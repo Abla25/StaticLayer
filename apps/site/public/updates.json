@@ -1,6 +1,6 @@
 {
-  "latest": "1.0.0",
+  "latest": "1.1.0",
   "date": "2026-08-27",
-  "notes": "v1.0.0 — Admin console v2: Cloudflare Access sign-in, search & bulk actions, allow/block lists + nickname ban, blocked terms, live settings, in-panel update checker.",
+  "notes": "v1.1.0 — Widget builder (live preview + 7 templates, language IT/EN, theme, accent, custom texts), browser keychain password save + session restore, Cloudflare Access step-by-step guide, GDPR-minimal Telegram alerts for pending comments, automatic D1 schema bootstrap.",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }
