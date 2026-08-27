@@ -3,27 +3,32 @@
 <!-- active: polls -->
 
 <style>
-  .fp-preview { background:var(--card,#fff); border:1px solid var(--border,#e8e8e6); border-radius:18px; padding:20px 18px; margin:22px 0; box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px -10px rgba(16,24,40,.12); }
-  .fp-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; }
-  .fp-q { font-size:15px; font-weight:650; letter-spacing:-.1px; margin:0; }
-  .fp-chip { font-size:11px; font-weight:600; color:#666; background:#f1f1ef; padding:3px 10px; border-radius:999px; white-space:nowrap; }
+  .fp-preview { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px 18px; margin:22px 0; box-shadow:var(--shadow-md); }
+  .fp-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .fp-q { font-size:15px; font-weight:650; letter-spacing:-.1px; margin:0; color:var(--ink); }
+  .fp-chip { font-size:11px; font-weight:600; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); padding:3px 10px; border-radius:999px; white-space:nowrap; }
   .fp-opt { margin-bottom:12px; }
   .fp-opt-label { display:flex; align-items:center; gap:8px; margin-bottom:5px; font-size:13px; }
-  .fp-rank { font-size:10px; font-weight:700; color:#888; background:#f1f1ef; padding:1px 6px; border-radius:999px; }
-  .fp-name { font-weight:600; flex:1; }
-  .fp-meta { font-size:11px; color:#888; }
-  .fp-bar { height:8px; border-radius:999px; background:#f1f1ef; overflow:hidden; }
-  .fp-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#ff8a2a,#ff5a1f,#ff3d54); transform-origin:left; transform:scaleX(0); animation:fp-grow 1s cubic-bezier(.22,1,.36,1) forwards; }
-  .fp-fill.d1 { animation-delay:.15s } .fp-fill.d2 { animation-delay:.5s } .fp-fill.d3 { animation-delay:.85s }
-  .fp-opt.leader .fp-fill { box-shadow:0 0 12px -2px #ff5a1faa; }
-  .fp-opt.leader .fp-name { color:#f57d1f; }
-  @keyframes fp-grow { to { transform:scaleX(1); } }
-  .fp-lead { font-size:12px; font-weight:700; color:#f57d1f; margin-top:6px; animation:fp-pop .4s ease; }
-  @keyframes fp-pop { 0%{transform:scale(.95)} 60%{transform:scale(1.02)} 100%{transform:scale(1)} }
-  .fp-actions { display:flex; gap:8px; margin-top:14px; }
-  .fp-btn { font-size:12px; font-weight:600; color:#666; border:1px solid #e0e0de; border-radius:999px; padding:5px 14px; background:#fff; }
-  .fp-btn.solid { color:#fff; background:linear-gradient(135deg,#f57d1f,#ff3d54); border:0; }
-  .fp-note { font-size:12px; color:#777; margin-top:12px; font-style:italic; }
+  .fp-rank { font-size:10px; font-weight:700; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); padding:1px 6px; border-radius:999px; }
+  .fp-name { font-weight:600; flex:1; color:var(--ink); }
+  .fp-meta { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .fp-bar { height:8px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden; }
+  .fp-fill { height:100%; border-radius:999px; background:var(--acc-grad); transform-origin:left; transform:scaleX(0); transition:transform .7s var(--ease); }
+  .fp-opt.leader .fp-fill { box-shadow:0 0 14px -2px var(--acc); }
+  .fp-opt.leader .fp-name { color:var(--acc); }
+  .fp-lead { font-size:12px; font-weight:700; color:var(--acc); margin:6px 0 0; animation:fp-pop .4s var(--ease); }
+  @keyframes fp-pop { 0%{transform:scale(.96)} 60%{transform:scale(1.03)} 100%{transform:scale(1)} }
+  .fp-btn { font:inherit; font-size:12px; font-weight:600; color:var(--muted); border:1px solid var(--line); background:transparent; border-radius:999px; padding:5px 14px; cursor:pointer; transition:color .15s,border-color .15s,transform .15s; }
+  .fp-btn:hover { color:var(--acc); border-color:var(--acc); }
+  .fp-btn.solid { color:#fff; background:var(--acc-grad); border:0; }
+  .fp-btn.solid:disabled { opacity:.5; cursor:not-allowed; }
+  .fp-optbtn { display:block; width:100%; text-align:left; font:inherit; font-size:13.5px; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:10px 14px; cursor:pointer; margin-bottom:9px; transition:border-color .15s,transform .15s,background .15s; }
+  .fp-optbtn:hover { border-color:var(--acc); transform:translateY(-1px); }
+  .fp-optbtn.selected { border-color:var(--acc); background:var(--acc-soft); }
+  .fp-optbtn::before { content:"○ "; color:var(--muted); }
+  .fp-optbtn.selected::before { content:"● "; color:var(--acc); }
+  .fp-actions { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .fp-note { font-size:12px; color:var(--muted); margin-top:12px; font-style:italic; }
 </style>
 
 <section class="section" style="padding-top:56px">
@@ -47,26 +52,13 @@
         <h1>Polls</h1>
         <p>StrawPoll-style polls, built on the same privacy engine: <b>Proof-of-Work votes</b>, atomic anti-replay, ranked results with a leader, and optional <b>single- or multi-select</b>.</p>
 
-        <div class="fp-preview" aria-hidden="true">
+        <div class="fp-preview" id="fp-poll" aria-label="Interactive poll preview">
           <div class="fp-head">
-            <span class="fp-q">Where should we host?</span>
-            <span class="fp-chip">28 votes</span>
+            <span class="fp-q" id="fp-q">Where should we host?</span>
+            <span class="fp-chip" id="fp-chip">28 votes</span>
           </div>
-          <div class="fp-opt leader">
-            <div class="fp-opt-label"><span class="fp-rank">#1</span><span class="fp-name">Cloudflare</span><span class="fp-meta">15 · 54%</span></div>
-            <div class="fp-bar"><div class="fp-fill d1" style="width:54%"></div></div>
-          </div>
-          <div class="fp-opt">
-            <div class="fp-opt-label"><span class="fp-rank">#2</span><span class="fp-name">AWS</span><span class="fp-meta">8 · 29%</span></div>
-            <div class="fp-bar"><div class="fp-fill d2" style="width:29%"></div></div>
-          </div>
-          <div class="fp-opt">
-            <div class="fp-opt-label"><span class="fp-rank">#3</span><span class="fp-name">Vercel</span><span class="fp-meta">5 · 18%</span></div>
-            <div class="fp-bar"><div class="fp-fill d3" style="width:18%"></div></div>
-          </div>
-          <p class="fp-lead">Leads by 7 votes</p>
-          <div class="fp-actions"><span class="fp-btn">Vote</span><span class="fp-btn solid">Vote (2)</span><span class="fp-btn">View results</span></div>
-          <p class="fp-note">Live preview — ranked bars fill with a stagger, leader glows, total chip counts.</p>
+          <div id="fp-body"></div>
+          <p class="fp-note" id="fp-note">Fully interactive preview — vote (single or multi), then see the ranked results.</p>
         </div>
 
         <h2>Everything included</h2>
@@ -94,3 +86,101 @@
     </div>
   </div>
 </section>
+
+<script>
+  // Interactive, theme-aware poll preview (client-side simulation only).
+  (function () {
+    var options = ['Cloudflare', 'AWS', 'Vercel', 'Netlify'];
+    var counts = { Cloudflare: 15, AWS: 8, Vercel: 5, Netlify: 0 };
+    var total = 28;
+    var multi = true;
+    var voted = false;
+    var revealed = false;
+    var selected = {};
+
+    var body = document.getElementById('fp-body');
+    var chip = document.getElementById('fp-chip');
+
+    function fmt(n) { return String(n); }
+
+    function renderResults(animate) {
+      body.replaceChildren();
+      var rows = options.map(function (o) { return { name: o, count: counts[o] || 0 }; });
+      rows.sort(function (a, b) { return b.count - a.count || options.indexOf(a.name) - options.indexOf(b.name); });
+      var leader = rows.length && rows[0].count > (rows[1] ? rows[1].count : 0);
+      rows.forEach(function (r, i) {
+        var pct = total ? Math.round((r.count / total) * 100) : 0;
+        var opt = document.createElement('div');
+        opt.className = 'fp-opt' + (leader && i === 0 ? ' leader' : '');
+        var label = document.createElement('div'); label.className = 'fp-opt-label';
+        var rank = document.createElement('span'); rank.className = 'fp-rank'; rank.textContent = '#' + (i + 1);
+        var name = document.createElement('span'); name.className = 'fp-name'; name.textContent = r.name;
+        var meta = document.createElement('span'); meta.className = 'fp-meta'; meta.textContent = r.count + ' · ' + pct + '%';
+        label.append(rank, name, meta);
+        var bar = document.createElement('div'); bar.className = 'fp-bar';
+        var fill = document.createElement('div'); fill.className = 'fp-fill';
+        bar.appendChild(fill); opt.append(label, bar); body.appendChild(opt);
+        if (animate) setTimeout(function () { fill.style.transform = 'scaleX(' + (pct / 100) + ')'; }, 120 + i * 110);
+        else fill.style.transform = 'scaleX(' + (pct / 100) + ')';
+      });
+      if (leader) {
+        var lead = document.createElement('p'); lead.className = 'fp-lead';
+        lead.textContent = 'Leads by ' + (rows[0].count - rows[1].count) + ' votes';
+        body.appendChild(lead);
+      }
+      var actions = document.createElement('div'); actions.className = 'fp-actions';
+      if (!voted) {
+        var back = document.createElement('button'); back.type = 'button'; back.className = 'fp-btn'; back.textContent = 'Vote';
+        back.addEventListener('click', function () { revealed = false; renderVote(); });
+        actions.appendChild(back);
+      }
+      body.appendChild(actions);
+    }
+
+    function renderVote() {
+      body.replaceChildren();
+      options.forEach(function (o) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'fp-optbtn' + (selected[o] ? ' selected' : '');
+        b.textContent = o;
+        b.addEventListener('click', function () {
+          if (multi) {
+            if (selected[o]) delete selected[o]; else selected[o] = true;
+            b.classList.toggle('selected', !!selected[o]);
+            var n = Object.keys(selected).length;
+            voteBtn.disabled = n === 0;
+            voteBtn.textContent = 'Vote (' + n + ')';
+          } else {
+            counts[o] = (counts[o] || 0) + 1; total += 1; voted = true;
+            chip.textContent = total + (total === 1 ? ' vote' : ' votes');
+            renderResults(true);
+          }
+        });
+        body.appendChild(b);
+      });
+      var actions = document.createElement('div'); actions.className = 'fp-actions';
+      var voteBtn = document.createElement('button'); voteBtn.type = 'button'; voteBtn.className = 'fp-btn solid';
+      if (multi) { voteBtn.textContent = 'Vote (0)'; voteBtn.disabled = true; }
+      else voteBtn.textContent = 'Vote';
+      voteBtn.addEventListener('click', function () {
+        if (multi) {
+          var sel = Object.keys(selected);
+          if (!sel.length) return;
+          sel.forEach(function (o) { counts[o] = (counts[o] || 0) + 1; total += 1; });
+          selected = {}; voted = true;
+          chip.textContent = total + (total === 1 ? ' vote' : ' votes');
+          renderResults(true);
+        }
+      });
+      actions.appendChild(voteBtn);
+      var view = document.createElement('button'); view.type = 'button'; view.className = 'fp-btn'; view.textContent = 'View results';
+      view.addEventListener('click', function () { revealed = true; renderResults(true); });
+      actions.appendChild(view);
+      body.appendChild(actions);
+    }
+
+    chip.textContent = total + (total === 1 ? ' vote' : ' votes');
+    renderVote();
+  })();
+</script>

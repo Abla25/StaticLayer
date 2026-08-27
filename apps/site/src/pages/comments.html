@@ -3,27 +3,33 @@
 <!-- active: comments -->
 
 <style>
-  .fp-preview { background:var(--card,#fff); border:1px solid var(--border,#e8e8e6); border-radius:18px; padding:18px; margin:22px 0; box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px -10px rgba(16,24,40,.12); }
-  .fp-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
-  .fp-title { font-size:15px; font-weight:650; letter-spacing:-.1px; }
-  .fp-count { font-size:11px; font-weight:600; color:#888; background:#f1f1ef; padding:3px 10px; border-radius:999px; }
+  .fp-preview { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin:22px 0; box-shadow:var(--shadow-md); }
+  .fp-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .fp-title { font-size:15px; font-weight:650; letter-spacing:-.1px; color:var(--ink); margin:0; }
+  .fp-count { font-size:11px; font-weight:600; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); padding:3px 10px; border-radius:999px; }
   .fp-sort { display:flex; gap:6px; }
-  .fp-sort span { font-size:10.5px; color:#888; border:1px solid #e8e8e6; padding:2px 8px; border-radius:999px; }
-  .fp-sort span.on { color:#f57d1f; border-color:#f57d1f; background:#f57d1f12; }
-  .fp-item { display:flex; gap:10px; padding:10px 0; border-top:1px solid #f1f1ef; }
+  .fp-sort button { font:inherit; font-size:10.5px; color:var(--muted); border:1px solid var(--line); background:transparent; padding:2px 9px; border-radius:999px; cursor:pointer; transition:color .15s,border-color .15s; }
+  .fp-sort button.on { color:var(--acc); border-color:var(--acc); background:var(--acc-soft); }
+  .fp-item { display:flex; gap:10px; padding:11px 0; border-top:1px solid var(--line); }
   .fp-ava { flex:none; width:30px; height:30px; border-radius:9px; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; }
   .fp-main { flex:1; min-width:0; }
-  .fp-meta { display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:12px; font-weight:600; }
-  .fp-time { font-weight:400; color:#999; font-size:11px; }
-  .fp-badge { font-size:9.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; color:#f57d1f; border:1px solid #f57d1f55; background:#f57d1f14; padding:0 6px; border-radius:999px; }
-  .fp-badge.author { color:#16a34a; border-color:#16a34a55; background:#16a34a14; }
-  .fp-body { font-size:12.5px; color:#333; margin:3px 0 0; }
-  .fp-actions { display:flex; gap:8px; margin-top:6px; align-items:center; }
-  .fp-like { font-size:11px; font-weight:700; color:#666; border:1px solid #e0e0de; border-radius:999px; padding:2px 9px; }
-  .fp-like.pop { animation:fp-pop .4s ease; }
-  .fp-flag { font-size:11px; color:#999; border:0; background:none; }
-  @keyframes fp-pop { 0%{transform:scale(1)} 40%{transform:scale(1.18)} 100%{transform:scale(1)} }
-  .fp-note { font-size:12px; color:#777; margin-top:10px; font-style:italic; }
+  .fp-meta { display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:12px; font-weight:600; color:var(--ink); }
+  .fp-time { font-weight:400; color:var(--muted); font-size:11px; }
+  .fp-badge { font-size:9.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; color:var(--acc); border:1px solid color-mix(in srgb,var(--acc) 40%,transparent); background:var(--acc-soft); padding:0 6px; border-radius:999px; }
+  .fp-badge.author { color:var(--ok); border-color:color-mix(in srgb,var(--ok) 40%,transparent); background:color-mix(in srgb,var(--ok) 12%,transparent); }
+  .fp-body { font-size:12.5px; color:var(--ink-soft); margin:3px 0 0; }
+  .fp-actions { display:flex; gap:8px; margin-top:6px; align-items:center; flex-wrap:wrap; }
+  .fp-btn { font:inherit; font-size:11px; font-weight:600; color:var(--muted); border:1px solid var(--line); background:transparent; border-radius:999px; padding:2px 10px; cursor:pointer; transition:color .15s,border-color .15s,transform .15s; }
+  .fp-btn:hover { color:var(--acc); border-color:var(--acc); }
+  .fp-btn.liked { color:var(--acc); border-color:var(--acc); background:var(--acc-soft); }
+  .fp-btn.reported { color:var(--ok); border-color:transparent; background:color-mix(in srgb,var(--ok) 12%,transparent); }
+  .fp-more { font:inherit; font-size:12px; font-weight:600; color:var(--acc); background:none; border:0; padding:0 0 0 4px; cursor:pointer; }
+  .fp-reply-box { margin-top:7px; display:flex; gap:6px; }
+  .fp-reply-box input { flex:1; font:inherit; font-size:12px; padding:6px 10px; border:1px solid var(--line); border-radius:9px; background:var(--surface); color:var(--ink); }
+  .fp-reply-box button { font:inherit; font-size:11.5px; font-weight:600; color:#fff; background:var(--acc-grad); border:0; border-radius:999px; padding:4px 12px; cursor:pointer; }
+  @keyframes fp-pop { 0%{transform:scale(1)} 40%{transform:scale(1.22)} 100%{transform:scale(1)} }
+  .fp-pop { animation:fp-pop .35s var(--ease); }
+  .fp-note { font-size:12px; color:var(--muted); margin-top:10px; font-style:italic; }
 </style>
 
 <section class="section" style="padding-top:56px">
@@ -47,37 +53,18 @@
         <h1>Comments</h1>
         <p>Moderated, nested, privacy-first conversations — plain text only, rendered with <code>textContent</code>, every comment protected by Proof-of-Work and human moderation. No accounts, no emails, no tracking.</p>
 
-        <div class="fp-preview" aria-hidden="true">
+        <div class="fp-preview" id="fp-comments" aria-label="Interactive comments preview">
           <div class="fp-row">
             <span class="fp-title">Comments</span>
-            <div class="fp-sort"><span>Newest</span><span class="on">Best</span><span>Oldest</span></div>
-            <span class="fp-count">4 comments</span>
-          </div>
-          <div class="fp-item">
-            <span class="fp-ava" style="background:linear-gradient(135deg,#ff8a2a,#ff5a1f)">S</span>
-            <div class="fp-main">
-              <div class="fp-meta"><span>Site owner</span><span class="fp-badge author">Author</span><span class="fp-time">2 min ago</span></div>
-              <p class="fp-body">Welcome! Ask anything about the Camino here. 👋</p>
-              <div class="fp-actions"><span class="fp-like" data-pop>▲ 18</span><span class="fp-flag">Reply</span><span class="fp-flag">Report</span></div>
+            <div class="fp-sort" role="group" aria-label="Sort comments">
+              <button type="button" data-sort="newest">Newest</button>
+              <button type="button" data-sort="best" class="on">Best</button>
+              <button type="button" data-sort="oldest">Oldest</button>
             </div>
+            <span class="fp-count" id="fp-count">4 comments</span>
           </div>
-          <div class="fp-item">
-            <span class="fp-ava" style="background:linear-gradient(135deg,#f57d1f,#ff3d54)">A</span>
-            <div class="fp-main">
-              <div class="fp-meta"><span>Alice</span><span class="fp-badge">📌 Pinned</span><span class="fp-time">1 h ago</span></div>
-              <p class="fp-body">Pinned: please read the rules before posting. 💬</p>
-              <div class="fp-actions"><span class="fp-like" data-pop>▲ 7</span><span class="fp-flag">Reply</span><span class="fp-flag">Report</span></div>
-            </div>
-          </div>
-          <div class="fp-item">
-            <span class="fp-ava" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">B</span>
-            <div class="fp-main">
-              <div class="fp-meta"><span>Bob</span><span class="fp-time">3 h ago</span></div>
-              <p class="fp-body">This is a longer comment that gets a “Read more” toggle when it exceeds a few hundred characters…</p>
-              <div class="fp-actions"><span class="fp-like" data-pop>▲ 3</span><span class="fp-flag">Reply</span><span class="fp-flag">Report</span></div>
-            </div>
-          </div>
-          <p class="fp-note">Live preview of the widget — likes pop, results sort, relative timestamps.</p>
+          <div id="fp-list"></div>
+          <p class="fp-note">Fully interactive preview — sort, like, report, reply and “read more” all work live (client-side only).</p>
         </div>
 
         <h2>Everything included</h2>
@@ -109,18 +96,98 @@
 </section>
 
 <script>
-  // Presentation-only animation for the preview card (no tracking, no data).
+  // Interactive, theme-aware comments preview (client-side only, no data sent).
   (function () {
-    var likes = document.querySelectorAll('.fp-like[data-pop]');
-    function pop() {
-      var i = Math.floor(Math.random() * likes.length);
-      var el = likes[i];
-      el.classList.remove('pop');
-      void el.offsetWidth;
-      el.classList.add('pop');
-      var n = parseInt(el.textContent.replace(/\D/g, ''), 10) || 0;
-      el.textContent = el.textContent.replace(/\d+/, String(n + 1));
+    var LONG = 'This is a long comment with a lot of useful details that triggers the “Read more” toggle so you can try it right here. '.repeat(9);
+    var data = [
+      { nick: 'Site owner', ava: 'S', grad: 'linear-gradient(135deg,#ff8a2a,#ff5a1f)', time: '2 min ago', body: 'Welcome! Ask anything about the Camino here. 👋', likes: 18, author: true, pinned: false },
+      { nick: 'Alice', ava: 'A', grad: 'linear-gradient(135deg,#f57d1f,#ff3d54)', time: '1 h ago', body: 'Pinned: please read the rules before posting. 💬', likes: 7, author: false, pinned: true },
+      { nick: 'Bob', ava: 'B', grad: 'linear-gradient(135deg,#0ea5e9,#6366f1)', time: '3 h ago', body: LONG, likes: 3, author: false, pinned: false },
+      { nick: 'Carol', ava: 'C', grad: 'linear-gradient(135deg,#16a34a,#0d9488)', time: '5 h ago', body: 'Thanks — this is exactly what I needed! 🙌', likes: 1, author: false, pinned: false }
+    ];
+    var sort = 'best';
+    var liked = {}; var reported = {}; var expanded = {};
+
+    var list = document.getElementById('fp-list');
+    var countEl = document.getElementById('fp-count');
+
+    function render() {
+      var rows = data.slice();
+      rows.sort(function (a, b) {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        if (sort === 'best') return b.likes - a.likes;
+        if (sort === 'oldest') return a.idx - b.idx;
+        return b.idx - a.idx;
+      });
+      list.replaceChildren();
+      rows.forEach(function (c) {
+        var el = document.createElement('div');
+        el.className = 'fp-item';
+        var ava = document.createElement('span');
+        ava.className = 'fp-ava'; ava.style.background = c.grad; ava.textContent = c.ava;
+        var main = document.createElement('div'); main.className = 'fp-main';
+        var meta = document.createElement('div'); meta.className = 'fp-meta';
+        var nick = document.createElement('span'); nick.textContent = c.nick; meta.appendChild(nick);
+        if (c.author) { var ab = document.createElement('span'); ab.className = 'fp-badge author'; ab.textContent = 'Author'; meta.appendChild(ab); }
+        if (c.pinned) { var pb = document.createElement('span'); pb.className = 'fp-badge'; pb.textContent = '📌 Pinned'; meta.appendChild(pb); }
+        var tm = document.createElement('span'); tm.className = 'fp-time'; tm.textContent = c.time; meta.appendChild(tm);
+        main.appendChild(meta);
+        var body = document.createElement('p'); body.className = 'fp-body';
+        if (c.body.length > 120 && !expanded[c.idx]) {
+          body.textContent = c.body.slice(0, 120).replace(/\\s+\\S*$/, '') + '… ';
+          var more = document.createElement('button'); more.type = 'button'; more.className = 'fp-more'; more.textContent = 'Read more';
+          more.addEventListener('click', function () { expanded[c.idx] = true; render(); });
+          body.appendChild(more);
+        } else { body.textContent = c.body; }
+        main.appendChild(body);
+        var actions = document.createElement('div'); actions.className = 'fp-actions';
+        var like = document.createElement('button'); like.type = 'button'; like.className = 'fp-btn' + (liked[c.idx] ? ' liked' : '');
+        like.textContent = (liked[c.idx] ? '✓ ' : '▲ ') + c.likes;
+        like.addEventListener('click', function () {
+          liked[c.idx] = !liked[c.idx]; c.likes += liked[c.idx] ? 1 : -1;
+          like.classList.add('fp-pop'); like.classList.toggle('liked', liked[c.idx]);
+          like.textContent = (liked[c.idx] ? '✓ ' : '▲ ') + c.likes;
+        });
+        actions.appendChild(like);
+        var reply = document.createElement('button'); reply.type = 'button'; reply.className = 'fp-btn'; reply.textContent = 'Reply';
+        reply.addEventListener('click', function () {
+          var box = main.querySelector('.fp-reply-box');
+          if (box) { box.remove(); return; }
+          box = document.createElement('div'); box.className = 'fp-reply-box';
+          var input = document.createElement('input'); input.placeholder = 'Write a reply…';
+          var send = document.createElement('button'); send.type = 'button'; send.textContent = 'Post';
+          send.addEventListener('click', function () {
+            var t = input.value.trim();
+            if (!t) return;
+            data.push({ nick: 'You', ava: 'Y', grad: 'linear-gradient(135deg,#ff5a1f,#ff3d54)', time: 'just now', body: t, likes: 0, author: false, pinned: false });
+            box.remove(); updateCount(); render();
+          });
+          box.append(input, send); main.appendChild(box); input.focus();
+        });
+        actions.appendChild(reply);
+        var report = document.createElement('button'); report.type = 'button'; report.className = 'fp-btn' + (reported[c.idx] ? ' reported' : '');
+        report.textContent = reported[c.idx] ? 'Reported ✓' : 'Report';
+        report.addEventListener('click', function () {
+          reported[c.idx] = true; report.classList.add('reported', 'fp-pop'); report.textContent = 'Reported ✓';
+        });
+        actions.appendChild(report);
+        main.appendChild(actions);
+        el.append(ava, main); list.appendChild(el);
+      });
     }
-    if (likes.length) { setInterval(pop, 2600); }
+
+    function updateCount() {
+      countEl.textContent = data.length + (data.length === 1 ? ' comment' : ' comments');
+    }
+    data.forEach(function (c, i) { c.idx = i; });
+    document.querySelectorAll('.fp-sort button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        sort = b.getAttribute('data-sort');
+        document.querySelectorAll('.fp-sort button').forEach(function (x) { x.classList.toggle('on', x === b); });
+        render();
+      });
+    });
+    render();
+    updateCount();
   })();
 </script>

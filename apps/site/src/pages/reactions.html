@@ -3,18 +3,21 @@
 <!-- active: reactions -->
 
 <style>
-  .fp-preview { background:var(--card,#fff); border:1px solid var(--border,#e8e8e6); border-radius:18px; padding:20px 18px; margin:22px 0; box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px -10px rgba(16,24,40,.12); }
-  .fp-title { font-size:15px; font-weight:650; letter-spacing:-.1px; margin-bottom:14px; }
+  .fp-preview { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px 18px; margin:22px 0; box-shadow:var(--shadow-md); }
+  .fp-title { font-size:15px; font-weight:650; letter-spacing:-.1px; margin-bottom:14px; color:var(--ink); }
   .fp-reactions { display:flex; gap:10px; flex-wrap:wrap; }
-  .fp-reaction { display:inline-flex; align-items:center; gap:8px; font-size:15px; padding:8px 16px; border-radius:999px; border:1px solid #e8e8e6; background:#fff; transition:transform .15s ease,border-color .15s ease; }
-  .fp-reaction:hover { transform:translateY(-2px); border-color:#f57d1f; }
-  .fp-reaction b { font-size:12px; color:#666; }
-  .fp-bar { height:8px; border-radius:999px; background:#f1f1ef; margin-top:18px; overflow:hidden; }
-  .fp-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#ff8a2a,#ff5a1f,#ff3d54); transform-origin:left; transform:scaleX(0); animation:fp-grow 1.1s cubic-bezier(.22,1,.36,1) forwards; }
-  .fp-fill.f1 { animation-delay:.1s } .fp-fill.f2 { animation-delay:.45s } .fp-fill.f3 { animation-delay:.8s }
-  @keyframes fp-grow { to { transform:scaleX(1); } }
-  .fp-legend { display:flex; gap:16px; margin-top:8px; font-size:11.5px; color:#888; }
-  .fp-note { font-size:12px; color:#777; margin-top:12px; font-style:italic; }
+  .fp-reaction { display:inline-flex; align-items:center; gap:8px; font:inherit; font-size:15px; padding:8px 16px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; transition:transform .15s var(--ease),border-color .15s,box-shadow .15s; }
+  .fp-reaction:hover { transform:translateY(-2px); border-color:var(--acc); box-shadow:var(--shadow-acc); }
+  .fp-reaction b { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .fp-reaction.bump { animation:fp-pop .35s var(--ease); }
+  @keyframes fp-pop { 0%{transform:scale(1)} 40%{transform:scale(1.15)} 100%{transform:scale(1)} }
+  .fp-bars { margin-top:18px; }
+  .fp-rowbar { margin-bottom:12px; }
+  .fp-bar { height:8px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden; }
+  .fp-fill { height:100%; border-radius:999px; background:var(--acc-grad); transform-origin:left; transform:scaleX(0); transition:transform .7s var(--ease); }
+  .fp-legend { display:flex; justify-content:space-between; gap:16px; margin-top:7px; font-size:11.5px; color:var(--muted); }
+  .fp-legend b { color:var(--ink); font-variant-numeric:tabular-nums; }
+  .fp-note { font-size:12px; color:var(--muted); margin-top:12px; font-style:italic; }
 </style>
 
 <section class="section" style="padding-top:56px">
@@ -38,18 +41,28 @@
         <h1>Reactions</h1>
         <p>One-tap anonymous emoji feedback with <b>real Proof-of-Work per click</b>. No identity, no cookies, no moderation — just engagement that is expensive to spam.</p>
 
-        <div class="fp-preview" aria-hidden="true">
-          <div class="fp-title">How did you like this article?</div>
-          <div class="fp-reactions">
-            <span class="fp-reaction">👍 <b data-count="42">0</b></span>
-            <span class="fp-reaction">❤️ <b data-count="31">0</b></span>
-            <span class="fp-reaction">🎉 <b data-count="17">0</b></span>
+        <div class="fp-preview" aria-label="Interactive reactions preview">
+          <div class="fp-title">How did you like this article? <span style="font-size:11px;color:var(--muted);font-weight:400">(try clicking)</span></div>
+          <div class="fp-reactions" id="fp-reactions">
+            <button type="button" class="fp-reaction" data-count="42">👍 <b>0</b></button>
+            <button type="button" class="fp-reaction" data-count="31">❤️ <b>0</b></button>
+            <button type="button" class="fp-reaction" data-count="17">🎉 <b>0</b></button>
           </div>
-          <div class="fp-bar"><div class="fp-fill f1" style="width:47%"></div></div>
-          <div class="fp-bar"><div class="fp-fill f2" style="width:34%"></div></div>
-          <div class="fp-bar"><div class="fp-fill f3" style="width:19%"></div></div>
-          <div class="fp-legend"><span>👍 47%</span><span>❤️ 34%</span><span>🎉 19%</span></div>
-          <p class="fp-note">Live preview — counts count up, bars fill with a stagger.</p>
+          <div class="fp-bars">
+            <div class="fp-rowbar">
+              <div class="fp-bar"><div class="fp-fill" data-pct="47"></div></div>
+              <div class="fp-legend"><span>👍 <b id="l1">0</b></span><span id="p1">0%</span></div>
+            </div>
+            <div class="fp-rowbar">
+              <div class="fp-bar"><div class="fp-fill" data-pct="34"></div></div>
+              <div class="fp-legend"><span>❤️ <b id="l2">0</b></span><span id="p2">0%</span></div>
+            </div>
+            <div class="fp-rowbar">
+              <div class="fp-bar"><div class="fp-fill" data-pct="19"></div></div>
+              <div class="fp-legend"><span>🎉 <b id="l3">0</b></span><span id="p3">0%</span></div>
+            </div>
+          </div>
+          <p class="fp-note">Fully interactive preview — click an emoji: the count bumps and the bars re-balance live.</p>
         </div>
 
         <h2>Everything included</h2>
@@ -76,12 +89,17 @@
 </section>
 
 <script>
-  // Presentation-only count-up for the preview (no tracking).
+  // Interactive, theme-aware reactions preview (client-side only).
   (function () {
-    var nums = document.querySelectorAll('[data-count]');
-    function run(el) {
-      var to = parseInt(el.getAttribute('data-count'), 10) || 0;
-      var t0 = performance.now(), dur = 900;
+    var counts = [42, 31, 17];
+    var btns = Array.prototype.slice.call(document.querySelectorAll('.fp-reaction'));
+    var nums = Array.prototype.slice.call(document.querySelectorAll('.fp-reactions b'));
+    var fills = Array.prototype.slice.call(document.querySelectorAll('.fp-fill'));
+    var totals = Array.prototype.slice.call(document.querySelectorAll('[id^="l"]'));
+    var pcts = Array.prototype.slice.call(document.querySelectorAll('[id^="p"]'));
+
+    function animateCount(el, to) {
+      var t0 = performance.now(), dur = 800;
       function step(t) {
         var p = Math.min(1, (t - t0) / dur);
         var eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
@@ -90,6 +108,32 @@
       }
       requestAnimationFrame(step);
     }
-    nums.forEach(run);
+
+    function redraw() {
+      var total = counts.reduce(function (a, b) { return a + b; }, 0);
+      counts.forEach(function (c, i) {
+        var pct = total ? Math.round((c / total) * 100) : 0;
+        pcts[i].textContent = pct + '%';
+        fills[i].style.transform = 'scaleX(' + (pct / 100) + ')';
+      });
+    }
+
+    btns.forEach(function (b, i) {
+      b.addEventListener('click', function () {
+        counts[i] += 1;
+        b.classList.remove('bump');
+        void b.offsetWidth;
+        b.classList.add('bump');
+        animateCount(nums[i], counts[i]);
+        redraw();
+      });
+    });
+
+    // Initial count-up + bars.
+    counts.forEach(function (c, i) {
+      animateCount(nums[i], c);
+      var pct = Math.round((c / (counts.reduce(function (a, b) { return a + b; }, 0))) * 100);
+      setTimeout(function () { fills[i].style.transform = 'scaleX(' + (pct / 100) + ')'; }, 150 + i * 120);
+    });
   })();
 </script>
