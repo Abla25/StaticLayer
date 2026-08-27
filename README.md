@@ -24,18 +24,22 @@ StaticLayer is an open-source, Cloudflare-native comment system designed for sta
 
 ---
 
-## Why not Disqus?
+## How it compares
+
+> Structural comparison only — not a legal or marketing claim about Disqus's
+> current terms. Verify Disqus's own privacy policy and pricing before you
+> make representations to your users.
 
 | | **Disqus** | **StaticLayer** |
 | --- | --- | --- |
-| **Where your data lives** | Disqus servers (a SaaS you don't control) | **Your Cloudflare account** (Worker + D1) |
-| **Tracking / ads** | Ad-supported, tracking cookies, analytics | **Zero** — no cookies, no fingerprinting, no analytics |
-| **Privacy** | GDPR-complex third-party processor | Clean data model: no IP persistence, plain text only |
-| **Cost** | Freemium / ads / paid tiers | **Cloudflare free tier** (Worker + D1) |
-| **Tech lock-in** | Proprietary | Open source (MIT), deterministic protocol |
-| **Spam protection** | CAPTCHA / ML | **Client-side Proof-of-Work** — no CAPTCHA, no friction |
+| **Where your data lives** | Disqus-operated servers (a third-party comment SaaS) | **Your Cloudflare account** (Worker + D1) |
+| **Cookies / tracking** | Uses cookies and analytics on its free tier (see their current policy) | **No cookies, no fingerprinting, no analytics** from the widget |
+| **Personal data handled** | Processed by Disqus under their DPA/terms | Minimal: nickname + plain-text comment + timestamp; **no IP persistence** |
+| **Cost** | Free (ad-supported) and paid tiers | **Cloudflare free tier** (Worker + D1) |
+| **License / lock-in** | Proprietary | **Open source (MIT)**, deterministic protocol |
+| **Spam protection** | CAPTCHA / ML on their side | **Client-side Proof-of-Work** — no CAPTCHA, no friction |
 
-**TL;DR:** Disqus is a centralized tracking network. StaticLayer is a privacy-preserving, open, BYOC comment engine that lives in *your* cloud.
+**TL;DR:** Disqus is a centralized third-party comment SaaS. StaticLayer keeps the entire comment system inside your own Cloudflare account.
 
 ---
 
