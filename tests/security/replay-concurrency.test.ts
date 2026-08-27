@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Miniflare } from 'miniflare';
-import { base64UrlToBytes, mineNonce, PROTOCOL_VERSION, serializeNonce } from '@staticlayer/protocol';
+import { base64UrlToBytes, bytesToBase64Url, mineNonce, PROTOCOL_VERSION, serializeNonce } from '@staticlayer/protocol';
 import { SECRETS, spawnWorker } from './worker.ts';
 
 const BASE = 'http://localhost';
@@ -166,8 +166,13 @@ describe('anti-replay — challenge consumption', () => {
     mf = await spawnWorker({ difficulty: 8 });
     const challenge = await obtainChallenge(mf);
     const payload = buildPayload(challenge, await solve(challenge, 'tampered'), 'tampered');
-    payload.signature =
-      payload.signature.slice(0, -1) + (payload.signature.endsWith('A') ? 'B' : 'A');
+    // Deterministic, robust tamper: flip a byte in the MIDDLE of the decoded
+    // signature, then re-encode. This can never re-encode to the original
+    // signature (unlike flipping the final base64 character, whose effective
+    // bits depend on the padding semantics of the encoded length).
+    const sig = base64UrlToBytes(payload.signature);
+    sig[Math.floor(sig.length / 2)] ^= 0x01;
+    payload.signature = bytesToBase64Url(sig);
     const res = await submit(mf, payload);
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: expect.stringMatching(/signature/i) });
