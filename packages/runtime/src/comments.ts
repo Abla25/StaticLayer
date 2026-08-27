@@ -20,6 +20,7 @@ import { applyRateLimit } from './ratelimit.ts';
 import { readSettings, settingModerationMode, settingNumber } from './settings.ts';
 import { decide, readLists } from './moderation-lists.ts';
 import { findBlockedTerm, readBlockedTerms } from './blocked-terms.ts';
+import { notifyPendingComment } from './telegram.ts';
 
 /**
  * POST /api/comments
@@ -237,6 +238,14 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
   if (inserted !== 1) {
     // Defensive: consumed === 1 but no comment row => internal inconsistency.
     return json({ error: 'comment not stored' }, 500);
+  }
+
+  // Owner notification when the comment enters the moderation queue.
+  // GDPR-minimal: the alert carries no comment data — only "pending" + admin
+  // link (see telegram.ts). Best-effort; never blocks or fails the submit.
+  if (status === 'pending') {
+    const origin = new URL(request.url).origin;
+    await notifyPendingComment(env, `${origin}/admin.html`);
   }
 
   return json({

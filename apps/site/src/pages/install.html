@@ -117,6 +117,16 @@
 
         <h2>9 · Deploy the website</h2>
         <p>Deploy your static site as usual. No build-time integration is required — the widget loads at runtime.</p>
+
+        <h2>10 · Telegram alerts (optional)</h2>
+        <p>Get a private notification on Telegram whenever a comment enters the moderation queue. <b>Privacy-first:</b> the alert contains <b>no comment content</b> — only "a new comment awaits moderation" plus a link to your admin console. Your bot token and chat id are stored only in your own private D1 database; nothing is sent to us.</p>
+        <ol>
+          <li><b>Create your bot:</b> in Telegram, search <b>@BotFather</b> → <b>/newbot</b> → choose a name and a username → copy the <b>token</b> it sends you (format <code>123456789:AA…</code>).</li>
+          <li><b>Find your chat id:</b> message your bot once (e.g. "hi"), then open <code>https://api.telegram.org/bot&lt;YOUR_TOKEN&gt;/getUpdates</code> in a browser and copy the number in <code>"chat":{"id":123456789,…}</code> (channels/groups have a leading minus).</li>
+          <li><b>Enable alerts:</b> open your admin → <b>Settings</b> → <b>Telegram alerts</b> → set <b>Alerts = On</b>, paste the bot token and chat id → <b>Save settings</b>.</li>
+          <li><b>Test:</b> post a comment on your site — you'll get the notification with a link to the queue.</li>
+        </ol>
+        <p>Alerts are off by default and never expose comment data. You can disable them anytime from the same settings.</p>
       </article>
     </div>
   </div>

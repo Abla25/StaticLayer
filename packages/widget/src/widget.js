@@ -238,17 +238,19 @@
     }
 
     // -------- theming: forced theme + CSS-variable overrides ------------
-    var theme = ((opts && opts.theme) || root.getAttribute('data-theme') || 'auto');
+    // Values may arrive as numbers (programmatic API) or strings (attributes);
+    // normalize to strings before trimming.
+    var theme = String(((opts && opts.theme) || root.getAttribute('data-theme') || '')).trim();
     if (theme === 'dark') root.classList.add('sl-theme-dark');
     else if (theme === 'light') root.classList.add('sl-theme-light');
-    var accent = ((opts && opts.accent) || root.getAttribute('data-accent') || '').trim();
+    var accent = String(((opts && opts.accent) || root.getAttribute('data-accent') || '')).trim();
     if (accent) root.style.setProperty('--accent', accent);
-    var accent2 = ((opts && opts.accent2) || root.getAttribute('data-accent-2') || '').trim();
+    var accent2 = String(((opts && opts.accent2) || root.getAttribute('data-accent-2') || '')).trim();
     if (accent2) root.style.setProperty('--accent-2', accent2);
-    var radius = ((opts && opts.radius) || root.getAttribute('data-radius') || '').trim();
-    if (radius) root.style.setProperty('--radius', String(radius).replace(/[^0-9.]/g, '') + 'px');
-    var maxWidth = ((opts && opts.maxWidth) || root.getAttribute('data-max-width') || '').trim();
-    if (maxWidth) root.style.setProperty('max-width', String(maxWidth).replace(/[^0-9.]/g, '') + 'px');
+    var radius = String(((opts && opts.radius) || root.getAttribute('data-radius') || '')).trim();
+    if (radius) root.style.setProperty('--radius', radius.replace(/[^0-9.]/g, '') + 'px');
+    var maxWidth = String(((opts && opts.maxWidth) || root.getAttribute('data-max-width') || '')).trim();
+    if (maxWidth) root.style.setProperty('max-width', maxWidth.replace(/[^0-9.]/g, '') + 'px');
 
     // -------- mode: comments only / reactions only / both --------
     // `data-reactions-only` (or opts.reactionsOnly) renders a STANDALONE

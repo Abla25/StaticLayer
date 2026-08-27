@@ -7,6 +7,7 @@ import {
 import { DEFAULTS, envNumber, type Env } from './env.ts';
 import { json, readJsonBody } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
+import { requireAdmin } from './auth.ts';
 import { signSession } from './session.ts';
 
 /**
@@ -65,4 +66,15 @@ export async function handleAdminLogin(request: Request, env: Env): Promise<Resp
 export function handleAdminLogout(): Response {
   const cookie = '__Host-StaticLayerSession=; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=0';
   return json({ ok: true }, 200, { 'set-cookie': cookie });
+}
+
+/**
+ * GET /api/admin/session — restore an existing admin session on page load.
+ * Returns the session-bound CSRF token when authenticated (the browser needs
+ * it for PATCH/DELETE after a reload), otherwise { authed: false }.
+ */
+export async function handleAdminSession(request: Request, env: Env): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return json({ authed: false });
+  return json({ authed: true, csrf: auth.payload.csrf });
 }

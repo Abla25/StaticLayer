@@ -52,6 +52,7 @@ StaticLayer is a source-available, Cloudflare-native comment system designed for
 - 🔐 **CSRF-safe admin** — session-bound, constant-time-verified tokens.
 - 🕵️ **No tracking** — the public widget sets no cookies and stores nothing in the browser.
 - 🔁 **Idempotent, verifiable deploys** — a Desired State Engine observes → plans → applies → verifies. It never fails silently.
+- 🔔 **Telegram alerts (optional)** — get a private notification when a comment awaits moderation; GDPR-minimal (no comment data in the message), configured from the admin panel.
 - 🧩 **Drop-in widget** — a few lines of HTML on any static site (Astro, Hugo, Jekyll, plain HTML…).
 
 ---
@@ -100,6 +101,12 @@ npx wrangler d1 migrations apply staticlayer --remote -c wrangler.jsonc
 ```
 
 Done. Moderate comments at `https://comments.yourdomain.com/admin.html`.
+
+> 🔔 **Telegram alerts (optional):** in the admin → **Settings** → **Telegram alerts**, set
+> Alerts = On, paste a bot token (create it with **@BotFather** in Telegram) and your chat id
+> (see `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates`), then **Save settings**. When a
+> comment awaits moderation you get a private message with a link to the queue — the message
+> contains **no comment data** (privacy-first).
 
 > 🧙 No terminal? The **Web Installer** (`npm run dev:installer`) guides you
 > through the same deploy with OAuth — scopes are least-privilege by design

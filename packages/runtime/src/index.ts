@@ -10,7 +10,7 @@ import {
   handleAdminGetTerms,
   handleAdminPutSettings,
 } from './admin-config.ts';
-import { handleAdminLogin, handleAdminLogout } from './admin.ts';
+import { handleAdminLogin, handleAdminLogout, handleAdminSession } from './admin.ts';
 import {
   handleAdminBulkComments,
   handleAdminDeleteComment,
@@ -134,6 +134,9 @@ const worker: ExportedHandler<Env> = {
     }
     if (pathname === '/api/admin/logout' && method === 'POST') {
       return respond(handleAdminLogout());
+    }
+    if (pathname === '/api/admin/session' && method === 'GET') {
+      return respond(handleAdminSession(request, env));
     }
     if (pathname === '/api/admin/access' && method === 'GET') {
       return respond(handleAdminAccessStatus(request, env));

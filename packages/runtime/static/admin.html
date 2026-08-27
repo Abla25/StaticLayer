@@ -198,8 +198,10 @@
       <div><h1>StaticLayer</h1><p class="sub">Moderation console</p></div>
     </div>
     <form id="login-form">
+      <!-- Hidden username lets the browser keychain offer to save the admin password -->
+      <input type="text" name="username" value="admin" autocomplete="username" style="display:none" aria-hidden="true" tabindex="-1">
       <label for="password">Admin password</label>
-      <input type="password" id="password" autocomplete="current-password" required>
+      <input type="password" id="password" name="password" autocomplete="current-password" required>
       <div class="row mt"><button type="submit" class="btn">Sign in</button></div>
     </form>
     <div class="divider" id="access-divider">or</div>
@@ -347,6 +349,43 @@
           <h3>Admin access &amp; sign-in</h3>
           <p class="lsub">Password-less login with Cloudflare Access is built in: protect <code>/admin.html</code> with an Access application and set the Worker var <code>CF_ACCESS_TEAM</code> (optionally <code>CF_ACCESS_AUD</code>) — the login screen then shows <b>"Sign in with Cloudflare"</b> and you never type a password. The hosted installer offers this in step 3.</p>
           <p class="lsub"><b>Lost the admin password?</b> With Cloudflare Access enabled, just sign in with Cloudflare. Otherwise rotate it: <code>npx wrangler secret put ADMIN_SECRET</code> (you choose the new value) — or reinstall fresh. Re-running the installer preserves your existing secrets (including the current password) by design.</p>
+          <div id="access-guide" class="hidden" style="margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)">
+            <h4 style="margin:0 0 8px;font-size:13px">Set up Cloudflare Access — step by step</h4>
+            <ol class="guide-list">
+              <li>Open <code>dash.cloudflare.com</code> → your account → <b>Zero Trust</b> → <b>Access</b> → <b>Applications</b>.</li>
+              <li>Click <b>Add an application</b> → <b>Self-hosted</b>.</li>
+              <li>Application domain: your Worker URL — <code id="access-domain">…</code> (and optionally your custom domain).</li>
+              <li>Policy: give it a name (e.g. "StaticLayer admin"), action <b>Allow</b>, include <b>Emails</b> → your email (or a group you manage).</li>
+              <li>Save the application. Then, in <b>Access → Service Auth</b>, copy the <b>Audience tag</b> of the app (optional but recommended).</li>
+              <li>Set the Worker vars (re-run the hosted installer, or in the dashboard: your Worker → <b>Settings</b> → <b>Variables</b>): <code>CF_ACCESS_TEAM</code> = your team name — the part before <code>.cloudflareaccess.com</code> in your Zero Trust URL — and optionally <code>CF_ACCESS_AUD</code> = the audience tag.</li>
+              <li>Re-deploy (installer) or save, then refresh this page: the login shows <b>"Sign in with Cloudflare"</b>. Only your email (or group) can open the console.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-form" style="margin-top:22px">
+        <div class="list-panel">
+          <h3>Telegram alerts</h3>
+          <p class="lsub">Get a private notification on Telegram when a new comment is awaiting moderation. <b>Privacy-first:</b> the message contains no comment content — only "a new comment awaits moderation" plus a link to this console. Your bot token and chat id are stored only in your own private D1 database.</p>
+          <div class="field">
+            <label for="set-telegram-alerts">Alerts</label>
+            <select id="set-telegram-alerts">
+              <option value="off">Off</option>
+              <option value="on">On</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="set-telegram-token">Bot token</label>
+            <input type="password" id="set-telegram-token" maxlength="200" placeholder="123456789:AA…" autocomplete="off" spellcheck="false">
+            <p class="hint"><b>Create your bot:</b> open Telegram → search <b>@BotFather</b> → <b>/newbot</b> → choose a name and a username → copy the token it sends you.</p>
+          </div>
+          <div class="field">
+            <label for="set-telegram-chat">Chat ID</label>
+            <input type="text" id="set-telegram-chat" maxlength="100" placeholder="123456789" spellcheck="false">
+            <p class="hint"><b>Find your chat id:</b> message your bot once (e.g. "hi"), then open <code>https://api.telegram.org/bot&lt;YOUR_TOKEN&gt;/getUpdates</code> in a browser and copy the number in <code>"chat":{"id":123456789,…}</code> (channels/groups have a leading minus).</p>
+          </div>
+          <p class="lsub" style="margin-top:8px">Then press <b>Save settings</b> and post a comment on your site: you'll get the notification.</p>
         </div>
       </div>
       <p id="settings-status" class="status"></p>
@@ -403,6 +442,20 @@
         <div class="list-panel">
           <h3>Look &amp; feel</h3>
           <div class="w-field">
+            <label for="w-template">Template</label>
+            <select id="w-template">
+              <option value="custom">Custom (manual)</option>
+              <option value="classic">Classic — orange, auto theme</option>
+              <option value="minimal">Minimal — clean, light</option>
+              <option value="vibrant">Vibrant — bold accent, rounded</option>
+              <option value="dark">Dark reader — always dark</option>
+              <option value="elegant">Elegant — purple, compact</option>
+              <option value="newsletter">Newsletter — blue, narrow</option>
+              <option value="reactions">Reactions bar — emoji only</option>
+            </select>
+            <p class="hint">Pick a preset to auto-fill the options below (your manual edits are kept unless you change template again).</p>
+          </div>
+          <div class="w-field">
             <label for="w-lang">Language</label>
             <select id="w-lang">
               <option value="auto">Auto (visitor's browser)</option>
@@ -446,6 +499,13 @@
       </div>
 
       <div class="list-panel" style="margin-top:16px">
+        <h3>Live preview</h3>
+        <p class="lsub">Updates as you change the options above — this is exactly what your visitors will see (themes and colors apply live).</p>
+        <div id="w-preview" style="padding:6px 2px"></div>
+        <p id="w-preview-status" class="status"></p>
+      </div>
+
+      <div class="list-panel" style="margin-top:16px">
         <h3>Snippet — copy &amp; paste into your page</h3>
         <div class="snippet-box">
           <textarea id="w-snippet" readonly spellcheck="false"></textarea>
@@ -468,6 +528,7 @@
 
   <footer>StaticLayer · BYOC · Source-available (Elastic License 2.0)</footer>
 </div>
-<script src="/admin.js"></script>
+<script src="/widget.js" defer></script>
+<script src="/admin.js" defer></script>
 </body>
 </html>

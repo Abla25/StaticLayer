@@ -10,6 +10,7 @@ import {
   settingModerationMode,
   settingNumber,
   settingString,
+  TELEGRAM_ALERT_STATES,
   type ModerationMode,
 } from './settings.ts';
 import { normalizeListValue, type ListKind } from './moderation-lists.ts';
@@ -142,6 +143,9 @@ interface EffectiveSettings {
   pow_difficulty: number;
   reaction_options: string;
   moderation_mode: ModerationMode;
+  telegram_alerts: string;
+  telegram_bot_token: string;
+  telegram_chat_id: string;
 }
 
 async function effectiveSettings(db: D1Database, env: Env): Promise<EffectiveSettings> {
@@ -150,6 +154,9 @@ async function effectiveSettings(db: D1Database, env: Env): Promise<EffectiveSet
     pow_difficulty: settingNumber(map, 'pow_difficulty', envNumber(env.POW_DIFFICULTY, DEFAULTS.POW_DIFFICULTY)),
     reaction_options: settingString(map, 'reaction_options', env.REACTION_OPTIONS ?? DEFAULTS.REACTION_OPTIONS),
     moderation_mode: settingModerationMode(map, 'open'),
+    telegram_alerts: settingString(map, 'telegram_alerts', 'off'),
+    telegram_bot_token: settingString(map, 'telegram_bot_token', ''),
+    telegram_chat_id: settingString(map, 'telegram_chat_id', ''),
   };
 }
 
@@ -197,6 +204,26 @@ export async function handleAdminPutSettings(request: Request, env: Env): Promis
       return json({ error: 'moderation_mode must be open or allowlist' }, 400);
     }
     await putSetting(env.DB, 'moderation_mode', s.moderation_mode);
+  }
+
+  // Telegram alerts (owner-only, GDPR-minimal — see settings.ts).
+  if (s.telegram_alerts !== undefined) {
+    if (typeof s.telegram_alerts !== 'string' || !TELEGRAM_ALERT_STATES.includes(s.telegram_alerts as (typeof TELEGRAM_ALERT_STATES)[number])) {
+      return json({ error: 'telegram_alerts must be on or off' }, 400);
+    }
+    await putSetting(env.DB, 'telegram_alerts', s.telegram_alerts);
+  }
+  if (s.telegram_bot_token !== undefined) {
+    if (typeof s.telegram_bot_token !== 'string' || s.telegram_bot_token.length > 200) {
+      return json({ error: 'telegram_bot_token must be a short string' }, 400);
+    }
+    await putSetting(env.DB, 'telegram_bot_token', s.telegram_bot_token.trim());
+  }
+  if (s.telegram_chat_id !== undefined) {
+    if (typeof s.telegram_chat_id !== 'string' || s.telegram_chat_id.length > 100) {
+      return json({ error: 'telegram_chat_id must be a short string' }, 400);
+    }
+    await putSetting(env.DB, 'telegram_chat_id', s.telegram_chat_id.trim());
   }
 
   return json({ settings: await effectiveSettings(env.DB, env) });

@@ -73,12 +73,38 @@
     loadPublished();
   }
 
+  // Restore an existing session on load (no need to re-type the password; also
+  // lets the keychain save it after the POST reload below).
+  api('/api/admin/session', { csrf: false })
+    .then(function (data) {
+      if (data && data.authed) { csrf = data.csrf; showApp(null); }
+    })
+    .catch(function () { /* not signed in */ });
+
   loginForm.addEventListener('submit', function (event) {
     event.preventDefault();
     var password = document.getElementById('password').value;
     showStatus(loginStatus, '');
     api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: password }), csrf: false })
-      .then(function (data) { csrf = data.csrf; showApp(null); })
+      .then(function (data) {
+        csrf = data.csrf;
+        showApp(null);
+        // Offer the browser keychain to save the admin password: submit a real
+        // POST form to this same page — the server answers with admin.html, the
+        // browser offers to store the credentials, and the reload restores the
+        // session via /api/admin/session above.
+        try {
+          var save = document.createElement('form');
+          save.method = 'POST';
+          save.action = window.location.pathname;
+          var u = document.createElement('input'); u.type = 'text'; u.name = 'username'; u.value = 'admin'; u.autocomplete = 'username';
+          var p = document.createElement('input'); p.type = 'password'; p.name = 'password'; p.value = password; p.autocomplete = 'current-password';
+          save.appendChild(u); save.appendChild(p);
+          save.style.display = 'none';
+          document.body.appendChild(save);
+          save.submit();
+        } catch (e) { /* keychain offer is best-effort */ }
+      })
       .catch(function () { showStatus(loginStatus, 'Incorrect password.', true); });
   });
 
@@ -505,15 +531,32 @@
         document.getElementById('set-difficulty').value = s.pow_difficulty;
         document.getElementById('set-reactions').value = s.reaction_options || '';
         document.getElementById('set-mode').value = s.moderation_mode === 'allowlist' ? 'allowlist' : 'open';
+        document.getElementById('set-telegram-alerts').value = s.telegram_alerts === 'on' ? 'on' : 'off';
+        document.getElementById('set-telegram-token').value = s.telegram_bot_token || '';
+        document.getElementById('set-telegram-chat').value = s.telegram_chat_id || '';
       })
       .catch(function (err) { showStatus(document.getElementById('settings-status'), 'Error: ' + err.message, true); });
+    // Show the step-by-step Cloudflare Access guide only when Access is not
+    // configured yet.
+    api('/api/admin/access', { csrf: false })
+      .then(function (data) {
+        var guide = document.getElementById('access-guide');
+        if (guide) {
+          guide.classList.toggle('hidden', !!(data && data.configured));
+          document.getElementById('access-domain').textContent = location.origin;
+        }
+      })
+      .catch(function () { /* keep guide hidden on errors */ });
   }
   document.getElementById('settings-save').addEventListener('click', function () {
     var payload = {
       settings: {
         pow_difficulty: parseInt(document.getElementById('set-difficulty').value, 10),
         reaction_options: document.getElementById('set-reactions').value.trim(),
-        moderation_mode: document.getElementById('set-mode').value
+        moderation_mode: document.getElementById('set-mode').value,
+        telegram_alerts: document.getElementById('set-telegram-alerts').value,
+        telegram_bot_token: document.getElementById('set-telegram-token').value.trim(),
+        telegram_chat_id: document.getElementById('set-telegram-chat').value.trim()
       }
     };
     showStatus(document.getElementById('settings-status'), '');
@@ -524,7 +567,7 @@
   document.getElementById('settings-reset').addEventListener('click', function () {
     api('/api/admin/settings', {
       method: 'PUT',
-      body: JSON.stringify({ settings: { pow_difficulty: 16, reaction_options: '👍,❤️,🎉', moderation_mode: 'open' } })
+      body: JSON.stringify({ settings: { pow_difficulty: 16, reaction_options: '👍,❤️,🎉', moderation_mode: 'open', telegram_alerts: 'off', telegram_bot_token: '', telegram_chat_id: '' } })
     })
       .then(function () { loadSettings(); showStatus(document.getElementById('settings-status'), 'Reset to defaults ✓'); })
       .catch(function (err) { showStatus(document.getElementById('settings-status'), 'Error: ' + err.message, true); });
@@ -600,6 +643,7 @@
     var reactionsField = document.getElementById('w-reactions-field');
     if (reactionsField) reactionsField.classList.toggle('hidden', s.mode === 'comments');
     renderWidgetSnippet();
+    renderPreview();
   }
   function loadWidget() {
     document.getElementById('widget-origin').textContent = location.origin;
@@ -637,6 +681,54 @@
     document.getElementById('w-accent-text').value = this.value;
     saveWidgetState();
     renderWidgetSnippet();
+    renderPreview();
+  });
+
+  // ---- widget templates + live preview ---------------------------------
+  var WIDGET_TEMPLATES = {
+    classic:    { mode: 'both', reactions: '👍,❤️,🎉', path: '', lang: 'auto', theme: 'auto', accent: '#f57d1f', radius: '14', maxwidth: '640', texts: '' },
+    minimal:    { mode: 'comments', reactions: '', path: '', lang: 'auto', theme: 'light', accent: '#1a1a1a', radius: '8', maxwidth: '600', texts: '' },
+    vibrant:    { mode: 'both', reactions: '🔥,❤️,👏,😄', path: '', lang: 'auto', theme: 'light', accent: '#ff3d54', radius: '20', maxwidth: '700', texts: '' },
+    dark:       { mode: 'both', reactions: '👍,❤️,🎉', path: '', lang: 'auto', theme: 'dark', accent: '#ff8a2a', radius: '14', maxwidth: '640', texts: '' },
+    elegant:    { mode: 'comments', reactions: '', path: '', lang: 'auto', theme: 'light', accent: '#7c3aed', radius: '10', maxwidth: '560', texts: '' },
+    newsletter: { mode: 'both', reactions: '👍,❤️', path: '', lang: 'it', theme: 'light', accent: '#0284c7', radius: '12', maxwidth: '520', texts: '' },
+    reactions:  { mode: 'reactions', reactions: '👍,❤️,🎉,🔥', path: '', lang: 'auto', theme: 'auto', accent: '#16a34a', radius: '999', maxwidth: '640', texts: '' }
+  };
+  function renderPreview() {
+    var container = document.getElementById('w-preview');
+    var status = document.getElementById('w-preview-status');
+    if (!container) return;
+    if (typeof window.StaticLayer !== 'object' || typeof window.StaticLayer.mount !== 'function') {
+      showStatus(status, 'Live preview unavailable here — the widget script is not loaded.', true);
+      return;
+    }
+    showStatus(status, '');
+    var s = widgetState();
+    try { window.StaticLayer.unmount(container); } catch (e) { /* not mounted */ }
+    var opts = { endpoint: location.origin, articlePath: '/__staticlayer_preview__', hostContext: location.hostname };
+    if (s.mode !== 'comments' && s.reactions) {
+      opts.reactions = s.reactions.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    }
+    if (s.mode === 'reactions') opts.reactionsOnly = true;
+    if (s.lang && s.lang !== 'auto') opts.lang = s.lang;
+    if (s.theme && s.theme !== 'auto') opts.theme = s.theme;
+    if (s.accent) opts.accent = s.accent;
+    var radius = parseInt(s.radius, 10);
+    if (!isNaN(radius)) opts.radius = radius;
+    var mw = parseInt(s.maxwidth, 10);
+    if (!isNaN(mw)) opts.maxWidth = mw;
+    if (s.texts) { try { opts.texts = JSON.parse(s.texts); } catch (e) { /* invalid JSON — use defaults */ } }
+    try {
+      window.StaticLayer.mount(container, opts);
+    } catch (err) {
+      showStatus(status, 'Preview error: ' + err.message, true);
+    }
+  }
+  document.getElementById('w-template').addEventListener('change', function () {
+    var t = WIDGET_TEMPLATES[this.value];
+    if (!t) return;
+    applyWidgetState(Object.assign(widgetDefaults(), t));
+    saveWidgetState();
   });
 })();
 
