@@ -58,5 +58,7 @@ npm run dev:installer:worker   # → http://localhost:8789 (local KV)
 
 Same invariants as the node installer: client secret server-side; tokens only
 in KV sessions (TTL), never in cookies/logs; deploy secrets generated in-memory
-and pushed via the Bulk Secrets API (never returned); OAuth tokens revoked
-after a successful apply; API-token sessions deleted.
+and pushed via the Bulk Secrets API (SESSION/POW never returned; the operator's
+ADMIN_SECRET is returned exactly once after a real deploy, to sign in to
+/admin.html); OAuth tokens revoked after a successful apply; API-token sessions
+deleted.

@@ -56,6 +56,20 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **ADMIN_SECRET shown once to the operator (Round 21.2).** Before, the wizard
+  generated secrets and never returned them, so a person installing via the
+  hosted installer could not sign in to their own `/admin.html`. Now a real
+  (non-dry-run) deploy returns `adminSecret` **exactly once** — the step-4
+  screen shows it with a copy button and a "save it now" warning.
+  `SESSION_SECRET`/`POW_SECRET` remain never returned. Tests + security docs
+  (SECURITY_REVIEW I16, SECURITY_AUDIT_REPORT, oauth-scopes, universal,
+  PUBLIC_RELEASE_AUDIT, DEPLOY_TO_REAL_CLOUDFLARE) updated; the
+  "cannot recover ADMIN_SECRET" residual risk is resolved.
+- **Hosted-installer iframe is now seamless (Round 21.2).** The wizard reports
+  its content height to the host page via `postMessage` (`source:
+  'staticlayer-installer'`); the site's `main.js` resizes the iframe, so there
+  is no internal scrollbar and it looks fully integrated. Fallback height 760px
+  + `scrolling="no"`.
 - **License: MIT → Elastic License 2.0 (Round 21).** The project is now
   **source-available**: anyone can read, modify, self-host and contribute, but
   may **not** resell the software or offer it to third parties as a

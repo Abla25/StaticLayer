@@ -7,6 +7,16 @@ if (new URLSearchParams(location.search).has('embed') || window.self !== window.
   document.body.classList.add('embed');
 }
 
+/* Embed mode: tell the host page our real height so the iframe grows with the
+   content and never shows an internal scrollbar. Ignored when not embedded. */
+function reportEmbedHeight() {
+  if (!document.body.classList.contains('embed')) return;
+  const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ source: 'staticlayer-installer', height: h }, '*');
+  }
+}
+
 const $ = (id) => document.getElementById(id);
 
 function show(step) {
@@ -166,9 +176,15 @@ $('deploy').addEventListener('click', async () => {
     $('deploy').disabled = true;
     const result = await api('/api/deploy', { method: 'POST', body: JSON.stringify(body) });
     show(4);
-    // Security (Phase 4 audit): the server NEVER returns secret values. The
-    // generated secrets were pushed to Cloudflare via the Bulk Secrets API
-    // server-side — the user only sees the success state and the snippet.
+    // The operator's admin password is returned exactly once (only on a real
+    // deploy), so they can sign in to /admin.html. It is never stored or
+    // logged; all other secrets stay server-side and go straight to
+    // Cloudflare via the Bulk Secrets API.
+    if (result.adminSecret) {
+      $('admin-secret').textContent = result.adminSecret;
+      $('admin-secret-box').classList.remove('hidden');
+      reportEmbedHeight();
+    }
     const snippet = [
       `<script src="${result.endpoint}/widget.js" data-staticlayer`,
       `  data-endpoint="${result.endpoint}"`,
@@ -187,6 +203,11 @@ $('copy').addEventListener('click', async () => {
   $('copy').textContent = 'Copied ✓';
 });
 
+$('copy-secret').addEventListener('click', async () => {
+  await navigator.clipboard.writeText($('admin-secret').textContent);
+  $('copy-secret').textContent = 'Copied ✓';
+});
+
 /* ---- bootstrap ---- */
 (async () => {
   try {
@@ -200,3 +221,21 @@ $('copy').addEventListener('click', async () => {
   }
   refreshMe();
 })();
+
+/* Embed mode: keep the host iframe in sync with our height (step switches,
+   plan lists, the admin-password box, window resizes). Debounced. */
+let embedResizeTimer = 0;
+function scheduleEmbedResize() {
+  clearTimeout(embedResizeTimer);
+  embedResizeTimer = setTimeout(reportEmbedHeight, 60);
+}
+window.addEventListener('resize', scheduleEmbedResize);
+window.addEventListener('load', scheduleEmbedResize);
+if ('MutationObserver' in window && document.body.classList.contains('embed')) {
+  new MutationObserver(scheduleEmbedResize).observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+  });
+}
+setTimeout(reportEmbedHeight, 150);

@@ -31,8 +31,10 @@ describe('installer deploy — dry run', () => {
       'Bind secret "SESSION_SECRET" to "pc"',
       'Bind secret "POW_SECRET" to "pc"',
     ]);
-    // SECURITY (audit): no secret values are ever returned.
+    // SECURITY (audit): no secret values are ever returned — including on a
+    // dry run there is no apply, so no admin password either.
     expect((result as { secrets?: unknown }).secrets).toBeUndefined();
+    expect(result.adminSecret).toBeUndefined();
     expect(result.alreadyInSync).toBe(false);
     // Zero side effects on dry run.
     expect(api.createCalls).toBe(0);
@@ -75,12 +77,13 @@ describe('installer deploy — apply (secrets never returned)', () => {
     // The 3 secrets were bound to the worker via ONE bulk call.
     expect(api.secrets.get('pc')).toEqual(new Set([...INSTALLER_SECRETS]));
     expect(api.secretCalls).toBe(1);
-    // SECURITY (audit): the result contains NO secret VALUES (names DO appear
-    // in the action descriptions, values must not).
+    // SECURITY (audit): SESSION_SECRET and POW_SECRET values are NEVER
+    // returned; the operator's ADMIN_SECRET IS returned exactly once after a
+    // real apply — they need it to sign in to /admin.html.
     const serialized = JSON.stringify(result);
-    expect(serialized).not.toMatch(/["']a["']/); // fixedSecrets() ADMIN value
     expect(serialized).not.toMatch(/["']b["']/); // SESSION value
     expect(serialized).not.toMatch(/["']c["']/); // POW value
+    expect(result.adminSecret).toBe('a'); // ADMIN value, shown once
     expect((result as { secrets?: unknown }).secrets).toBeUndefined();
   });
 

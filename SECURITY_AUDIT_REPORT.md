@@ -28,7 +28,7 @@
 
 | Previous claim | Verified by |
 | --- | --- |
-| "Secrets shown exactly once" (Phase 4 wording) | **CHANGED (audit):** secrets are now **never shown**. `runInstallerDeploy` returns `{ actions, alreadyInSync }` only (`apps/installer/src/deploy.ts:116-119`); the browser never receives secret values. |
+| "Secrets shown exactly once" (Phase 4 wording) | **CHANGED (audit):** secrets were made **never shown**; **amended (Round 21):** the operator's `ADMIN_SECRET` is now returned **exactly once** after a real deploy (they need it for `/admin.html`), while `SESSION_SECRET`/`POW_SECRET` remain never returned (`apps/installer/src/deploy.ts` → `adminSecret`). |
 | "Workers Bulk Secrets API" | Verified endpoint `PATCH /secrets-bulk` (JSON Merge Patch body `{ secrets: { NAME: { name, type: "secret_text", text } } }`), implemented in `packages/deployment-core/src/api.ts:163-172` and covered by `packages/deployment-core/test/api.test.ts:64`. |
 | OAuth scope IDs `workers-platform.write` / `account.read` | Verified verbatim against official API/Fundamentals examples (see matrix row + `docs/oauth-scopes.md §4`). `com.cloudflare.*` strings are the underlying resource scopes, NOT the OAuth labels (correction documented). |
 | `@staticlayer/cli` is a safe import for the installer | **CHANGED (audit):** the installer now imports `@staticlayer/deployment-core` (library-first, no `process.exit`, no prompts, no console). CLI and installer share the same engine. |
@@ -65,7 +65,7 @@
 | --- | --- | --- |
 | Remote D1 concurrency not yet proven end-to-end | Medium (pre-launch) | Run `wrangler dev --remote` concurrency replay before commercial launch (SECURITY_REVIEW.md §14.4). |
 | `d1.write` scope ID not yet confirmed verbatim | Low | `GET /oauth/scopes` at client registration; single constant + test guard. |
-| Operators cannot recover `ADMIN_SECRET` after an installer deploy (never shown) | Medium (usability) | Documented tradeoff of the audit: rotate via `wrangler secret put ADMIN_SECRET` or redeploy; the CLI path (`npx staticlayer init`) lets operators set their own secrets. |
+| Operators cannot recover `ADMIN_SECRET` after an installer deploy | Resolved (Round 21) | The installer now shows `ADMIN_SECRET` exactly once after a real deploy — save it. Rotation remains available via `wrangler secret put ADMIN_SECRET` or redeploy; the CLI path (`npx staticlayer init`) lets operators set their own secrets. |
 | Rate limiting is edge-local / eventually consistent | Accepted (backstop only) | PoW + anti-replay remain the security boundary (Cloudflare-documented). |
 
 ## 5. Evidence status

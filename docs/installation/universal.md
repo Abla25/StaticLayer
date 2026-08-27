@@ -18,8 +18,10 @@ This guide works for any site. Framework-specific notes live in
 
 Both paths produce the same desired state: **Worker + D1 + three secrets**
 (`ADMIN_SECRET`, `SESSION_SECRET`, `POW_SECRET`) + rate-limit binding. Secrets
-are generated locally and sent straight to Cloudflare via the Bulk Secrets API —
-they are never shown to you and never stored on disk.
+are generated locally and sent straight to Cloudflare via the Bulk Secrets API.
+The **admin password (`ADMIN_SECRET`) is shown exactly once** after the deploy
+— save it to sign in to `/admin.html`. The other secrets are never shown and
+nothing is stored on disk.
 
 ## 1 · Deploy the Worker
 

@@ -15,10 +15,11 @@
  *   - The access token is kept ONLY in an in-memory session (never in a cookie,
  *     never persisted).
  *   - After a successful deploy, the OAuth token is revoked and the session
- *     cleared. The generated worker secrets (ADMIN_SECRET/SESSION_SECRET/
- *     POW_SECRET) are pushed server-side via the Workers Bulk Secrets API and
- *     are NEVER returned to the browser — the user only sees "Deploy
- *     Successful" (Phase 4 audit).
+ *     cleared. The generated worker secrets (SESSION_SECRET/POW_SECRET) are
+ *     pushed server-side via the Workers Bulk Secrets API and are NEVER
+ *     returned to the browser. The one exception: the operator's ADMIN_SECRET
+ *     is returned exactly once, after a real deploy, so they can sign in to
+ *     /admin.html (Phase 4 audit).
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
@@ -362,9 +363,9 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
       if (!dryRun) {
         // Apply succeeded. Revoke the OAuth token (only when it came from the
         // OAuth consent screen — pasted API tokens are user-managed) and drop
-        // the session. The worker secrets were pushed to Cloudflare server-side
-        // and never appear in this response — nothing sensitive can be
-        // retrieved again.
+        // the session. SESSION_SECRET/POW_SECRET were pushed to Cloudflare
+        // server-side and never appear in this response; ADMIN_SECRET is
+        // returned exactly once so the operator can log in to /admin.html.
         if (session.tokenKind === 'oauth') {
           try {
             await revokeToken({
@@ -381,7 +382,8 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
         session.expiresAt = 0;
       }
 
-      // `result` contains only { actions, alreadyInSync } — never secrets.
+      // `result` contains { actions, alreadyInSync } plus `adminSecret` (the
+      // operator's own admin password, shown exactly once after a real deploy).
       json(res, 200, {
         ...result,
         endpoint: env('STATICLAYER_INSTALLER_URL', 'http://localhost:8788'),

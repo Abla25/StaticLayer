@@ -245,14 +245,15 @@ registration — see `docs/oauth-scopes.md` and
   broad/account-edit/user/zone scope. The scope set lives in one constant.
 - The client secret never leaves the server; the access token is kept only in
   an in-memory session (never in a cookie, never persisted).
-- **I16 — Secrets never shown to the user** (Phase 4 audit): after a successful
-  apply the installer generates `ADMIN_SECRET`/`SESSION_SECRET`/`POW_SECRET`
-  (32 bytes, base64url, CSPRNG) and pushes them straight to Cloudflare via the
-  Bulk Secrets API; the HTTP response contains ONLY `{ actions,
-  alreadyInSync, endpoint }` — no secret values — then the OAuth token is
-  revoked (`/oauth2/revoke`) and the session cleared. The user only sees
-  "Deploy Successful". A dry-run returns the plan with zero side effects and
-  no secrets.
+- **I16 — Secrets stay server-side; the operator's ADMIN_SECRET is shown once**
+  (Phase 4 audit, amended Round 21): after a successful apply the installer
+  generates `ADMIN_SECRET`/`SESSION_SECRET`/`POW_SECRET` (32 bytes, base64url,
+  CSPRNG) and pushes them straight to Cloudflare via the Bulk Secrets API. The
+  HTTP response contains `{ actions, alreadyInSync, endpoint }` plus
+  `adminSecret` — the operator's password, returned **exactly once** so they
+  can sign in to `/admin.html`. `SESSION_SECRET`/`POW_SECRET` values are never
+  returned. Then the OAuth token is revoked (`/oauth2/revoke`) and the session
+  cleared. A dry-run returns the plan with zero side effects and no secrets.
 - Installer session cookie: HMAC-signed, HttpOnly, SameSite=Lax; constant-time
   verification (proven in `auth.test.ts`).
 - Deploy reuses the deployment-core engine verbatim: dry-run = plan only;

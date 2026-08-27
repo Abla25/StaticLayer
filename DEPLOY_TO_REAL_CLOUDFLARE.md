@@ -231,7 +231,9 @@ account (**Manage Account → OAuth clients**) with the minimal scopes
 `account.read`, `workers-platform.write`, `d1.write` (see
 `docs/oauth-scopes.md`), then run `npm run dev:installer` and follow the wizard
 at **http://localhost:8788**. Secrets are generated server-side and bound to
-the Worker via the Bulk Secrets API — **never shown** to the user.
+the Worker via the Bulk Secrets API. The wizard shows the **admin password
+(`ADMIN_SECRET`) exactly once** after the deploy — save it to open
+`/admin.html`; the other secrets are never shown.
 
 ---
 

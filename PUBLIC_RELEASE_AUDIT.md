@@ -42,7 +42,7 @@ listed as **pending** — nothing here is assumed.
 | **Widget aliases + programmatic API (NEW — Phase F)** | `packages/widget/src/widget.js` | `data-api`/`data-article-id` aliases; `StaticLayer.mount/unmount`; `tests/security/widget-api.test.ts` |
 | **Health endpoint (NEW — Phase F)** | `packages/runtime/src/version.ts`, `index.ts` (`GET /api/health`) | runtime version + schema version; `tests/security/cors-health.test.ts` |
 | **Reactions (NEW)** | `packages/runtime/src/reactions.ts`, `migrations/003_reactions.sql`, `packages/widget/src/widget.js` | anonymous events, single-use PoW, per-article escalation + rate limit + interval; comments/reactions separable (`data-reactions-only`); `tests/security/reactions.test.ts`, `tests/security/widget-reactions.test.ts` |
-| Secrets never shown to user | `apps/installer/src/deploy.ts`, `packages/cli/src/index.ts` | generated server-side, pushed via Bulk Secrets API; `packages/deployment-core/src/engine.ts` |
+| Secrets stay server-side; ADMIN_SECRET shown once | `apps/installer/src/deploy.ts`, `packages/cli/src/index.ts` | generated server-side, pushed via Bulk Secrets API; operator's ADMIN_SECRET returned exactly once after a real deploy; `packages/deployment-core/src/engine.ts` |
 | `apiToken` never on disk | `packages/cli/src/config.ts` (saveConfig strips it) | `packages/cli/test/config.test.ts` |
 
 ## 3 · Architecture & infrastructure claims

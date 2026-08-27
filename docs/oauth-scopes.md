@@ -125,5 +125,7 @@ The installer generates `ADMIN_SECRET` / `SESSION_SECRET` / `POW_SECRET`
 server-side (CSPRNG, 32 bytes, base64url) and pushes them directly to
 Cloudflare via the **Workers Bulk Secrets API**
 (`PATCH /accounts/{id}/workers/scripts/{name}/secrets-bulk`, JSON Merge Patch —
-verified 2026-08-26). The values are **never returned to the browser, never
-logged, never shown**: the user only sees "Deploy Successful".
+verified 2026-08-26). `SESSION_SECRET`/`POW_SECRET` are **never returned to the
+browser, never logged, never shown**. The operator's `ADMIN_SECRET` is returned
+**exactly once** after a real deploy (they need it to sign in to `/admin.html`);
+afterwards it too is never shown again.

@@ -25,7 +25,7 @@
         </div>
 
         <div class="embed-frame">
-          <iframe src="https://staticlayer-installer.staticlayer.workers.dev/?embed=1" title="StaticLayer hosted installer" loading="lazy" referrerpolicy="no-referrer" allow="clipboard-write"></iframe>
+          <iframe src="https://staticlayer-installer.staticlayer.workers.dev/?embed=1" title="StaticLayer hosted installer" loading="lazy" referrerpolicy="no-referrer" allow="clipboard-write" scrolling="no"></iframe>
         </div>
         <p class="embed-cap">Prefer a separate tab? Open the <a href="https://staticlayer-installer.staticlayer.workers.dev" target="_blank" rel="noopener">hosted installer in full screen ↗</a>. The same wizard also runs locally via <code>npm run dev:installer</code>.</p>
 
@@ -106,7 +106,7 @@
 &lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
 
         <h2>7 · Open the admin</h2>
-        <p>Visit <code>https://comments.example.com/admin.html</code>, sign in with <code>ADMIN_SECRET</code>. The console shows one moderation queue for <b>all</b> articles: approve or delete each pending comment. Approved comments appear on their article immediately; published comments are also listed for reference. Deleted comments are removed from the database.</p>
+        <p>Visit <code>https://comments.example.com/admin.html</code> and sign in with your admin password. If you deployed with the wizard it showed the password <b>exactly once</b> at the end (with a copy button); the CLI lets you set your own. The console shows one moderation queue for <b>all</b> articles: approve or delete each pending comment. Approved comments appear on their article immediately; published comments are also listed for reference. Deleted comments are removed from the database.</p>
 
         <h2>8 · Test a comment</h2>
         <p>Post from your site: the browser solves a proof-of-work, the comment enters moderation, and you approve it from the admin. Comments are plain text + emoji only — no HTML, no Markdown, no clickable links.</p>

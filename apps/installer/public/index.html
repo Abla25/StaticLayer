@@ -389,8 +389,13 @@
       <div class="success-hero">
         <div class="check">✓</div>
         <div class="panel-title">Deploy successful</div>
-        <p class="panel-sub" style="max-width:48ch;margin:0 auto">Your Worker and database are live in your Cloudflare account.
-          Secrets were generated server-side and bound via the Bulk Secrets API — <b>they are never shown to you</b>.</p>
+        <p class="panel-sub" style="max-width:48ch;margin:0 auto">Your Worker and database are live in your Cloudflare account.</p>
+      </div>
+      <div id="admin-secret-box" class="hidden">
+        <div class="panel-title" style="margin:22px 0 8px;font-size:15px">Your admin password</div>
+        <p class="muted" style="font-size:13.5px;margin:0 0 8px">This is the only time it is shown. Save it now — you need it to open <code>/admin.html</code> and moderate your comments.</p>
+        <pre id="admin-secret"></pre>
+        <div class="row"><button id="copy-secret" class="btn btn-ghost">Copy password</button></div>
       </div>
       <div class="panel-title" style="margin:22px 0 8px;font-size:15px">Snippet for your page</div>
       <pre id="snippet"></pre>

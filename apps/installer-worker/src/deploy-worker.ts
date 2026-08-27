@@ -50,6 +50,8 @@ export function generateSecrets(): Record<string, string> {
 export interface InstallerDeployResult {
   actions: string[];
   alreadyInSync: boolean;
+  /** The operator's admin password, returned exactly once after a real apply. */
+  adminSecret?: string;
 }
 
 export async function runInstallerDeployWorker(options: {
@@ -88,5 +90,11 @@ export async function runInstallerDeployWorker(options: {
   return {
     actions: describeActions(result.actions),
     alreadyInSync: result.actions.length === 0,
+    // The operator's own admin password: returned exactly once, after a real
+    // (non-dry-run) deploy, so they can sign in to /admin.html and moderate.
+    // It is never stored, never logged, and never sent anywhere except this
+    // one response to the browser that ran the deploy. All other secrets stay
+    // server-side and flow exclusively into the Bulk Secrets API.
+    adminSecret: options.input.dryRun ? undefined : secretValues.ADMIN_SECRET,
   };
 }

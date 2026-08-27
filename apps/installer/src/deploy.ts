@@ -59,13 +59,16 @@ export interface InstallerDeployOptions {
 }
 
 /**
- * Result of an installer deploy. Deliberately contains NO secret values:
- * the secrets are generated server-side and pushed to Cloudflare; the caller
- * (and the browser) never see them.
+ * Result of an installer deploy. SESSION_SECRET/POW_SECRET values are never
+ * included: the secrets are generated server-side and pushed to Cloudflare.
+ * The one exception is `adminSecret` — the operator's own admin password,
+ * returned exactly once after a real (non-dry-run) apply so they can sign in
+ * to /admin.html. It is never stored or logged.
  */
 export interface InstallerDeployResult {
   actions: string[];
   alreadyInSync: boolean;
+  adminSecret?: string;
 }
 
 export function generateSecrets(): Record<string, string> {
@@ -116,5 +119,11 @@ export async function runInstallerDeploy(
   return {
     actions: describeActions(result.actions),
     alreadyInSync: result.actions.length === 0,
+    // The operator's own admin password: returned exactly once, after a real
+    // (non-dry-run) deploy, so they can sign in to /admin.html and moderate.
+    // It is never stored, never logged, and never sent anywhere except this
+    // one response to the browser that ran the deploy. All other secrets stay
+    // server-side and flow exclusively into the Bulk Secrets API.
+    adminSecret: options.input.dryRun ? undefined : secretValues.ADMIN_SECRET,
   };
 }

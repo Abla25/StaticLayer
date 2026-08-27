@@ -10,7 +10,9 @@
  *  - client secret stays server-side; tokens live only in KV sessions (TTL),
  *    never in a cookie, never logged;
  *  - a deploy generates the 3 secrets in-memory and pushes them straight to
- *    Cloudflare via the Bulk Secrets API — never returned to the browser;
+ *    Cloudflare via the Bulk Secrets API — never returned to the browser,
+ *    except the operator's ADMIN_SECRET, returned exactly once after a real
+ *    deploy so they can sign in to /admin.html;
  *  - OAuth tokens are revoked after a successful apply; API-token sessions are
  *    simply deleted.
  */

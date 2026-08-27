@@ -47,6 +47,15 @@
     });
   });
 
+  /* Hosted installer iframe: keep its height in sync with the content so there
+     is no internal scrollbar — the wizard reports its height via postMessage. */
+  window.addEventListener('message', function (e) {
+    if (e && e.data && e.data.source === 'staticlayer-installer' && typeof e.data.height === 'number') {
+      var frame = document.querySelector('.embed-frame iframe');
+      if (frame && frame.contentWindow === e.source) frame.style.height = e.data.height + 'px';
+    }
+  });
+
   /* Interactive architecture cards */
   var archData = {
     visitor: {
