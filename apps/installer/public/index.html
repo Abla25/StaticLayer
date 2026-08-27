@@ -224,6 +224,14 @@
   .footer-legal { grid-column:1 / -1; color:var(--muted); font-size:12.5px; margin:26px 0 0;
     border-top:1px solid var(--line); padding-top:20px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
 
+  /* embed mode (iframe on the StaticLayer site): hide the site chrome so only
+     the wizard shows. The JS adds `embed` to <body> when ?embed=1 or in an iframe. */
+  body.embed .site-nav, body.embed .site-footer { display:none; }
+  body.embed .hero { padding:28px 0 18px; }
+  body.embed .hero h1 { font-size:clamp(28px, 3.6vw, 40px); }
+  body.embed .hero-sub { font-size:15.5px; }
+  body.embed .installer-body { padding-bottom:48px; }
+
   @media (max-width: 960px) { .footer-inner { grid-template-columns:1fr 1fr; } }
   @media (max-width: 720px) {
     .nav-links { display:none; }
@@ -412,7 +420,7 @@
       <a href="https://github.com/staticlayer/staticlayer/blob/main/SECURITY.md" target="_blank" rel="noopener">Report a vulnerability</a>
       <a href="https://staticlayer.github.io/staticlayer/docs.html#quick-start">Quick start</a>
     </div>
-    <p class="footer-legal"><span>MIT licensed · Open Source · BYOC</span><span>© 2026 StaticLayer</span></p>
+    <p class="footer-legal"><span>Source-available (Elastic License 2.0) · BYOC</span><span>© 2026 StaticLayer</span></p>
   </div>
 </footer>
 <script src="/app.js"></script>

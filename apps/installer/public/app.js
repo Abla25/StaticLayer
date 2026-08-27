@@ -1,6 +1,12 @@
 /* StaticLayer Web Installer — wizard UI (vanilla JS, textContent only). */
 'use strict';
 
+// Embed mode: used inside an iframe on the StaticLayer site. Hide the site
+// chrome (nav + footer) so only the wizard itself is visible.
+if (new URLSearchParams(location.search).has('embed') || window.self !== window.top) {
+  document.body.classList.add('embed');
+}
+
 const $ = (id) => document.getElementById(id);
 
 function show(step) {

@@ -56,6 +56,30 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **License: MIT → Elastic License 2.0 (Round 21).** The project is now
+  **source-available**: anyone can read, modify, self-host and contribute, but
+  may **not** resell the software or offer it to third parties as a
+  hosted/managed service. The owner retains the right to sell or grant
+  commercial licenses and to decide the licensing of future releases (ELv2
+  never auto-converts to a permissive license). All references (README,
+  site footer, FAQ, index, og-image, CONTRIBUTING, SECURITY.md, demo and
+  installer footers) updated from "MIT / open source" to ELv2 wording.
+  **New `TERMS.md`** — terms of use, disclaimer & liability (AS-IS, no
+  warranty, no liability, BYOC responsibility, moderation/security/compliance
+  on the operator, third-party Cloudflare disclaimer, no SLA, not legal
+  advice).
+- **Hosted installer embed (Round 21).** The installer wizard now supports an
+  **embed mode** (`?embed=1` or when loaded in an iframe): the site chrome
+  (nav + footer) is hidden so only the wizard shows. The site's install page
+  now embeds the live hosted installer in a styled iframe
+  (`staticlayer-installer.staticlayer.workers.dev/?embed=1`), with a
+  full-screen link.
+- **Site polish (Round 21).** Copy updated to match reality: "Start →" instead
+  of "Continue" in the installer steps, hosted installer promoted from
+  "roadmap" to live (FAQ), new FAQ entries for admin login/security, optional
+  Cloudflare Access SSO, and the update model (BYOC = you redeploy; site/docs/
+  hosted installer update automatically). Meta description + keywords +
+  kicker aligned to "source-available".
 - **Magic-link sign-in removed (Round 20).** The email path
   (`/api/auth/request` + `/api/auth/verify`, `createMagicToken`/
   `verifyMagicToken`, wizard email UI) is gone: no SMTP transport was wired, so

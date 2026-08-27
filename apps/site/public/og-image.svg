@@ -60,7 +60,7 @@
     <rect x="266" y="440" width="120" height="52" rx="26" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="2"/>
     <text x="326" y="473" text-anchor="middle" fill="#f7f4ed">BYOC</text>
     <rect x="408" y="440" width="150" height="52" rx="26" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="2"/>
-    <text x="483" y="473" text-anchor="middle" fill="#f7f4ed">MIT license</text>
+    <text x="483" y="473" text-anchor="middle" fill="#f7f4ed">ELv2 license</text>
   </g>
 
   <!-- mini architecture: site → worker → d1 -->

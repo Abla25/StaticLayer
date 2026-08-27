@@ -1,7 +1,7 @@
 # Contributing to StaticLayer
 
-Thanks for considering contributing! StaticLayer is open source (MIT) and we
-welcome issues, bug reports and pull requests.
+Thanks for considering contributing! StaticLayer is source-available under the
+Elastic License 2.0 and we welcome issues, bug reports and pull requests.
 
 ## Code of conduct
 

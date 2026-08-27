@@ -21,10 +21,13 @@
         <p>This guide works for any site. Framework-specific notes live in <a href="{{BASE}}integrations.html">Integrations</a>.</p>
 
         <div class="callout" style="margin-top:0">
-          <b>Zero terminal?</b> The <b>hosted installer</b> is live:
-          <a href="https://staticlayer-installer.staticlayer.workers.dev" target="_blank" rel="noopener">staticlayer-installer.staticlayer.workers.dev ↗</a>
-          — open it, connect your Cloudflare (OAuth or API token), and StaticLayer deploys into your account straight from the browser.
+          <b>Zero terminal?</b> Try the <b>hosted installer</b> right here — connect your Cloudflare (OAuth or API token) and StaticLayer deploys into <i>your own</i> account straight from the browser. Nothing is stored by us; the OAuth token is revoked right after the deploy.
         </div>
+
+        <div class="embed-frame">
+          <iframe src="https://staticlayer-installer.staticlayer.workers.dev/?embed=1" title="StaticLayer hosted installer" loading="lazy" referrerpolicy="no-referrer" allow="clipboard-write"></iframe>
+        </div>
+        <p class="embed-cap">Prefer a separate tab? Open the <a href="https://staticlayer-installer.staticlayer.workers.dev" target="_blank" rel="noopener">hosted installer in full screen ↗</a>. The same wizard also runs locally via <code>npm run dev:installer</code>.</p>
 
         <h2>Three ways to install</h2>
         <ul>
@@ -35,7 +38,7 @@
 
         <h3>Web installer, step by step</h3>
         <ol>
-          <li><b>Start it:</b> one command (<code>npm run dev:installer</code>) launches a small local app at <code>http://localhost:8788</code>. Locally there is no email step — just press <b>Continue</b>. From here on, everything happens in the browser.</li>
+          <li><b>Start it:</b> one command (<code>npm run dev:installer</code>) launches a small local app at <code>http://localhost:8788</code>. There is no email step — just press <b>Start →</b>. From here on, everything happens in the browser.</li>
           <li><b>Connect Cloudflare — choose a method:</b> <b>(A)</b> one-click <b>OAuth</b>: the app redirects you to the official Cloudflare consent screen with the minimal scopes (Workers deploy, D1, account read). <b>(B)</b> paste an <b>API token</b> (permissions: Workers Scripts: Edit, Cloudflare D1: Edit, Account Settings: Read). Your Cloudflare password is never seen by StaticLayer; pasted tokens are kept only in memory.</li>
           <li><b>Pick your account:</b> choose the Cloudflare account to deploy into.</li>
           <li><b>Review the plan:</b> the engine lists exactly what it will create — nothing happens until you confirm.</li>

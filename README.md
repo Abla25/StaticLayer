@@ -2,7 +2,7 @@
 
 **Comments for static sites — without the comment SaaS.**
 
-StaticLayer is an open-source, Cloudflare-native comment system designed for static websites. Your Worker. Your database. No centralized comment platform.
+StaticLayer is a source-available, Cloudflare-native comment system designed for static websites. Your Worker. Your database. No centralized comment platform.
 
 > **🌐 [Website](https://Abla25.github.io/StaticLayer/)** · **[Try the interactive demo](https://Abla25.github.io/StaticLayer/demo.html)** · **[Docs](https://Abla25.github.io/StaticLayer/docs.html)** · **[Security](SECURITY.md)** · **[Install guide](DEPLOY_TO_REAL_CLOUDFLARE.md)** · **[GitHub](https://github.com/Abla25/StaticLayer)**
 
@@ -12,7 +12,7 @@ StaticLayer is an open-source, Cloudflare-native comment system designed for sta
 
 | | |
 | --- | --- |
-| **Product** | Open-source, BYOC comment system running entirely in *your* Cloudflare account (Worker + D1) |
+| **Product** | Source-available, BYOC comment system running entirely in *your* Cloudflare account (Worker + D1) |
 | **Demo / simulator** | `apps/site` — static website + interactive client-side simulator (`npm run build:site`) |
 | **Install** | [DEPLOY_TO_REAL_CLOUDFLARE.md](DEPLOY_TO_REAL_CLOUDFLARE.md) · [docs/installation/universal.md](docs/installation/universal.md) · [docs.html](apps/site/src/pages/docs.html) |
 | **Examples** | [examples/](examples/README.md) — vanilla, Astro, Hugo, Jekyll, Next.js static |
@@ -20,7 +20,7 @@ StaticLayer is an open-source, Cloudflare-native comment system designed for sta
 | **Release audit** | [PUBLIC_RELEASE_AUDIT.md](PUBLIC_RELEASE_AUDIT.md) · [docs/clean-room-checklist.md](docs/clean-room-checklist.md) |
 | **Privacy** | [docs/PRIVACY_POLICY_TEMPLATE.md](docs/PRIVACY_POLICY_TEMPLATE.md) · [privacy.html](apps/site/src/pages/privacy.html) |
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: Elastic 2.0](https://img.shields.io/badge/license-Elastic%202.0-orange.svg)](LICENSE)
 
 ---
 
@@ -36,7 +36,7 @@ StaticLayer is an open-source, Cloudflare-native comment system designed for sta
 | **Cookies / tracking** | Uses cookies and analytics on its free tier (see their current policy) | **No cookies, no fingerprinting, no analytics** from the widget |
 | **Personal data handled** | Processed by Disqus under their DPA/terms | Minimal: nickname + plain-text comment + timestamp; **no IP persistence** |
 | **Cost** | Free (ad-supported) and paid tiers | **Cloudflare free tier** (Worker + D1) |
-| **License / lock-in** | Proprietary | **Open source (MIT)**, deterministic protocol |
+| **License / lock-in** | Proprietary | **Source-available (Elastic License 2.0)**, deterministic protocol |
 | **Spam protection** | CAPTCHA / ML on their side | **Client-side Proof-of-Work** — no CAPTCHA, no friction |
 
 **TL;DR:** Disqus is a centralized third-party comment SaaS. StaticLayer keeps the entire comment system inside your own Cloudflare account.
@@ -197,21 +197,22 @@ npm run test:demo      # demo daily-purge tests
 - **[HOW_TO_TEST_MANUALLY.md](HOW_TO_TEST_MANUALLY.md)** — manual validation checklist
 - **[docs/PRIVACY_POLICY_TEMPLATE.md](docs/PRIVACY_POLICY_TEMPLATE.md)** — privacy-policy template for your site
 
-## 📄 License & business model
+## 📄 License, terms & business model
 
-[MIT](LICENSE) — the **core is fully open source**: protocol, runtime, widget,
-migrations, admin, installer/CLI.
-
-**Open-core model (current and future):**
-
-- The released core (comments + reactions, as shipped) is **MIT** and stays
-  free forever. MIT is irrevocable for code already released, by design.
-- New, optional **premium features will live in a separate package/repo** under
-  their own (proprietary) license — for example a multi-site dashboard,
-  advanced moderation/automation, polls & votes, white-labeling, premium
-  themes, or a hosted zero-terminal installer. The core keeps working without
-  them, and the core remains MIT.
-- This line is deliberate: MIT maximizes adoption of the core; separate
-  licensing lets the project stay sustainable without ever taking away what was
-  given free. If you rely on StaticLayer, the core you use today can never be
-  re-licensed out from under you.
+- **Source-available, not OSI "open source".** The code is public under the
+  [Elastic License 2.0](LICENSE) (ELv2): anyone can read, modify, self-host and
+  contribute, but **may not** resell it or offer it to third parties as a
+  hosted/managed service. This keeps StaticLayer free to self-host while
+  protecting the owner's right to sell or license it commercially.
+- **Owner rights.** The copyright holder retains the right to (a) sell or
+  license the software commercially, (b) grant custom licenses, and (c) decide
+  the licensing of future releases — ELv2 never auto-converts to a permissive
+  license, so the source can stay closed for future versions if ever needed.
+- **Premium features** may ship in a separate package/repo under their own
+  (proprietary) license — multi-site dashboard, advanced moderation, polls &
+  votes, white-labeling, hosted installer, etc. The self-hosted core keeps
+  working without them.
+- **No warranty, no liability.** See [TERMS.md](TERMS.md): the software is
+  provided "AS IS". You operate it on **your own Cloudflare account** (BYOC)
+  and remain responsible for your content, your infrastructure, your security
+  configuration and your legal compliance.

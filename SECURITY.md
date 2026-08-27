@@ -1,7 +1,7 @@
 # Security
 
 StaticLayer is designed with a **minimal attack surface and defense-in-depth
-security controls**. It is an open-source project: the runtime, protocol,
+security controls**. It is a source-available project: the runtime, protocol,
 widget, migrations and security model are all inspectable and auditable.
 
 > StaticLayer does not claim "100% security", "zero bugs", "perfect anonymity"

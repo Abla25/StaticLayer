@@ -15,11 +15,11 @@ function resolveRepo() {
 export default {
   title: 'StaticLayer',
   description:
-    'Open-source, Cloudflare-native comments for static sites. Your Worker. Your database. No centralized comment platform.',
+    'Source-available, Cloudflare-native comments for static sites. Your Worker. Your database. No centralized comment platform.',
   repo: resolveRepo(),
   keywords: [
     'static site comments',
-    'open source comments',
+    'source-available comments',
     'Cloudflare comments',
     'self-hosted comments',
     'GitHub Pages comments',

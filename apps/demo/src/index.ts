@@ -314,7 +314,7 @@ const DEMO_PAGE_TEMPLATE = `<!doctype html>
       <a href="${REPO_URL}/blob/main/SECURITY.md" target="_blank" rel="noopener">Report a vulnerability</a>
       <a href="${SITE_BASE}docs.html#quick-start">Quick start</a>
     </div>
-    <p class="footer-legal"><span>MIT licensed · Open Source · BYOC</span><span>© 2026 StaticLayer</span></p>
+    <p class="footer-legal"><span>Source-available (Elastic License 2.0) · BYOC</span><span>© 2026 StaticLayer</span></p>
   </div>
 </footer>
 <script src="{{ORIGIN}}/widget.js"></script>
