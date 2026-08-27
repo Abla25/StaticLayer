@@ -30,6 +30,9 @@ npm-debug.log*
 # Test artifacts
 coverage/
 
+# Owner's moderation key (generated at deploy, chmod 600) — NEVER commit
+.admin-secret.txt
+
 # installer-worker generated files (embedded assets + pre-bundled runtime)
 apps/installer-worker/src/static-assets.ts
 apps/installer-worker/src/runtime-bundle.ts

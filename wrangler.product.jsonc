@@ -26,8 +26,7 @@
     {
       "binding": "DB",
       "database_name": "staticlayer-comments",
-      // Run `npx wrangler d1 create staticlayer-comments` and paste the ID.
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "c573167c-03d1-4720-94b5-4cc7657ae837",
       "migrations_dir": "migrations"
     }
   ],

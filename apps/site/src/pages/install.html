@@ -20,6 +20,12 @@
         <h1>Universal installation</h1>
         <p>This guide works for any site. Framework-specific notes live in <a href="{{BASE}}integrations.html">Integrations</a>.</p>
 
+        <div class="callout" style="margin-top:0">
+          <b>Zero terminal?</b> The <b>hosted installer</b> is live:
+          <a href="https://staticlayer-installer.staticlayer.workers.dev" target="_blank" rel="noopener">staticlayer-installer.staticlayer.workers.dev ↗</a>
+          — open it, connect your Cloudflare (OAuth or API token), and StaticLayer deploys into your account straight from the browser.
+        </div>
+
         <h2>Three ways to install</h2>
         <ul>
           <li><b>Web installer (recommended)</b> — a guided browser wizard that creates the Worker, the D1 database and the secrets for you. It supports <b>two connections</b>: one-click <b>OAuth</b> or a pasted <b>API token</b>. No tokens stored on disk; the OAuth token is revoked after the deploy. Start it with one command and follow the browser flow: <code>npm run dev:installer</code> (→ <code>http://localhost:8788</code>).</li>

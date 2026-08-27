@@ -3,11 +3,11 @@
   "main": "dist/worker.js",
   "compatibility_date": "2026-08-26",
   "kv_namespaces": [
-    { "binding": "SESSIONS", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }
+    { "binding": "SESSIONS", "id": "9b9dd1cb21b94776b261397565f3c5be" }
   ],
   "vars": {
     "STATICLAYER_SITE_BASE": "https://abla25.github.io/StaticLayer/",
     "STATICLAYER_REPO_URL": "https://github.com/Abla25/StaticLayer",
-    "STATICLAYER_REDIRECT_URI": "http://localhost:8789/oauth/callback"
+    "STATICLAYER_REDIRECT_URI": "https://staticlayer-installer.staticlayer.workers.dev/oauth/callback"
   }
 }
