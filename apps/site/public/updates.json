@@ -1,6 +1,6 @@
 {
-  "latest": "1.6.2",
-  "date": "2026-08-27",
-  "notes": "v1.6.2 — Fix: after voting, the widget now lands directly on the ranked results even without the \"one vote per browser\" guard (the \"voted\" flag from the vote response is mirrored into the poll).",
+  "latest": "1.6.3",
+  "date": "2026-08-28",
+  "notes": "v1.6.3 — Fix: multi-select polls now accept a SINGLE selected option (the widget always sends an \"options\" array for multi polls, even with one choice — previously it sent a bare \"option\" string and the server correctly rejected it with 400).",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }

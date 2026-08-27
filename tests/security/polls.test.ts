@@ -323,6 +323,17 @@ describe('polls — multi-select (one PoW for the whole set)', () => {
     expect(p2.total).toBe(3);
   });
 
+  it('accepts a single-option array on a multi poll (one choice = one vote)', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf, { multi: true });
+    const res = await vote(mf, poll.id, ['A']);
+    expect(res.status).toBe(200);
+    const p = res.body.poll as { counts: Record<string, number>; total: number };
+    expect(p.counts).toEqual({ A: 1 });
+    expect(p.total).toBe(1);
+  });
+
   it('rejects a duplicate option in the same multi vote', async () => {
     mf = await spawnWorker();
     auth = await login(mf);

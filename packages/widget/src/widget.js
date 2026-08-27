@@ -1275,7 +1275,7 @@
               btn.setAttribute('aria-pressed', 'false');
               btn.addEventListener('click', function () { toggleSelect(o, btn); });
             } else {
-              btn.addEventListener('click', function () { vote([o], btn); });
+              btn.addEventListener('click', function () { vote([o], btn, false); });
             }
             li.appendChild(btn);
           }
@@ -1336,7 +1336,7 @@
       function submitMulti() {
         var opts = Object.keys(selected);
         if (!opts.length) return;
-        vote(opts, multiVoteBtn);
+        vote(opts, multiVoteBtn, true);
       }
 
       // "Change your votes": the same anonymous browser token revokes its own
@@ -1385,7 +1385,7 @@
           .catch(function () { setStatus(t('pollLoadError'), 'err'); });
       }
 
-      function vote(options, btn) {
+      function vote(options, btn, multi) {
         if (btn) { btn.disabled = true; btn.classList.add('sl-pop'); }
         setStatus(t('solving'), 'busy');
         var t0 = Date.now();
@@ -1395,8 +1395,9 @@
         )
           .then(function (res) { if (!res.ok) throw new Error('challenge request failed'); return res.json(); })
           .then(function (challenge) {
-            // Multi-set: solve ONE PoW over the whole selected set.
-            var solveArg = options.length > 1 ? options : options[0];
+            // Multi-set: solve ONE PoW over the whole selected set — ALWAYS as
+            // an array (even a single choice) so the server accepts it.
+            var solveArg = multi ? options : options[0];
             return solveWithWorker(challenge, 'poll', pollId, solveArg).then(function (nonce) {
               return { challenge: challenge, nonce: nonce };
             });
@@ -1413,7 +1414,7 @@
                 signature: solved.challenge.signature,
                 nonce: solved.nonce
               };
-              if (options.length > 1) payload.options = options;
+              if (multi) payload.options = options;
               else payload.option = options[0];
               if (voterToken) payload.voterToken = voterToken;
               return fetch(endpoint + '/api/polls/vote', {

@@ -13,6 +13,12 @@ Versioning: [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- **Multi polls with ONE selected option (1.6.3)** — the widget now sends an
+  `options` array for multi-select polls even when a single choice is selected
+  (previously a single selection was sent as a bare `option` string, which the
+  server — correctly — rejected with "options must be 1..10"). The vote()
+  function now takes an explicit `multi` flag instead of inferring it from the
+  array length; tests use a realistic worker mock (`Array.isArray`).
 - **Polls: results after voting (1.6.2)** — the widget now mirrors the top-level
   `voted` flag from the vote response into the poll, so it lands on the ranked
   results right after voting — even when "one vote per browser" is off (no

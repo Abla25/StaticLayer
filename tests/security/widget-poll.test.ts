@@ -128,7 +128,7 @@ function makeDom(initial: Partial<PollState> = {}, pollId = 'poll-1') {
         challengeId: base64UrlToBytes(c.challengeId),
       };
       const work =
-        data.options && data.options.length > 1
+        Array.isArray(data.options)
           ? minePollNonceMulti({ ...base, options: data.options }, c.difficulty)
           : minePollNonce({ ...base, option: data.option as string }, c.difficulty);
       work.then((nonce) => {
@@ -227,6 +227,28 @@ describe('widget polls v2 — single vs multi voting', () => {
     // After voting the widget lands on the ranked results (voted flag mirrored).
     expect(host.querySelector('.sl-poll-rank')).not.toBeNull();
     expect(host.querySelector('.sl-poll-status')?.textContent).toContain('voted');
+  });
+
+  it('multi poll: a SINGLE selected option still posts an options array', async () => {
+    const { dom, postedVotes } = makeDom({ multi: true });
+    await flushAsync();
+    const host = dom.window.document.getElementById('host')!;
+
+    // Select exactly ONE option.
+    (Array.from(host.querySelectorAll('.sl-poll-check')).find((b) => b.textContent === 'B') as HTMLButtonElement).click();
+    const voteBtn = host.querySelector('.sl-poll-vote-btn') as HTMLButtonElement;
+    expect(voteBtn.textContent).toBe('Vote (1)');
+    expect(voteBtn.disabled).toBe(false);
+
+    voteBtn.click();
+    await flushAsync();
+
+    // The multi poll must ALWAYS send `options` as an array (even 1 element),
+    // never a bare `option` string — otherwise the server rejects with 400.
+    expect(postedVotes.length).toBe(1);
+    expect(postedVotes[0].options).toEqual(['B']);
+    expect(postedVotes[0].option).toBeUndefined();
+    expect(host.querySelector('.sl-poll-rank')).not.toBeNull();
   });
 
   it('multi + single-vote guard: shows "Change your votes" and revokes', async () => {
