@@ -7,7 +7,7 @@
 
 ## Environment
 
-- [ ] Fresh macOS/Linux machine (or disposable VM). No `~/PureComment`, no
+- [ ] Fresh macOS/Linux machine (or disposable VM). No `~/StaticLayer`, no
       `node_modules`, no Cloudflare CLI state, no `~/.wrangler`.
 - [ ] `node --version` ≥ 20, `npm --version` ≥ 10.
 - [ ] A fresh Cloudflare account (or a fresh sub-account), empty.
