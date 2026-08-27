@@ -73,8 +73,21 @@ function makeDom() {
         json: async () => ({ ok: true, reaction: body.reaction, reactions: [{ reaction: '👍', count: 4 }] }),
       } as Response;
     }
+    // The widget fetches the PoW worker cross-origin (CORS) and re-hosts it as
+    // a Blob URL — jsdom has no Worker, so return an empty blob.
+    if (url.endsWith('pow-worker.js')) {
+      return {
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(['// mock pow worker'], { type: 'application/javascript' }),
+      } as Response;
+    }
     throw new Error('unexpected fetch: ' + url);
   };
+
+  // Blob URL helpers (jsdom lacks them) — the widget wraps the worker script.
+  window.URL.createObjectURL = (() => 'blob:staticlayer-mock') as typeof URL.createObjectURL;
+  window.URL.revokeObjectURL = (() => {}) as typeof URL.revokeObjectURL;
 
   // Web Worker stub: actually mines a nonce with the real protocol.
   window.Worker = class FakeWorker {

@@ -369,17 +369,33 @@
         });
     }
 
+    // Cross-origin safety: a CLASSIC Worker cannot be created from a different
+    // origin (`new Worker('https://other/pow-worker.js')` is blocked by the
+    // browser even with CORS headers). Fix: fetch the script with CORS and
+    // wrap it in a Blob URL — works from any page that can load the widget.
+    function createPowWorkerUrl() {
+      return fetch(workerUrl, { mode: 'cors', credentials: 'omit' })
+        .then(function (res) { if (!res.ok) throw new Error('failed to load pow worker'); return res.blob(); })
+        .then(function (blob) { return URL.createObjectURL(blob); });
+    }
+
     function solveWithWorker(challenge, nickname, body) {
       return new Promise(function (resolve, reject) {
-        var worker;
-        try { worker = new Worker(workerUrl); } catch (err) { reject(err); return; }
-        worker.onmessage = function (e) {
-          worker.terminate();
-          if (e.data && e.data.type === 'nonce') resolve(e.data.nonce);
-          else reject(new Error((e.data && e.data.message) || 'pow worker failed'));
-        };
-        worker.onerror = function () { worker.terminate(); reject(new Error('pow worker error')); };
-        worker.postMessage({ challenge: challenge, nickname: nickname, body: body });
+        createPowWorkerUrl()
+          .then(function (url) {
+            var worker;
+            try { worker = new Worker(url); } catch (err) { reject(err); return null; }
+            worker.onmessage = function (e) {
+              URL.revokeObjectURL(url);
+              worker.terminate();
+              if (e.data && e.data.type === 'nonce') resolve(e.data.nonce);
+              else reject(new Error((e.data && e.data.message) || 'pow worker failed'));
+            };
+            worker.onerror = function () { URL.revokeObjectURL(url); worker.terminate(); reject(new Error('pow worker error')); };
+            worker.postMessage({ challenge: challenge, nickname: nickname, body: body });
+            return null;
+          })
+          .catch(reject);
       });
     }
 

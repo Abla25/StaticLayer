@@ -221,16 +221,20 @@ describe('static assets (Phase 2)', () => {
     mf = undefined;
   });
 
-  it('serves /widget.js and /pow-worker.js as public cacheable JS', async () => {
+  it('serves /widget.js and /pow-worker.js as public cacheable JS with CORS', async () => {
     mf = await spawnWorker();
     const widget = await mf.dispatchFetch(`${BASE}/widget.js`);
     expect(widget.status).toBe(200);
     expect(widget.headers.get('content-type')).toContain('application/javascript');
     expect(widget.headers.get('cache-control')).toBe('public, max-age=3600');
+    // Public widget assets must be readable from ANY origin: the widget runs on
+    // arbitrary sites and its cross-origin PoW worker is fetched via CORS.
+    expect(widget.headers.get('access-control-allow-origin')).toBe('*');
 
     const worker = await mf.dispatchFetch(`${BASE}/pow-worker.js`);
     expect(worker.status).toBe(200);
     expect(worker.headers.get('cache-control')).toBe('public, max-age=3600');
+    expect(worker.headers.get('access-control-allow-origin')).toBe('*');
   });
 
   it('serves /admin.html with the CSP header', async () => {
