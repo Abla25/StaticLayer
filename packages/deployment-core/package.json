@@ -1,0 +1,25 @@
+{
+  "name": "@staticlayer/deployment-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "StaticLayer — library-first Desired State Engine (Observe→Diff→Plan→Apply→Verify) + Cloudflare API client + worker bundler. Shared by the CLI and the Web Installer. No process.exit, no prompts, no console side effects.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./engine": "./src/engine.ts",
+    "./api": "./src/api.ts",
+    "./types": "./src/types.ts",
+    "./build-worker": "./src/build-worker.ts",
+    "./testing": "./src/mock-api.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

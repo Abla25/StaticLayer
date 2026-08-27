@@ -1,0 +1,27 @@
+{
+  "name": "@staticlayer/protocol",
+  "version": "0.1.0",
+  "description": "StaticLayer v1 — canonical binary PoW protocol (encoding, hashing, challenge signing, verification). Zero runtime dependencies; Web Crypto only.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

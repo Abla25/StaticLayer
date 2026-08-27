@@ -1,0 +1,110 @@
+<!-- title: StaticLayer — Universal Installation Guide -->
+<!-- description: Deploy the StaticLayer Worker and D1 in any Cloudflare account, connect any static site, configure CORS and moderation. -->
+<!-- active: install -->
+
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="doc-layout">
+      <aside class="doc-side">
+        <nav aria-label="Documentation">
+          <a href="{{BASE}}docs.html">Quick start</a>
+          <a href="{{BASE}}install.html" class="active">Universal install</a>
+          <a href="{{BASE}}integrations.html">Integrations</a>
+          <a href="{{BASE}}security.html">Security</a>
+          <a href="{{BASE}}privacy.html">Privacy</a>
+          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+        </nav>
+      </aside>
+
+      <article class="prose">
+        <h1>Universal installation</h1>
+        <p>This guide works for any site. Framework-specific notes live in <a href="{{BASE}}integrations.html">Integrations</a>.</p>
+
+        <h2>Three ways to install</h2>
+        <ul>
+          <li><b>Web installer (recommended)</b> — a guided browser wizard that creates the Worker, the D1 database and the secrets for you. It supports <b>two connections</b>: one-click <b>OAuth</b> or a pasted <b>API token</b>. No tokens stored on disk; the OAuth token is revoked after the deploy. Start it with one command and follow the browser flow: <code>npm run dev:installer</code> (→ <code>http://localhost:8788</code>).</li>
+          <li><b>CLI</b> — <code>npx staticlayer init</code> with an API token. More control, still fully scripted.</li>
+          <li><b>Manual dashboard</b> — for tinkerers who prefer clicking through the Cloudflare dashboard. See below.</li>
+        </ul>
+
+        <h3>Web installer, step by step</h3>
+        <ol>
+          <li><b>Start it:</b> one command (<code>npm run dev:installer</code>) launches a small local app at <code>http://localhost:8788</code>. Locally there is no email step — just press <b>Continue</b>. From here on, everything happens in the browser.</li>
+          <li><b>Connect Cloudflare — choose a method:</b> <b>(A)</b> one-click <b>OAuth</b>: the app redirects you to the official Cloudflare consent screen with the minimal scopes (Workers deploy, D1, account read). <b>(B)</b> paste an <b>API token</b> (permissions: Workers Scripts: Edit, Cloudflare D1: Edit, Account Settings: Read). Your Cloudflare password is never seen by StaticLayer; pasted tokens are kept only in memory.</li>
+          <li><b>Pick your account:</b> choose the Cloudflare account to deploy into.</li>
+          <li><b>Review the plan:</b> the engine lists exactly what it will create — nothing happens until you confirm.</li>
+          <li><b>Deploy:</b> the app generates the three secrets locally, creates the D1 database, deploys the Worker and binds the secrets via the Bulk Secrets API, then verifies the deployed state.</li>
+          <li><b>Cleanup:</b> the OAuth token is <b>revoked immediately</b>; a pasted token is cleared from memory. Nothing is stored on disk — no token, no secrets.</li>
+        </ol>
+        <p>A fully hosted, zero-terminal installer (a Cloudflare Worker we operate) is on the roadmap — it needs a registered public Cloudflare OAuth app and is not part of this release.</p>
+
+        <div class="callout">
+          <b>Why does the installer open a local app — and can't it run from GitHub Pages?</b>
+          Two reasons. First, Cloudflare's OAuth <code>client_secret_post</code> exchange needs a confidential server holding the OAuth app secret; a static GitHub Pages page cannot hold that secret safely. Second, <code>api.cloudflare.com</code> does not allow browser cross-origin calls (no CORS), so even the API-token path cannot run purely client-side. The local app is the confidential server — it runs on <i>your</i> machine, secrets never leave it, and the Cloudflare token is revoked after deploy. A hosted installer on a Cloudflare Worker would remove the local step; it is a roadmap item, not part of this release.
+        </div>
+
+        <h2>Alternative — manual install in the Cloudflare dashboard</h2>
+        <p>No terminal, no local app, no installer. You do everything in the Cloudflare dashboard (about 10 minutes the first time):</p>
+        <ol>
+          <li><b>D1:</b> Dashboard → D1 → Create database → name it <code>staticlayer</code> → copy its ID.</li>
+          <li><b>Worker:</b> Dashboard → Workers &amp; Pages → Create → Worker → paste the runtime source (or upload the built bundle) → set compatibility date to the release's date.</li>
+          <li><b>Bindings:</b> in the Worker → Settings → Variables → add D1 binding <code>DB</code>, the rate-limit binding, and the vars (<code>POW_DIFFICULTY</code>, <code>ALLOWED_ORIGINS</code>, …).</li>
+          <li><b>Secrets:</b> add the three secrets <code>ADMIN_SECRET</code>, <code>SESSION_SECRET</code>, <code>POW_SECRET</code> with strong random values (e.g. <code>openssl rand -hex 32</code>).</li>
+          <li><b>Migrations:</b> run the two migration files against the D1 database (Dashboard → D1 → Console, or the CLI).</li>
+          <li><b>Route:</b> add a custom domain or route (e.g. <code>comments.yourdomain.com</code>).</li>
+        </ol>
+        <p>Then follow steps 5–9 below to add the widget, choose article IDs and moderate. The automated installer and CLI exist to replace this manual work with a verified, repeatable process.</p>
+
+        <p>Both paths produce the same desired state: Worker + D1 + three secrets (<code>ADMIN_SECRET</code>, <code>SESSION_SECRET</code>, <code>POW_SECRET</code>) + rate-limit binding. Secrets are generated locally and sent straight to Cloudflare via the Bulk Secrets API — they are never shown to you and never stored on disk.</p>
+
+        <h2>1 · Deploy the Worker</h2>
+        <p>Run <code>npx staticlayer init</code> (see <a href="{{BASE}}docs.html">Quick start</a>). The CLI creates the D1 database, deploys the Worker and binds the three secrets via the Bulk Secrets API. It then verifies the desired state.</p>
+
+        <h2>2 · Create &amp; bind D1</h2>
+        <p>Handled automatically by the CLI. Apply the schema migrations to the remote database:</p>
+<pre><code>npx wrangler d1 migrations apply staticlayer --remote -c wrangler.jsonc</code></pre>
+
+        <h2>3 · Configure secrets</h2>
+        <p>Exactly three secrets: <code>ADMIN_SECRET</code>, <code>SESSION_SECRET</code>, <code>POW_SECRET</code>. Values are generated locally and sent to Cloudflare; they are never stored on disk by StaticLayer.</p>
+
+        <h2>4 · Configure the allowed origin (CORS)</h2>
+        <p>When your site and the Worker are on different origins (e.g. GitHub Pages → a <code>*.workers.dev</code> endpoint), the Worker must allow your site origin. Configure the allowlist in your deployment (see <a href="{{BASE}}security.html">Security</a>) and reject unexpected origins. No wildcard for authenticated routes.</p>
+        <p>Reactions are configured through plain vars in the same file when you want to change the defaults: <code>REACTION_OPTIONS</code> (e.g. <code>"👍,❤️,🎉"</code>), <code>REACTION_DIFFICULTY_BASE/CEILING</code>, <code>REACTION_ESCALATION_VOTES</code>, <code>REACTION_MIN_INTERVAL_SECONDS</code>. See <a href="{{BASE}}integrations.html">Integrations → Reactions</a>.</p>
+
+        <h2>5 · Add the widget</h2>
+<pre><code>&lt;div data-staticlayer
+     data-api="https://comments.example.com"
+     data-article-id="/blog/my-post"&gt;&lt;/div&gt;
+&lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
+        <p><code>data-article-id</code> defaults to <code>window.location.pathname</code> when omitted.</p>
+
+        <h2>6 · Choose the article ID</h2>
+        <ul>
+          <li><b>Automatic:</b> <code>articleId = window.location.pathname</code> — one comment thread per URL.</li>
+          <li><b>Explicit:</b> <code>data-article-id="post-123"</code> — useful for client-side routing, translated sites, URL migrations and aliases.</li>
+        </ul>
+        <p>Each unique article ID gets its own moderated thread. Put the same snippet on every page where you want comments, with the matching <code>data-article-id</code> (or rely on the URL). Example across two pages:</p>
+<pre><code>&lt;!-- /blog/hello-world.html --&gt;
+&lt;div data-staticlayer
+     data-api="https://comments.example.com"
+     data-article-id="/blog/hello-world"&gt;&lt;/div&gt;
+&lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;
+
+&lt;!-- /blog/another-post.html --&gt;
+&lt;div data-staticlayer
+     data-api="https://comments.example.com"
+     data-article-id="/blog/another-post"&gt;&lt;/div&gt;
+&lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
+
+        <h2>7 · Open the admin</h2>
+        <p>Visit <code>https://comments.example.com/admin.html</code>, sign in with <code>ADMIN_SECRET</code>. The console shows one moderation queue for <b>all</b> articles: approve or delete each pending comment. Approved comments appear on their article immediately; published comments are also listed for reference. Deleted comments are removed from the database.</p>
+
+        <h2>8 · Test a comment</h2>
+        <p>Post from your site: the browser solves a proof-of-work, the comment enters moderation, and you approve it from the admin. Comments are plain text + emoji only — no HTML, no Markdown, no clickable links.</p>
+
+        <h2>9 · Deploy the website</h2>
+        <p>Deploy your static site as usual. No build-time integration is required — the widget loads at runtime.</p>
+      </article>
+    </div>
+  </div>
+</section>

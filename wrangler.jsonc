@@ -1,0 +1,55 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "staticlayer",
+  "main": "packages/runtime/src/index.ts",
+  "compatibility_date": "2026-08-26",
+  "workers_dev": false,
+
+  // Daily maintenance at 03:00 UTC: purges used_challenges older than 24h
+  // (packages/runtime/src/retention.ts).
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
+
+  // Non-secret, tunable runtime configuration.
+  // Secrets (ADMIN_SECRET, SESSION_SECRET, POW_SECRET) are declared below and
+  // must be set via `wrangler secret put` (or `.dev.vars` for local dev).
+  "vars": {
+    "POW_DIFFICULTY": 16,
+    "CHALLENGE_TTL_SECONDS": 300,
+    "SESSION_TTL_SECONDS": 7200,
+    "MAX_REQUEST_BYTES": 65536,
+    // Comma-separated allowed origins for cross-origin API calls (CORS).
+    // Empty = same-origin only (fail-closed).
+    // Example: "https://blog.example.com,https://www.example.com"
+    "ALLOWED_ORIGINS": ""
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "staticlayer",
+      // Run `wrangler d1 create staticlayer` and paste the returned ID here.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Edge-local rate limiting (see docs/cloudflare-assumptions.md §5).
+  // namespace_id is an account-unique integer; see the Rate Limiting docs.
+  "ratelimits": [
+    {
+      "name": "RATE_LIMITER",
+      "namespace_id": "REPLACE_WITH_RATELIMIT_NAMESPACE_ID",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
+    }
+  ],
+
+  // Exactly three secrets, strictly separated roles (see SECURITY_REVIEW.md §6).
+  "secrets": {
+    "required": ["ADMIN_SECRET", "SESSION_SECRET", "POW_SECRET"]
+  }
+}

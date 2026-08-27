@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StaticLayer — Web Installer</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root {
+    --bg:#f4f2ec; --bg-2:#ece8df; --surface:#fffdf8; --surface-2:#f8f5ee;
+    --ink:#17130e; --ink-soft:#3a332a; --muted:#6f675a;
+    --line:rgba(23,19,14,.1); --line-strong:rgba(23,19,14,.16);
+    --acc:#ff5a1f; --acc-2:#ff8a2a; --acc-3:#ff3d54;
+    --acc-grad:linear-gradient(135deg,#ff8a2a 0%,#ff5a1f 55%,#ff3d54 120%);
+    --acc-soft:rgba(255,90,31,.1);
+    --ok:#1a8f5a; --warn:#b45309;
+    --glass:rgba(255,253,248,.72); --glass-strong:rgba(255,253,248,.9); --blur:20px;
+    --radius:18px; --radius-lg:26px; --radius-sm:11px;
+    --shadow-sm:0 1px 2px rgba(23,19,14,.05),0 4px 14px -6px rgba(23,19,14,.08);
+    --shadow-md:0 2px 4px rgba(23,19,14,.05),0 18px 50px -22px rgba(23,19,14,.22);
+    --shadow-acc:0 8px 26px -8px rgba(255,90,31,.45);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0e0d0b; --bg-2:#12100c; --surface:#16140f; --surface-2:#1a1711;
+      --ink:#f4f1ea; --ink-soft:#d8d2c6; --muted:#9a9284;
+      --line:rgba(244,241,234,.1); --line-strong:rgba(244,241,234,.18);
+      --acc-soft:rgba(255,90,31,.14);
+      --glass:rgba(22,20,15,.72); --glass-strong:rgba(22,20,15,.92);
+      --shadow-sm:0 1px 2px rgba(0,0,0,.3),0 4px 14px -6px rgba(0,0,0,.5);
+      --shadow-md:0 2px 6px rgba(0,0,0,.4),0 24px 60px -24px rgba(0,0,0,.65);
+    }
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:var(--font); font-size:16px; line-height:1.6; color:var(--ink);
+    background:var(--bg); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  a { color:var(--acc); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  code { font-family:var(--mono); font-size:.86em; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:6px; padding:.15em .42em; }
+  ::selection { background:var(--acc-soft); }
+  :focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:4px; }
+  .skip { position:absolute; left:-999px; top:0; z-index:100; background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:0 0 10px 0; }
+  .skip:focus { left:0; }
+  .container { max-width:1120px; margin:0 auto; padding:0 24px; }
+  .hidden { display:none !important; }
+  .muted { color:var(--muted); }
+
+  /* buttons */
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; font:inherit; font-weight:600;
+    font-size:15px; color:var(--ink); background:var(--surface); border:1px solid var(--line-strong);
+    border-radius:999px; padding:12px 22px; cursor:pointer; text-decoration:none; white-space:nowrap;
+    transition:transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease), background .18s var(--ease); }
+  .btn:hover { text-decoration:none; transform:translateY(-1px); border-color:var(--acc); box-shadow:var(--shadow-sm); }
+  .btn:active { transform:translateY(0); }
+  .btn:disabled { opacity:.55; cursor:progress; transform:none; filter:none; }
+  .btn-sm { padding:8px 15px; font-size:13.5px; }
+  .btn-primary { color:#fff; background:var(--acc-grad); border:0; box-shadow:var(--shadow-acc); }
+  .btn-primary:hover { filter:brightness(1.06); box-shadow:0 10px 30px -8px rgba(255,90,31,.55); }
+  .btn-ghost { background:transparent; border-color:transparent; color:var(--muted); }
+  .btn-ghost:hover { color:var(--ink); border-color:var(--line); background:var(--surface); }
+
+  /* nav */
+  .site-nav { position:sticky; top:0; z-index:60; background:var(--glass);
+    -webkit-backdrop-filter:blur(var(--blur)); backdrop-filter:blur(var(--blur)); border-bottom:1px solid var(--line); }
+  .nav-inner { display:flex; align-items:center; gap:12px; height:64px; }
+  .brand { display:inline-flex; align-items:center; gap:10px; color:var(--ink); font-weight:700; font-size:17px; letter-spacing:-.3px; }
+  .brand:hover { text-decoration:none; }
+  .brand-mark { display:grid; place-items:center; width:30px; height:30px; border-radius:9px; background:var(--ink); color:transparent; }
+  .brand-mark svg { width:20px; height:20px; display:block; }
+  .nav-links { display:flex; align-items:center; gap:2px; margin-left:auto; }
+  .nav-links a { color:var(--muted); font-size:14px; font-weight:500; padding:8px 12px; border-radius:9px; transition:color .15s, background .15s; }
+  .nav-links a:hover { color:var(--ink); background:var(--surface-2); text-decoration:none; }
+  .nav-drop { position:relative; }
+  .nav-drop summary { display:inline-flex; align-items:center; gap:6px; list-style:none; cursor:pointer; color:var(--muted);
+    font-size:14px; font-weight:500; padding:8px 12px; border-radius:9px; transition:color .15s, background .15s; }
+  .nav-drop summary::-webkit-details-marker { display:none; }
+  .nav-drop summary:hover { color:var(--ink); background:var(--surface-2); }
+  .nav-drop .caret { width:7px; height:7px; flex:none; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+    transform:rotate(45deg); margin-top:-4px; transition:transform .2s var(--ease); }
+  .nav-drop[open] .caret { transform:rotate(225deg); margin-top:3px; }
+  .drop-menu { position:absolute; top:calc(100% + 12px); left:50%; transform:translateX(-50%) translateY(-4px); min-width:210px;
+    background:var(--surface); border:1px solid var(--line-strong); border-radius:14px; box-shadow:var(--shadow-md); padding:6px;
+    display:flex; flex-direction:column; gap:2px; opacity:0; visibility:hidden; z-index:70;
+    transition:opacity .18s var(--ease), transform .18s var(--ease), visibility .18s; }
+  .nav-drop[open] .drop-menu { opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
+  .drop-menu a { padding:9px 12px; border-radius:9px; font-size:13.5px; color:var(--muted); }
+  .drop-menu a:hover { color:var(--ink); background:var(--surface-2); text-decoration:none; }
+  .nav-actions { display:flex; align-items:center; gap:10px; }
+  .nav-burger { display:none; background:none; border:0; padding:8px; cursor:pointer; border-radius:8px; }
+  .nav-burger:hover { background:var(--surface-2); }
+  .nav-burger span { display:block; width:20px; height:2px; background:var(--ink); margin:4px 0; border-radius:2px; transition:transform .2s var(--ease); }
+  .nav-burger[aria-expanded="true"] span:nth-child(1) { transform:translateY(6px) rotate(45deg); }
+  .nav-burger[aria-expanded="true"] span:nth-child(2) { transform:translateY(-6px) rotate(-45deg); }
+  .mobile-nav { display:none; flex-direction:column; gap:2px; padding:8px 24px 18px; border-top:1px solid var(--line); }
+  .mobile-nav.open { display:flex; }
+  .mobile-nav a { padding:12px 8px; color:var(--ink); font-weight:500; border-top:1px solid var(--line); }
+  .mobile-nav a:first-child { border-top:0; }
+  .mobile-nav a.btn { border-top:0; margin-top:10px; justify-content:center; }
+
+  /* alert */
+  .installer-alert { border-bottom:1px solid var(--line); background:var(--acc-soft); color:var(--muted);
+    text-align:center; padding:10px 20px; font-size:12.5px; letter-spacing:.2px; }
+  .installer-alert b { color:var(--acc); }
+
+  /* hero */
+  .hero { position:relative; padding:64px 0 44px; overflow:hidden; }
+  .hero::before { content:""; position:absolute; top:-220px; right:-160px; width:640px; height:640px;
+    background:radial-gradient(circle at 30% 30%, rgba(255,138,42,.22), rgba(255,61,84,.08) 55%, transparent 70%); pointer-events:none; }
+  .hero::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background-image:linear-gradient(to right, var(--line) 1px, transparent 1px), linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size:72px 72px;
+    -webkit-mask-image:radial-gradient(ellipse 90% 60% at 50% 0%, #000 20%, transparent 75%);
+    mask-image:radial-gradient(ellipse 90% 60% at 50% 0%, #000 20%, transparent 75%); }
+  .hero-inner { position:relative; max-width:760px; }
+  .hero-eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12.5px; font-weight:650; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--acc); background:var(--acc-soft); border:1px solid rgba(255,90,31,.22);
+    border-radius:999px; padding:6px 13px; margin-bottom:22px; }
+  .hero-eyebrow::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); }
+  .hero h1 { margin:0 0 18px; font-size:clamp(38px, 5vw, 56px); line-height:1.05; letter-spacing:-.045em; font-weight:750; text-wrap:balance; }
+  .hero h1 .grad { background:var(--acc-grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+  .hero-sub { font-size:17px; line-height:1.6; color:var(--muted); max-width:600px; margin:0; }
+
+  /* wizard */
+  .installer-body { max-width:760px; padding:0 24px 80px; }
+
+  /* stepper */
+  .steps { display:flex; gap:8px; margin:0 0 20px; }
+  .step { flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--line);
+    border-radius:14px; background:var(--glass); color:var(--muted); font-size:12px; font-weight:600; }
+  .step .n { width:22px; height:22px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:11px; background:var(--surface-2); border:1px solid var(--line); }
+  .step.active { border-color:rgba(255,90,31,.45); color:var(--ink); }
+  .step.active .n { background:var(--acc-grad); border:0; color:#fff; }
+  .step.done { border-color:rgba(26,143,90,.4); color:var(--ok); }
+  .step.done .n { background:var(--ok); border:0; color:#fff; }
+
+  .glass-panel { background:var(--glass); border:1px solid var(--line-strong); border-radius:var(--radius-lg);
+    padding:28px; -webkit-backdrop-filter:blur(var(--blur)); backdrop-filter:blur(var(--blur)); box-shadow:var(--shadow-sm);
+    animation:rise .35s var(--ease); }
+  @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  .panel-title { margin:0 0 6px; font-size:17px; letter-spacing:-.02em; font-weight:700; }
+  .panel-sub { margin:0 0 20px; font-size:13.5px; color:var(--muted); }
+
+  label { display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin:16px 0 7px; }
+  input, select { width:100%; padding:12px 14px; border:1px solid var(--line-strong); border-radius:12px;
+    background:var(--surface); color:var(--ink); font:inherit; font-size:14px; outline:none;
+    transition:border-color .15s, box-shadow .15s; }
+  input:focus, select:focus { border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); }
+  input::placeholder { color:var(--muted); opacity:.7; }
+  .row { display:flex; gap:10px; margin-top:20px; align-items:center; flex-wrap:wrap; }
+
+  .local-card { text-align:center; padding:26px 22px; border:1px dashed var(--line-strong); border-radius:16px;
+    background:var(--surface-2); margin-bottom:6px; }
+  .local-card .hint { margin:14px 0 0; font-size:12.5px; color:var(--muted); }
+  .divider { display:flex; align-items:center; gap:12px; margin:22px 0 4px; color:var(--muted); font-size:12px; }
+  .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--line); }
+
+  .method { border:1px solid var(--line-strong); border-radius:16px; padding:18px; margin-bottom:14px; background:var(--surface); }
+  .method-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .method-head b { font-size:14px; letter-spacing:-.01em; }
+  .method-head .pill { font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ok);
+    background:rgba(26,143,90,.1); border:1px solid rgba(26,143,90,.3); padding:3px 9px; border-radius:999px; }
+  .method p { margin:0 0 14px; font-size:13px; color:var(--muted); }
+  .method p a { font-weight:600; }
+
+  /* which method? */
+  .pick { border:1px solid var(--line-strong); border-radius:16px; padding:16px 18px; margin-bottom:16px; background:var(--surface-2); }
+  .pick > b { font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; }
+  .pick-row { display:flex; align-items:center; gap:10px; margin-top:10px; font-size:13px; color:var(--muted); }
+  .pick-row b { color:var(--ink); }
+  .pick-badge { flex:none; font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:3px 8px; border-radius:999px; }
+  .pick-badge.token { color:#7c3aed; background:rgba(124,58,237,.1); border:1px solid rgba(124,58,237,.28); }
+  .pick-badge.oauth { color:var(--acc); background:var(--acc-soft); border:1px solid rgba(255,90,31,.28); }
+
+  /* how-to steps */
+  .howto { margin-top:16px; border-top:1px dashed var(--line); padding-top:10px; }
+  .howto summary { cursor:pointer; font-size:12.5px; font-weight:600; color:var(--muted); list-style:none; }
+  .howto summary::-webkit-details-marker { display:none; }
+  .howto summary::before { content:"▸ "; color:var(--acc); }
+  .howto[open] summary::before { content:"▾ "; }
+  .howto summary:hover { color:var(--ink); }
+  .howto ol { margin:10px 0 0; padding-left:20px; font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:6px; }
+  .howto li b { color:var(--ink-soft); }
+  .howto code { font-size:11.5px; }
+
+  .note { display:flex; gap:10px; align-items:flex-start; background:var(--acc-soft); border:1px solid rgba(255,90,31,.28);
+    border-radius:14px; padding:13px 15px; margin:16px 0; font-size:13px; color:var(--muted); }
+  .note::before { content:"🔒"; }
+  .note b { color:var(--ink); }
+  .tip { display:flex; gap:10px; align-items:flex-start; background:rgba(124,58,237,.08); border:1px solid rgba(124,58,237,.25);
+    border-radius:14px; padding:13px 15px; margin:16px 0; font-size:13px; color:var(--muted); }
+  .tip::before { content:"💡"; }
+
+  .plan-list { margin:18px 0 4px; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .plan-list li { display:flex; gap:10px; align-items:center; padding:12px 14px; border:1px solid var(--line);
+    border-radius:12px; background:var(--surface-2); font-size:13.5px; }
+  .plan-list li::before { content:"→"; color:var(--acc); font-weight:700; }
+  .plan-list li.done-item::before { content:"✓"; color:var(--ok); }
+
+  pre { background:#171310; color:#f0ebe0; border:1px solid rgba(255,255,255,.08); border-radius:var(--radius-sm);
+    padding:16px 18px; overflow-x:auto; font-size:12.5px; line-height:1.55; font-family:var(--mono); }
+
+  .success-hero { display:flex; flex-direction:column; align-items:center; text-align:center; padding:14px 0 6px; }
+  .success-hero .check { width:68px; height:68px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:30px; background:rgba(26,143,90,.14); border:1px solid rgba(26,143,90,.5); color:var(--ok); margin-bottom:16px;
+    box-shadow:0 0 44px -10px rgba(26,143,90,.5); animation:pop .4s var(--ease); }
+  @keyframes pop { 0% { transform:scale(.6); opacity:0; } 60% { transform:scale(1.08); } 100% { transform:scale(1); opacity:1; } }
+
+  /* footer */
+  .site-footer { border-top:1px solid var(--line); background:var(--bg-2); padding:60px 0 34px; }
+  .footer-inner { display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px; }
+  .footer-brand { display:flex; align-items:center; gap:10px; font-weight:750; font-size:16px; margin:0 0 6px; letter-spacing:-.3px; }
+  .footer-brand .brand-mark { width:26px; height:26px; border-radius:8px; }
+  .footer-tag { color:var(--muted); font-size:13.5px; margin:0 0 16px; max-width:300px; }
+  .footer-links { display:flex; flex-direction:column; gap:9px; }
+  .footer-links a { color:var(--muted); font-size:13.5px; font-weight:500; }
+  .footer-links a:hover { color:var(--ink); }
+  .footer-legal { grid-column:1 / -1; color:var(--muted); font-size:12.5px; margin:26px 0 0;
+    border-top:1px solid var(--line); padding-top:20px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+
+  @media (max-width: 960px) { .footer-inner { grid-template-columns:1fr 1fr; } }
+  @media (max-width: 720px) {
+    .nav-links { display:none; }
+    .nav-actions .btn { display:none; }
+    .nav-burger { display:block; }
+    .steps { flex-wrap:wrap; }
+    .step { min-width:calc(50% - 4px); }
+    .footer-inner { grid-template-columns:1fr; gap:24px; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-nav">
+  <div class="container nav-inner">
+    <a class="brand" href="https://staticlayer.github.io/staticlayer/" aria-label="StaticLayer home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="slg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a2a"/><stop offset="1" stop-color="#ff3d54"/></linearGradient></defs><g fill="url(#slg)"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg></span>
+      <span class="brand-name">StaticLayer</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="https://staticlayer.github.io/staticlayer/">Product</a>
+      <a href="https://staticlayer.github.io/staticlayer/demo.html">Demo</a>
+      <details class="nav-drop">
+        <summary>Docs<span class="caret" aria-hidden="true"></span></summary>
+        <div class="drop-menu" role="menu">
+          <a href="https://staticlayer.github.io/staticlayer/docs.html" role="menuitem">Quick start</a>
+          <a href="https://staticlayer.github.io/staticlayer/install.html" role="menuitem">Universal install</a>
+          <a href="https://staticlayer.github.io/staticlayer/integrations.html" role="menuitem">Integrations</a>
+          <a href="https://staticlayer.github.io/staticlayer/security.html" role="menuitem">Security</a>
+          <a href="https://staticlayer.github.io/staticlayer/privacy.html" role="menuitem">Privacy</a>
+          <a href="https://staticlayer.github.io/staticlayer/faq.html" role="menuitem">FAQ</a>
+        </div>
+      </details>
+      <a href="https://github.com/staticlayer/staticlayer" class="nav-github" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-primary btn-sm" href="https://staticlayer.github.io/staticlayer/docs.html">Get started</a>
+      <button class="nav-burger" id="nav-burger" aria-label="Menu" aria-expanded="false" aria-controls="mobile-nav"><span></span><span></span></button>
+    </div>
+  </div>
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile">
+    <a href="https://staticlayer.github.io/staticlayer/">Product</a>
+    <a href="https://staticlayer.github.io/staticlayer/demo.html">Demo</a>
+    <a href="https://staticlayer.github.io/staticlayer/docs.html">Quick start</a>
+    <a href="https://staticlayer.github.io/staticlayer/install.html">Universal install</a>
+    <a href="https://staticlayer.github.io/staticlayer/integrations.html">Integrations</a>
+    <a href="https://staticlayer.github.io/staticlayer/security.html">Security</a>
+    <a href="https://staticlayer.github.io/staticlayer/privacy.html">Privacy</a>
+    <a href="https://staticlayer.github.io/staticlayer/faq.html">FAQ</a>
+    <a href="https://github.com/staticlayer/staticlayer" target="_blank" rel="noopener">GitHub ↗</a>
+    <a class="btn btn-primary" href="https://staticlayer.github.io/staticlayer/docs.html">Get started</a>
+  </nav>
+</header>
+
+<div class="installer-alert">Runs on <b>your machine</b> · deploys into <b>your</b> Cloudflare account · no data passes through our servers</div>
+
+<main id="main">
+  <section class="hero">
+    <div class="container hero-inner">
+      <span class="hero-eyebrow">Web installer</span>
+      <h1>Install in <span class="grad">your</span> Cloudflare</h1>
+      <p class="hero-sub">A guided wizard that creates the Worker and D1 database for you. Connect with one click (OAuth) or paste an API token — everything else is automatic.</p>
+    </div>
+  </section>
+
+  <div class="container installer-body">
+    <div class="steps" id="steps">
+      <div class="step active" data-step="1"><span class="n">1</span><span>Start</span></div>
+      <div class="step" data-step="2"><span class="n">2</span><span>Connect Cloudflare</span></div>
+      <div class="step" data-step="3"><span class="n">3</span><span>Review plan</span></div>
+      <div class="step" data-step="4"><span class="n">4</span><span>Deploy &amp; snippet</span></div>
+    </div>
+
+    <!-- Step 1 -->
+    <section id="s1" class="glass-panel">
+      <div class="panel-title">Welcome</div>
+      <p class="panel-sub">The installer lives on your machine and only talks to Cloudflare. Nothing else is involved.</p>
+      <div class="local-card hidden" id="local-row">
+        <button id="continue-local" class="btn btn-primary">Continue →</button>
+        <p class="hint">No account, no email — you're running this locally, so you're already the owner.</p>
+      </div>
+      <div class="divider hidden" id="email-divider"><span>prefer email verification?</span></div>
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
+      <div class="row"><button id="request-link" class="btn btn-ghost">Send magic link →</button></div>
+      <div id="link-result" class="hidden"></div>
+    </section>
+
+    <!-- Step 2 -->
+    <section id="s2" class="glass-panel hidden">
+      <div class="panel-title">Connect Cloudflare</div>
+      <p class="panel-sub">Both methods need a one-time permission from you — after that everything is automatic. Pick whichever you prefer.</p>
+
+      <div class="pick" aria-label="Which method to pick">
+        <b>Which one?</b>
+        <div class="pick-row"><span class="pick-badge token">Fastest now</span><span>Installing <b>once</b> → paste an <b>API token</b> (fewest steps, no registration).</span></div>
+        <div class="pick-row"><span class="pick-badge oauth">Best repeat</span><span>Installing <b>often</b> → <b>OAuth</b> (one click per install, after a one-time setup).</span></div>
+      </div>
+
+      <div class="method" id="oauth-method">
+        <div class="method-head"><b>Option A — Connect with Cloudflare</b><span class="pill">one click after setup</span></div>
+        <p>Authorize in your browser with the minimal scopes (Workers deploy, D1, account read). The token is revoked right after the deploy.</p>
+        <button id="connect" class="btn btn-primary" disabled>Connect with Cloudflare ↗</button>
+        <details class="howto">
+          <summary>How to enable this option (one-time setup)</summary>
+          <ol>
+            <li>In the Cloudflare dashboard go to <b>Manage Account → OAuth clients → Create client</b>.</li>
+            <li>Fill in: response type <code>code</code>, grant <code>authorization_code</code>, token auth <code>client_secret_post</code>, redirect <code>http://localhost:8788/oauth/callback</code>.</li>
+            <li>Scopes: <code>workers-platform.write</code>, <code>d1.write</code>, <code>account.read</code>.</li>
+            <li>Put <code>CLIENT_ID</code> and <code>CLIENT_SECRET</code> in <code>apps/installer/.env.local</code> and restart the installer.</li>
+            <li>From now on every install is <b>one click</b>: Connect → Approve → done.</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="method">
+        <div class="method-head"><b>Option B — Paste an API token</b><span class="pill">fastest for one-time</span></div>
+        <p>Create a token with 3 permissions and paste it here.
+        <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">Open API tokens ↗</a></p>
+        <input id="api-token" type="password" placeholder="Paste your Cloudflare API token" autocomplete="off" spellcheck="false">
+        <div class="row"><button id="connect-token" class="btn btn-primary">Connect with token →</button></div>
+        <details class="howto">
+          <summary>How to create the token (about 1 minute)</summary>
+          <ol>
+            <li>Open <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener">API tokens ↗</a> → <b>Create Token</b> → <b>Custom token</b>.</li>
+            <li>Add these 3 <b>account</b> permissions:</li>
+            <li><b>Workers Scripts → Edit</b> — deploys the Worker.</li>
+            <li><b>Cloudflare D1 → Edit</b> — creates and manages the database.</li>
+            <li><b>Account Settings → Read</b> — lists your accounts.</li>
+            <li>Create → copy the token → paste it above. It is validated instantly, kept only in memory, and cleared after the deploy.</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="note">Comment data never touches our servers. With OAuth the token is revoked after the deploy; with a pasted token it lives only in memory here and is cleared after the deploy.</div>
+      <div id="connect-state" class="muted"></div>
+    </section>
+
+    <!-- Step 3 -->
+    <section id="s3" class="glass-panel hidden">
+      <div class="panel-title">Review the plan</div>
+      <p class="panel-sub">The engine compares your account with the desired state and plans only the missing actions. Nothing happens until you confirm.</p>
+      <label for="account">Cloudflare account</label>
+      <select id="account"></select>
+      <label for="worker-name">Worker name</label>
+      <input id="worker-name" value="staticlayer">
+      <label for="db-name">D1 database name</label>
+      <input id="db-name" value="staticlayer">
+      <label for="rl-ns">Rate limit namespace ID <span style="font-weight:400">(optional)</span></label>
+      <input id="rl-ns" placeholder="leave empty to disable rate limiting">
+      <div class="row">
+        <button id="plan" class="btn btn-ghost">Preview plan</button>
+        <button id="deploy" class="btn btn-primary hidden">Deploy →</button>
+      </div>
+      <div id="plan-result" class="hidden"></div>
+    </section>
+
+    <!-- Step 4 -->
+    <section id="s4" class="glass-panel hidden">
+      <div class="success-hero">
+        <div class="check">✓</div>
+        <div class="panel-title">Deploy successful</div>
+        <p class="panel-sub" style="max-width:48ch;margin:0 auto">Your Worker and database are live in your Cloudflare account.
+          Secrets were generated server-side and bound via the Bulk Secrets API — <b>they are never shown to you</b>.</p>
+      </div>
+      <div class="panel-title" style="margin:22px 0 8px;font-size:15px">Snippet for your page</div>
+      <pre id="snippet"></pre>
+      <div class="row"><button id="copy" class="btn btn-primary">Copy snippet</button></div>
+      <div class="tip">Connect the Worker to your domain with <b>Workers Routes</b> in the dashboard, or use the CLI:
+        <code>npx staticlayer init</code>.</div>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div>
+      <p class="footer-brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><g fill="url(#slg)"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg></span>StaticLayer</p>
+      <p class="footer-tag">Comments for static sites — without the comment SaaS.</p>
+    </div>
+    <div class="footer-links">
+      <a href="https://staticlayer.github.io/staticlayer/">Product</a>
+      <a href="https://staticlayer.github.io/staticlayer/demo.html">Demo</a>
+      <a href="https://staticlayer.github.io/staticlayer/docs.html">Docs</a>
+      <a href="https://staticlayer.github.io/staticlayer/security.html">Security</a>
+      <a href="https://staticlayer.github.io/staticlayer/privacy.html">Privacy</a>
+      <a href="https://staticlayer.github.io/staticlayer/faq.html">FAQ</a>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/staticlayer/staticlayer" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/staticlayer/staticlayer/blob/main/SECURITY.md" target="_blank" rel="noopener">Report a vulnerability</a>
+      <a href="https://staticlayer.github.io/staticlayer/docs.html#quick-start">Quick start</a>
+    </div>
+    <p class="footer-legal"><span>MIT licensed · Open Source · BYOC</span><span>© 2026 StaticLayer</span></p>
+  </div>
+</footer>
+<script src="/app.js"></script>
+<script src="/nav.js"></script>
+</body>
+</html>

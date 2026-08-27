@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16130e"/>
+      <stop offset="0.55" stop-color="#1c1812"/>
+      <stop offset="1" stop-color="#241b12"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8a2a"/>
+      <stop offset="1" stop-color="#ff3d54"/>
+    </linearGradient>
+    <radialGradient id="blob1" cx="0.92" cy="0.08" r="0.55">
+      <stop offset="0" stop-color="#ff5a1f" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ff5a1f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blob2" cx="0.04" cy="0.95" r="0.5">
+      <stop offset="0" stop-color="#ff3d54" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#ff3d54" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="layer1" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8a2a"/>
+      <stop offset="1" stop-color="#ff5a1f"/>
+    </linearGradient>
+    <linearGradient id="layer2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff7a18"/>
+      <stop offset="1" stop-color="#ff3d54"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#blob1)"/>
+  <rect width="1200" height="630" fill="url(#blob2)"/>
+
+  <!-- subtle grid -->
+  <g stroke="#ffffff" stroke-opacity="0.04" stroke-width="1">
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+    <line x1="0" y1="420" x2="1200" y2="420"/>
+    <line x1="300" y1="0" x2="300" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="900" y1="0" x2="900" y2="630"/>
+  </g>
+
+  <!-- brand mark (layered strata) -->
+  <g>
+    <rect x="72" y="150" width="120" height="26" rx="13" fill="url(#layer1)"/>
+    <rect x="72" y="190" width="96" height="26" rx="13" fill="url(#layer1)" opacity="0.8"/>
+    <rect x="72" y="230" width="72" height="26" rx="13" fill="url(#layer1)" opacity="0.62"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="72" y="335" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="76" font-weight="700" letter-spacing="-2.5" fill="#f7f4ed">StaticLayer</text>
+
+  <!-- tagline -->
+  <text x="72" y="392" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="30" font-weight="500" letter-spacing="-0.4" fill="#c9c1b2">Comments for static sites — without the comment SaaS.</text>
+
+  <!-- pills -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600">
+    <rect x="72" y="440" width="172" height="52" rx="26" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="2"/>
+    <text x="158" y="473" text-anchor="middle" fill="#f7f4ed">Open source</text>
+    <rect x="266" y="440" width="120" height="52" rx="26" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="2"/>
+    <text x="326" y="473" text-anchor="middle" fill="#f7f4ed">BYOC</text>
+    <rect x="408" y="440" width="150" height="52" rx="26" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="2"/>
+    <text x="483" y="473" text-anchor="middle" fill="#f7f4ed">MIT license</text>
+  </g>
+
+  <!-- mini architecture: site → worker → d1 -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+    <rect x="880" y="120" width="240" height="90" rx="18" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.14" stroke-width="2"/>
+    <text x="1000" y="158" text-anchor="middle" font-size="24" font-weight="600" fill="#f7f4ed">Your site</text>
+    <text x="1000" y="188" text-anchor="middle" font-size="17" fill="#9a9284">static HTML</text>
+
+    <text x="1000" y="268" text-anchor="middle" font-size="26" fill="#ff7a18">↓</text>
+
+    <rect x="880" y="296" width="240" height="90" rx="18" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.14" stroke-width="2"/>
+    <text x="1000" y="334" text-anchor="middle" font-size="24" font-weight="600" fill="#f7f4ed">Your Worker</text>
+    <text x="1000" y="364" text-anchor="middle" font-size="17" fill="#9a9284">Cloudflare</text>
+
+    <text x="1000" y="444" text-anchor="middle" font-size="26" fill="#ff7a18">↓</text>
+
+    <rect x="880" y="472" width="240" height="90" rx="18" fill="url(#accent)" fill-opacity="0.18" stroke="url(#accent)" stroke-opacity="0.7" stroke-width="2"/>
+    <text x="1000" y="510" text-anchor="middle" font-size="24" font-weight="600" fill="#f7f4ed">Your D1</text>
+    <text x="1000" y="540" text-anchor="middle" font-size="17" fill="#d8c2b0">database</text>
+  </g>
+</svg>

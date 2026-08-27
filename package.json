@@ -1,0 +1,41 @@
+{
+  "name": "staticlayer",
+  "version": "0.1.0",
+  "description": "StaticLayer v1 — BYOC comment system for static sites (Cloudflare Worker + D1).",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "npm run build --workspace @staticlayer/protocol && npm run build --workspace @staticlayer/widget && node scripts/sync-static.mjs && npm run build --workspace @staticlayer/cli && npm run build --workspace @staticlayer/installer",
+    "test": "npm run build && vitest run",
+    "test:protocol": "npm run test --workspace @staticlayer/protocol",
+    "test:security": "npm run build && vitest run tests/security",
+    "test:cli": "vitest run packages/deployment-core/test",
+    "test:installer": "vitest run apps/installer/test",
+    "test:demo": "vitest run apps/demo/test",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev": "npm run build && wrangler dev",
+    "dev:demo": "npm run build && [ -f apps/demo/.dev.vars ] || cp apps/demo/.dev.vars.example apps/demo/.dev.vars && npx wrangler d1 migrations apply staticlayer-demo-local --local -c apps/demo/wrangler.local.jsonc && npx wrangler dev -c apps/demo/wrangler.local.jsonc --port 8787",
+    "dev:installer": "npm run build --workspace @staticlayer/installer && STATICLAYER_DEV_MODE=1 STATICLAYER_SESSION_SECRET=local-installer-session-secret STATICLAYER_CLIENT_ID=local-oauth-client-id STATICLAYER_CLIENT_SECRET=local-oauth-client-secret STATICLAYER_REDIRECT_URI=http://localhost:8788/oauth/callback npm run start --workspace @staticlayer/installer",
+    "dev:installer:real": "npm run build --workspace @staticlayer/installer && node --env-file=apps/installer/.env.local apps/installer/dist/server.js",
+    "build:site": "npm run build --workspace @staticlayer/protocol && node apps/site/build.mjs",
+    "dev:site": "node apps/site/build.mjs --watch",
+    "check:size": "node scripts/check-bundle-size.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260826.1",
+    "@types/node": "^26.3.0",
+    "esbuild": "^0.28.2",
+    "jsdom": "^29.1.1",
+    "miniflare": "^5.20260825.0-alpha",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.126.0"
+  }
+}

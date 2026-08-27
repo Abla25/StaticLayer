@@ -1,0 +1,14 @@
+{
+  "name": "@staticlayer/widget",
+  "version": "0.1.0",
+  "description": "StaticLayer v1 — public widget + PoW Web Worker (Vanilla JS, built with esbuild).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "echo \"widget is plain JS — no typecheck\""
+  },
+  "dependencies": {
+    "@staticlayer/protocol": "0.1.0"
+  }
+}

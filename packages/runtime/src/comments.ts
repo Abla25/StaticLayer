@@ -1,0 +1,224 @@
+import {
+  base64UrlToBytes,
+  encodeCanonicalPayload,
+  MAX_ARTICLE_PATH_BYTES,
+  MAX_BODY_BYTES,
+  MAX_HOST_CONTEXT_BYTES,
+  MAX_NICKNAME_BYTES,
+  parseNonce,
+  PROTOCOL_VERSION,
+  ProtocolError,
+  utf8EncodeStrict,
+  verifyChallenge,
+  verifyPow,
+  type ChallengeFields,
+} from '@staticlayer/protocol';
+import type { D1Result } from '@cloudflare/workers-types';
+import { DEFAULTS, envNumber, type Env } from './env.ts';
+import { json, readJsonBody, validField } from './http.ts';
+import { applyRateLimit } from './ratelimit.ts';
+
+/**
+ * POST /api/comments
+ *
+ * Full verification pipeline — every step FAILS CLOSED:
+ *   1. body byte cap (MAX_REQUEST_BYTES) + strict field type checks;
+ *   2. UTF-8 strictness + byte-length limits (255/255/50/3000) via the protocol;
+ *   3. challenge signature verification (HMAC-SHA256, constant-time);
+ *   4. challenge expiry;
+ *   5. difficulty must equal the configured value (defense in depth);
+ *   6. proof-of-work over the canonical payload (leading-zero bits);
+ *   7. ATOMIC anti-replay: consume the challenge + insert the comment in ONE
+ *      D1 batch() transaction.
+ *
+ * ANTI-REPLAY (SECURITY INVARIANT):
+ *   The comment INSERT is guarded by `WHERE changes() = 1`, i.e. it only fires
+ *   when THIS batch actually consumed the challenge (INSERT OR IGNORE inserted
+ *   a row). Without that guard, a request that loses the race (changes === 0)
+ *   would still insert a duplicate comment before we return 409 — breaking
+ *   "exactly one accepted comment per challenge". `changes()` reflects the most
+ *   recently completed write on the same connection, i.e. statement 1 of this
+ *   batch (verified empirically by tests/security/replay-concurrency.test.ts).
+ *
+ *   D1 batch() is a transaction (docs/cloudflare-assumptions.md §2): if the
+ *   comment insert fails, the whole batch rolls back and the challenge is NOT
+ *   consumed, so a failed store never burns the proof.
+ */
+
+interface SubmitFields {
+  challengeIdB64: string;
+  hostContext: string;
+  articlePath: string;
+  nickname: string;
+  body: string;
+  difficulty: number;
+  expiresAt: number;
+  signatureB64: string;
+  nonce: bigint;
+}
+
+function requireString(data: Record<string, unknown>, key: string): string | null {
+  const value = data[key];
+  return typeof value === 'string' ? value : null;
+}
+
+export async function handleSubmitComment(request: Request, env: Env): Promise<Response> {
+  const limited = await applyRateLimit(env.RATE_LIMITER, 'comments');
+  if (limited) return limited;
+
+  const maxBytes = envNumber(env.MAX_REQUEST_BYTES, DEFAULTS.MAX_REQUEST_BYTES);
+  const read = await readJsonBody(request, maxBytes);
+  if (!read.ok) {
+    return json(
+      { error: read.status === 413 ? 'request body too large' : 'invalid JSON body' },
+      read.status,
+    );
+  }
+  const data = read.value;
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    return json({ error: 'body must be a JSON object' }, 400);
+  }
+  const record = data as Record<string, unknown>;
+
+  // ---- strict field extraction (fail closed on wrong types) ----
+  const challengeIdB64 = requireString(record, 'challengeId');
+  const hostContext = requireString(record, 'hostContext');
+  const articlePath = requireString(record, 'articlePath');
+  const body = requireString(record, 'body');
+  const signatureB64 = requireString(record, 'signature');
+  const difficulty = record.difficulty;
+  const expiresAt = record.expiresAt;
+  if (!challengeIdB64 || !hostContext || !articlePath || !body || !signatureB64) {
+    return json({ error: 'missing required fields' }, 400);
+  }
+  // nickname is optional (anonymous comments): missing => '', but a present
+  // non-string value is rejected (fail closed).
+  let nickname = '';
+  if (record.nickname !== undefined) {
+    const nick = requireString(record, 'nickname');
+    if (nick === null) return json({ error: 'nickname must be a string' }, 400);
+    nickname = nick;
+  }
+  if (typeof difficulty !== 'number' || !Number.isSafeInteger(difficulty) || difficulty < 0) {
+    return json({ error: 'difficulty must be a non-negative integer' }, 400);
+  }
+  if (typeof expiresAt !== 'number' || !Number.isSafeInteger(expiresAt) || expiresAt < 0) {
+    return json({ error: 'expiresAt must be a non-negative integer' }, 400);
+  }
+
+  let nonce: bigint;
+  let challengeId: Uint8Array;
+  let signature: Uint8Array;
+  try {
+    nonce = parseNonce(record.nonce);
+    challengeId = base64UrlToBytes(challengeIdB64);
+    signature = base64UrlToBytes(signatureB64);
+  } catch {
+    return json({ error: 'invalid challengeId, signature or nonce encoding' }, 400);
+  }
+
+  // ---- 2. UTF-8 strictness + byte limits (fail closed, before any crypto) ----
+  if (!validField(hostContext, MAX_HOST_CONTEXT_BYTES)) {
+    return json({ error: `hostContext must be valid UTF-8 within ${MAX_HOST_CONTEXT_BYTES} bytes` }, 400);
+  }
+  if (!validField(articlePath, MAX_ARTICLE_PATH_BYTES)) {
+    return json({ error: `articlePath must be valid UTF-8 within ${MAX_ARTICLE_PATH_BYTES} bytes` }, 400);
+  }
+  if (!validField(nickname, MAX_NICKNAME_BYTES)) {
+    return json({ error: `nickname must be valid UTF-8 within ${MAX_NICKNAME_BYTES} bytes` }, 400);
+  }
+  if (!validField(body, MAX_BODY_BYTES)) {
+    return json({ error: `body must be valid UTF-8 within ${MAX_BODY_BYTES} bytes` }, 400);
+  }
+
+  // ---- 3. challenge signature (constant-time, fail closed) ----
+  const challenge: ChallengeFields = {
+    version: PROTOCOL_VERSION,
+    hostContext,
+    articlePath,
+    challengeId,
+    expiresAt: BigInt(expiresAt),
+    difficulty,
+  };
+  if (!(await verifyChallenge(challenge, signature, env.POW_SECRET))) {
+    return json({ error: 'invalid challenge signature' }, 400);
+  }
+
+  // ---- 4. expiry (fail closed) ----
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (expiresAt <= nowSec) {
+    return json({ error: 'challenge expired' }, 410);
+  }
+
+  // ---- 5. difficulty must match the configured value ----
+  const expectedDifficulty = envNumber(env.POW_DIFFICULTY, DEFAULTS.POW_DIFFICULTY);
+  if (difficulty !== expectedDifficulty) {
+    return json({ error: 'unexpected difficulty' }, 400);
+  }
+
+  // ---- 6. proof of work over the canonical payload ----
+  let canonical: Uint8Array;
+  try {
+    canonical = encodeCanonicalPayload({
+      version: PROTOCOL_VERSION,
+      hostContext,
+      articlePath,
+      nickname,
+      body,
+      challengeId,
+      nonce,
+    });
+  } catch (err) {
+    if (err instanceof ProtocolError) return json({ error: err.message }, 400);
+    throw err;
+  }
+  if (!(await verifyPow(canonical, difficulty))) {
+    return json({ error: 'invalid proof of work' }, 400);
+  }
+
+  // ---- 7. ATOMIC anti-replay ----
+  const id = crypto.randomUUID();
+  const createdAt = nowSec;
+  const status = 'pending'; // moderation pipeline: pending -> approved (Phase 2)
+
+  const consume = env.DB.prepare(
+    'INSERT OR IGNORE INTO used_challenges (challenge_id, used_at) VALUES (?, ?)',
+  ).bind(challengeIdB64, createdAt);
+
+  // Conditional insert: only fires when THIS batch consumed the challenge.
+  const insertComment = env.DB.prepare(
+    `INSERT INTO comments (id, article_path, nickname, body, status, created_at, challenge_id)
+     SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7
+     WHERE changes() = 1`,
+  ).bind(id, articlePath, nickname, body, status, createdAt, challengeIdB64);
+
+  let results: D1Result[];
+  try {
+    results = await env.DB.batch([consume, insertComment]);
+  } catch {
+    // Whole transaction rolled back => challenge NOT consumed.
+    return json({ error: 'storage error' }, 500);
+  }
+
+  const consumed = results[0].meta.changes;
+  if (consumed === 0) {
+    return json({ error: 'Challenge Already Used' }, 409);
+  }
+
+  const inserted = results[1].meta.changes;
+  if (inserted !== 1) {
+    // Defensive: consumed === 1 but no comment row => internal inconsistency.
+    return json({ error: 'comment not stored' }, 500);
+  }
+
+  return json({
+    comment: {
+      id,
+      article_path: articlePath,
+      nickname,
+      body,
+      status,
+      created_at: createdAt,
+    },
+  });
+}

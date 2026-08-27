@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "staticlayer-demo",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-26",
+  "workers_dev": true,
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
+  "vars": {
+    "POW_DIFFICULTY": 18,
+    "CHALLENGE_TTL_SECONDS": 300,
+    "SESSION_TTL_SECONDS": 7200,
+    "MAX_REQUEST_BYTES": 65536,
+    "ALLOWED_ORIGINS": ""
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "staticlayer-demo",
+      "database_id": "REPLACE_WITH_DEMO_D1_DATABASE_ID",
+      "migrations_dir": "../../migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "RATE_LIMITER",
+      "namespace_id": "REPLACE_WITH_DEMO_RATELIMIT_NAMESPACE_ID",
+      "simple": { "limit": 3, "period": 60 }
+    }
+  ],
+  "secrets": {
+    "required": ["ADMIN_SECRET", "SESSION_SECRET", "POW_SECRET"]
+  }
+}

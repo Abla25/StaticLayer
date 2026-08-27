@@ -1,0 +1,29 @@
+{
+  "name": "@staticlayer/cli",
+  "version": "0.1.0",
+  "description": "StaticLayer CLI — Desired State Engine (observe/diff/plan/apply/verify) for Cloudflare Worker + D1 installs.",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "staticlayer": "./dist/cli.js"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/config.ts"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@staticlayer/deployment-core": "0.1.0",
+    "esbuild": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

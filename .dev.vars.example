@@ -1,0 +1,6 @@
+# Local development secrets — copy to `.dev.vars` and fill in real values.
+# NEVER commit the real `.dev.vars`. Generate strong random values, e.g.:
+#   openssl rand -hex 32
+ADMIN_SECRET="change-me-admin"
+SESSION_SECRET="change-me-session"
+POW_SECRET="change-me-pow"

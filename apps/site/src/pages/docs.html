@@ -1,0 +1,55 @@
+<!-- title: StaticLayer — Documentation -->
+<!-- description: Documentation for StaticLayer: quick start, installation, universal guide, security, privacy and integrations. -->
+<!-- active: docs -->
+
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="doc-layout">
+      <aside class="doc-side">
+        <nav aria-label="Documentation">
+          <a href="{{BASE}}docs.html" class="active">Quick start</a>
+          <a href="{{BASE}}install.html">Universal install</a>
+          <a href="{{BASE}}integrations.html">Integrations</a>
+          <a href="{{BASE}}security.html">Security</a>
+          <a href="{{BASE}}privacy.html">Privacy</a>
+          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+        </nav>
+      </aside>
+
+      <article class="prose" id="quick-start">
+        <h1>Quick start</h1>
+        <p>Get StaticLayer running in about five minutes. You need a Cloudflare account, Node.js ≥ 20, and npm.</p>
+
+        <h2>1. Prepare credentials</h2>
+        <p>Create an API token in the Cloudflare dashboard with account permissions <b>Workers Scripts: Edit</b>, <b>Cloudflare D1: Edit</b> and <b>Account Settings: Read</b>. Copy your <b>Account ID</b> from the same dashboard.</p>
+
+        <h2>2. Install &amp; generate secrets</h2>
+<pre><code>npm install
+npm run build
+
+export CLOUDFLARE_API_TOKEN="&lt;your token&gt;"          # never stored on disk
+export STATICLAYER_ADMIN_SECRET="$(openssl rand -hex 32)"
+export STATICLAYER_SESSION_SECRET="$(openssl rand -hex 32)"
+export STATICLAYER_POW_SECRET="$(openssl rand -hex 32)"</code></pre>
+
+        <h2>3. Deploy</h2>
+<pre><code>npx staticlayer init    # observe → plan → apply → verify
+
+# then create the D1 tables
+npx wrangler d1 migrations apply staticlayer --remote -c wrangler.jsonc</code></pre>
+
+        <h2>4. Add the widget</h2>
+<pre><code>&lt;div data-staticlayer data-api="https://comments.example.com"&gt;&lt;/div&gt;
+&lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
+        <p>Same snippet works on every page (thread = page URL). Add an anonymous reaction bar with
+        <code>data-reactions="👍,❤️,🎉"</code>, show it <b>without comments</b> via <code>data-reactions-only</code>,
+        or place them separately — see <a href="{{BASE}}integrations.html">Integrations</a>.</p>
+
+        <h2>5. Moderate</h2>
+        <p>Open <code>https://comments.example.com/admin.html</code>, sign in with <code>ADMIN_SECRET</code>, and approve the first comment.</p>
+
+        <blockquote><p>Full step-by-step deploy: <a href="{{BASE}}install.html">Universal installation guide</a>. Live walkthrough: <a href="{{BASE}}demo.html">the simulator</a>.</p></blockquote>
+      </article>
+    </div>
+  </div>
+</section>

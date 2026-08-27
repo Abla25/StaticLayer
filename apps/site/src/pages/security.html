@@ -1,0 +1,70 @@
+<!-- title: StaticLayer — Security -->
+<!-- description: StaticLayer security model: minimal attack surface, explicit boundaries, tested invariants, threat model and reporting. -->
+<!-- active: security -->
+
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="doc-layout">
+      <aside class="doc-side">
+        <nav aria-label="Documentation">
+          <a href="{{BASE}}docs.html">Quick start</a>
+          <a href="{{BASE}}install.html">Universal install</a>
+          <a href="{{BASE}}integrations.html">Integrations</a>
+          <a href="{{BASE}}security.html" class="active">Security</a>
+          <a href="{{BASE}}privacy.html">Privacy</a>
+          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+        </nav>
+      </aside>
+
+      <article class="prose">
+        <h1>Security</h1>
+        <p>StaticLayer is designed with a <b>minimal attack surface and defense-in-depth controls</b>. We do not claim "100% security" — the source, protocol, migrations and tests are public so the claims can be checked.</p>
+
+        <h2>Security invariants (tested)</h2>
+        <ul>
+          <li><b>Challenge single-use</b> — one valid challenge is consumed at most once, atomically via D1 <code>batch()</code>. N concurrent requests with the same challenge → exactly one accepted.</li>
+          <li><b>Stateless admin session</b> — HMAC-signed, absolute TTL, <code>__Host-</code> cookie (<code>Secure; HttpOnly; SameSite=Strict</code>, no <code>Domain</code>).</li>
+          <li><b>Signed CSRF binding</b> — admin mutations require a session-bound token, verified in constant time.</li>
+          <li><b>Plain-text rendering</b> — comments are rendered with <code>textContent</code> only; no raw HTML, no Markdown in v1.</li>
+          <li><b>Prepared SQL</b> — all database access uses prepared statements + parameter binding.</li>
+          <li><b>Secret separation</b> — exactly three secrets with disjoint roles (<code>ADMIN_SECRET</code>, <code>SESSION_SECRET</code>, <code>POW_SECRET</code>).</li>
+        </ul>
+
+        <h2>Public vs admin API</h2>
+        <p>Public endpoints (<code>/api/comments*</code>) need no admin cookies. Admin endpoints (<code>/api/admin*</code>) require session + CSRF validation, restrictive caching, secure cookies, and fail closed.</p>
+
+        <h2>Cross-origin (CORS)</h2>
+        <p>Cross-origin calls are governed by an explicit allowlist: set the <code>ALLOWED_ORIGINS</code> var (comma-separated origins) in your worker config. Fail-closed — with an empty value, no cross-origin request is allowed and no <code>Access-Control-Allow-Origin</code> header is ever sent. Allowed origins are echoed back exactly (never <code>*</code>), including for admin routes; admin sessions remain same-origin by default.</p>
+
+        <h2>Reactions</h2>
+        <p>Reactions use the same cost-based integrity model as comments: single-use signed challenges, real Proof-of-Work, atomic anti-replay, per-article rate limiting and a minimum interval. Difficulty escalates per article to make stuffing progressively more expensive. A reaction row is an anonymous event — no user identifier, no IP. This is anti-stuffing by cost, not identity-based voting: repeated votes by one person are not detectable by design.</p>
+
+        <h2>Operational controls</h2>
+        <ul>
+          <li>Route-scoped rate limiting (challenge / comments / login) — edge-local backstop, never IP-only.</li>
+          <li>Request size caps (default 64 KB).</li>
+          <li>Challenge TTL 5 minutes; <code>used_challenges</code> purged after 24 hours.</li>
+          <li>Daily maintenance cron; failures propagate (never silent).</li>
+        </ul>
+
+        <h2>Threat model &amp; evidence</h2>
+        <ul>
+          <li><a href="{{REPO}}/blob/main/THREAT_MODEL.md" target="_blank" rel="noopener">THREAT_MODEL.md</a> — threats T1–T16 and invariants.</li>
+          <li><a href="{{REPO}}/blob/main/SECURITY_REVIEW.md" target="_blank" rel="noopener">SECURITY_REVIEW.md</a> — full evidence, invariants I1–I16.</li>
+          <li><a href="{{REPO}}/blob/main/SECURITY_AUDIT_REPORT.md" target="_blank" rel="noopener">SECURITY_AUDIT_REPORT.md</a> — claim-by-claim matrix with file:line references.</li>
+          <li><a href="{{REPO}}/blob/main/docs/cloudflare-assumptions.md" target="_blank" rel="noopener">docs/cloudflare-assumptions.md</a> — every Cloudflare behavior verified against official docs, dated.</li>
+        </ul>
+
+        <h2>Reporting a vulnerability</h2>
+        <p>Please do not open a public issue for security vulnerabilities. Follow the process in <a href="{{REPO}}/blob/main/SECURITY.md" target="_blank" rel="noopener">SECURITY.md</a> and report privately to the maintainers.</p>
+
+        <h2>Known limitations (honest)</h2>
+        <ul>
+          <li>Proof-of-Work raises the cost of automated submissions; it is not absolute spam prevention.</li>
+          <li>Rate limiting is per-location and eventually consistent (Cloudflare-documented).</li>
+          <li>Remote D1 concurrency is documented as pending empirical validation via <code>wrangler dev --remote</code> before commercial launch.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>

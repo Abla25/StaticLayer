@@ -1,0 +1,16 @@
+{
+  "name": "@staticlayer/site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "StaticLayer public website — static, GitHub Pages compatible, zero framework.",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
+    "typecheck": "echo 'site is HTML/CSS/JS — no typecheck (JS checked via node --check in CI)'"
+  },
+  "dependencies": {
+    "@staticlayer/protocol": "0.1.0",
+    "esbuild": "^0.25.0"
+  }
+}

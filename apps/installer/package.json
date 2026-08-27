@@ -1,0 +1,22 @@
+{
+  "name": "@staticlayer/installer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "StaticLayer Web Installer — OAuth + Desired State Engine deploys",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@staticlayer/deployment-core": "0.1.0",
+    "@staticlayer/protocol": "0.1.0",
+    "esbuild": "^0.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "typescript": "^7.0.0"
+  }
+}

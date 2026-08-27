@@ -1,0 +1,131 @@
+<!-- title: StaticLayer — Interactive Demo & Simulator -->
+<!-- description: A safe, client-side simulator of the StaticLayer flow: challenge, proof-of-work, moderation and admin approval. No data leaves your browser. -->
+<!-- active: demo -->
+<!-- simulator: true -->
+
+<section class="sim-shell">
+  <div class="container">
+    <div class="sim-title">
+      <span class="hero-eyebrow">Try it in 60 seconds</span>
+      <h1>See StaticLayer in action</h1>
+      <p>A safe, deterministic simulator. It runs the <b>real proof-of-work</b> in your browser — no data leaves this page. Restyle the widget, post a comment, then open the <b>admin console</b> and moderate it.</p>
+    </div>
+
+    <div class="sim-grid">
+      <div class="glass-panel">
+        <div class="sim-tabs" role="tablist" aria-label="Demo views">
+          <button class="sim-tab active" id="tab-visitor" role="tab" aria-selected="true" aria-controls="view-visitor">👤 Visitor view</button>
+          <button class="sim-tab" id="tab-admin" role="tab" aria-selected="false" aria-controls="view-admin">🛡️ Admin console</button>
+        </div>
+
+        <!-- ---------- visitor view ---------- -->
+        <div class="sim-view" id="view-visitor" role="tabpanel">
+          <div class="panel-title">Comments widget
+            <span class="dt-count" id="dt-count" style="margin-left:auto">0 comments</span>
+          </div>
+          <p class="panel-sub">Pick a graphic theme, then post a comment. It will land in the moderation queue — check the Admin console.</p>
+
+          <div class="theme-picker" role="group" aria-label="Widget theme">
+            <button class="theme-btn active" data-theme="classic" aria-pressed="true"><span class="theme-swatch" style="background:linear-gradient(135deg,#fffdf8,#f4f2ec)"></span>Classic</button>
+            <button class="theme-btn" data-theme="ink" aria-pressed="false"><span class="theme-swatch" style="background:#16130f"></span>Ink</button>
+            <button class="theme-btn" data-theme="glass" aria-pressed="false"><span class="theme-swatch" style="background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.4))"></span>Glass</button>
+            <button class="theme-btn" data-theme="ocean" aria-pressed="false"><span class="theme-swatch" style="background:linear-gradient(135deg,#eaf2f7,#f4f8fb)"></span>Ocean</button>
+            <button class="theme-btn" data-theme="sunset" aria-pressed="false"><span class="theme-swatch" style="background:linear-gradient(135deg,#ffece2,#fff5f0)"></span>Sunset</button>
+          </div>
+
+          <div class="react-editor" role="group" aria-label="Reactions to show">
+            <span class="dt-hint">Reactions to show (comma-separated) — try editing or removing one</span>
+            <input id="demo-reactions" class="dt-input" value="👍,❤️,🎉" maxlength="80" aria-label="Reactions to show" spellcheck="false">
+            <label class="dt-toggle" title="data-reactions-only">
+              <input type="checkbox" id="demo-reactions-only"> Reactions only
+            </label>
+          </div>
+
+          <div class="demo-thread" id="demo-thread" data-theme="classic">
+            <div class="dt-head">
+              <h3>Comments</h3>
+              <span class="dt-count">0 comments</span>
+            </div>
+            <div class="dt-list" id="dt-list" aria-live="polite"></div>
+            <p class="dt-hint" id="dt-react-hint" aria-live="polite"></p>
+            <div class="dt-reactions" id="dt-reactions" aria-label="Reactions" role="group"></div>
+            <p class="dt-note" id="dt-react-status"></p>
+            <div class="dt-form">
+              <input id="sim-nick" class="dt-input" placeholder="Your name (optional)" aria-label="Your name" maxlength="50">
+              <textarea id="sim-body" class="dt-input" placeholder="Write a comment…" aria-label="Write a comment" rows="3" maxlength="3000" style="resize:vertical;min-height:70px"></textarea>
+              <div class="dt-row">
+                <span class="dt-hint">Plain text · emoji welcome · anti-spam proof-of-work</span>
+                <button id="sim-post" class="btn btn-primary btn-sm">Post comment</button>
+              </div>
+            </div>
+            <p class="dt-note" id="sim-status-text" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="content-rules" aria-label="What visitors can write">
+            <b>What visitors can write</b>
+            <ul>
+              <li>Plain text + emoji ✓</li>
+              <li>No HTML, no Markdown — everything renders as text</li>
+              <li>No clickable links</li>
+              <li>Nickname ≤ 50 · body ≤ 3000 characters</li>
+              <li>Reactions are anonymous events (real PoW, escalating difficulty)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ---------- admin view ---------- -->
+        <div class="sim-view" id="view-admin" role="tabpanel" hidden>
+          <div class="panel-title">Admin console</div>
+          <p class="panel-sub">In production this is <code>/admin.html</code> on your Worker, protected by <code>ADMIN_SECRET</code>. Sessions are stateless and HMAC-signed.</p>
+
+          <div id="admin-login">
+            <div class="dt-form">
+              <input id="admin-pass" class="dt-input" type="password" placeholder="ADMIN_SECRET" aria-label="Admin secret">
+              <div class="dt-row">
+                <span class="dt-hint">This demo accepts any value · production verifies your ADMIN_SECRET</span>
+                <button id="admin-signin" class="btn btn-primary btn-sm">Sign in</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="admin-panel" hidden>
+            <p class="panel-sub" style="margin-top:18px">Pages with comments — one Worker serves many pages. Visitors only see their own page's thread.</p>
+            <div class="admin-pages" id="admin-pages" aria-live="polite"></div>
+
+            <p class="panel-sub" style="margin-top:20px">Moderation queue — comments await your decision.</p>
+            <div class="admin-queue" id="admin-queue" aria-live="polite"></div>
+            <p class="panel-sub" style="margin-top:20px">Published recently</p>
+            <div class="admin-published" id="admin-published"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-panel sim-side">
+        <div class="panel-title">Under the hood</div>
+        <p class="panel-sub">What the visitor and the system experience.</p>
+        <ul class="sim-status" aria-live="polite">
+          <li data-step="challenge"><span class="dot"></span>Challenge</li>
+          <li data-step="pow"><span class="dot"></span>Proof of Work</li>
+          <li data-step="submission"><span class="dot"></span>Submission</li>
+          <li data-step="moderation"><span class="dot"></span>Moderation</li>
+          <li data-step="published"><span class="dot"></span>Published</li>
+        </ul>
+        <button id="sim-log-toggle" class="btn btn-ghost btn-sm" style="margin-top:10px">Show what happened</button>
+        <div class="sim-log" id="sim-log" aria-label="Technical log"></div>
+
+        <p class="embed-label">Embed this widget</p>
+        <pre id="embed-code" style="font-size:12px"></pre>
+
+        <div class="dt-row" style="margin-top:14px">
+          <span class="dt-hint" style="font-size:11.5px">Seeds reset automatically. No server, no writes.</span>
+          <button id="sim-reset" class="btn btn-ghost btn-sm">Reset demo</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="sim-note" style="text-align:center;margin-top:36px;color:var(--muted);font-size:14px">
+      This simulator never writes data, never calls a server, and never exposes secrets.
+      The real product is deployed in <b>your</b> Cloudflare account.
+    </p>
+  </div>
+</section>

@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Local wrangler / Miniflare state (never commit)
+.wrangler/
+wrangler/state/
+
+# Local dev / environment secrets — NEVER commit
+.dev.vars*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+
+# Logs / OS
+*.log
+npm-debug.log*
+.DS_Store
+
+# Editors / IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Test artifacts
+coverage/

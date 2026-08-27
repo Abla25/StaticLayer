@@ -1,0 +1,21 @@
+{
+  "name": "@staticlayer/demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "StaticLayer public demo (data purged daily)",
+  "scripts": {
+    "dev": "wrangler dev -c wrangler.jsonc",
+    "deploy": "wrangler deploy -c wrangler.jsonc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@staticlayer/runtime": "0.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260826.1",
+    "typescript": "^7.0.0",
+    "wrangler": "^4.0.0"
+  }
+}

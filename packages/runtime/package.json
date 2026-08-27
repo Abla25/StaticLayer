@@ -1,0 +1,14 @@
+{
+  "name": "@staticlayer/runtime",
+  "version": "0.1.0",
+  "description": "StaticLayer v1 — Cloudflare Worker + D1 runtime (Phase 0 skeleton; full implementation in Phase 1).",
+  "type": "module",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@staticlayer/protocol": "0.1.0"
+  }
+}

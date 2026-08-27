@@ -1,0 +1,52 @@
+<!-- title: StaticLayer — Privacy -->
+<!-- description: StaticLayer privacy model: what the application stores, what it does not store, what network infrastructure may see, and the owner's responsibility. -->
+<!-- active: privacy -->
+
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="doc-layout">
+      <aside class="doc-side">
+        <nav aria-label="Documentation">
+          <a href="{{BASE}}docs.html">Quick start</a>
+          <a href="{{BASE}}install.html">Universal install</a>
+          <a href="{{BASE}}integrations.html">Integrations</a>
+          <a href="{{BASE}}security.html">Security</a>
+          <a href="{{BASE}}privacy.html" class="active">Privacy</a>
+          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+        </nav>
+      </aside>
+
+      <article class="prose">
+        <h1>Privacy</h1>
+        <p>StaticLayer follows a <b>privacy-conscious architecture</b>. This page describes observable behavior — what the application stores, what it deliberately does not store, and who is responsible for what.</p>
+
+        <h2>What the application database stores</h2>
+        <ul>
+          <li>Comment ID, article path, nickname, comment body (plain text), status, timestamp.</li>
+          <li>Reaction ID, article path, reaction, timestamp — anonymous events (no user identifier, no IP).</li>
+          <li>Consumed challenge identifiers (temporary, purged after 24 hours) for anti-replay.</li>
+        </ul>
+
+        <h2>What it intentionally does not store</h2>
+        <ul>
+          <li>No IP addresses — <b>no application-level IP persistence</b>.</li>
+          <li>No User-Agent, Referer, CF-Ray or fingerprint data.</li>
+          <li>No persistent visitor identifiers; the public widget sets no visitor cookies and uses no local storage.</li>
+        </ul>
+
+        <h2>What network infrastructure may see</h2>
+        <p>Cloudflare is the <b>infrastructure provider</b>. Its network handles standard connection metadata (including the source IP) for routing and security, as a data processor. That metadata is not used by the StaticLayer application and is not written to the application database.</p>
+
+        <h2>Who is responsible for what</h2>
+        <ul>
+          <li><b>You (the site owner)</b> control the Worker, the D1 database and the deployed code.</li>
+          <li><b>Nickname and body are user-supplied</b> and may constitute personal data; treat them accordingly.</li>
+          <li><b>You remain responsible for your own privacy notices and legal compliance.</b> StaticLayer minimizes data processing, but it is not a legal guarantee.</li>
+        </ul>
+
+        <h2>Privacy template</h2>
+        <p>Adapt the provided template for your site's privacy policy: <a href="{{REPO}}/blob/main/docs/PRIVACY_POLICY_TEMPLATE.md" target="_blank" rel="noopener">docs/PRIVACY_POLICY_TEMPLATE.md</a>.</p>
+      </article>
+    </div>
+  </div>
+</section>

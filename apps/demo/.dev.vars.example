@@ -1,0 +1,6 @@
+# Local demo secrets — COPY to .dev.vars (git-ignored) with:
+#   cp apps/demo/.dev.vars.example apps/demo/.dev.vars
+# Dev-only values. NEVER use these in production (wrangler secret put).
+ADMIN_SECRET=demo-admin-secret-0123456789abcdef
+SESSION_SECRET=demo-session-secret-0123456789abcdef
+POW_SECRET=demo-pow-secret-0123456789abcdef
