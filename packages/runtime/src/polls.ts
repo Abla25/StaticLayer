@@ -2,14 +2,17 @@ import {
   base64UrlToBytes,
   bytesToBase64Url,
   encodeCanonicalPollPayload,
+  encodeCanonicalPollPayloadMulti,
   MAX_OPTION_BYTES,
   MAX_POLL_ID_BYTES,
+  MAX_POLL_OPTIONS,
   parseNonce,
   PROTOCOL_VERSION,
   ProtocolError,
   randomBytes,
   sha256,
   signChallenge,
+  sortPollOptions,
   utf8EncodeStrict,
   verifyChallenge,
   verifyHmacSha256,
@@ -216,7 +219,8 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
   const voterToken = str('voterToken') ?? '';
   const difficulty = data.difficulty;
   const expiresAt = data.expiresAt;
-  if (!challengeIdB64 || !hostContext || !articlePath || !pollId || !option || !signatureB64) {
+  const rawOptions = data.options;
+  if (!challengeIdB64 || !hostContext || !articlePath || !pollId || !signatureB64) {
     return json({ error: 'missing required fields' }, 400);
   }
   if (typeof difficulty !== 'number' || !Number.isSafeInteger(difficulty) || difficulty < 0) {
@@ -225,9 +229,15 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
   if (typeof expiresAt !== 'number' || !Number.isSafeInteger(expiresAt) || expiresAt < 0) {
     return json({ error: 'expiresAt must be a non-negative integer' }, 400);
   }
-  if (pollId.length > MAX_POLL_ID_BYTES || option.length > MAX_OPTION_BYTES) {
-    return json({ error: 'pollId or option too long' }, 400);
+  if (pollId.length > MAX_POLL_ID_BYTES) {
+    return json({ error: 'pollId too long' }, 400);
   }
+  // Multi-select: `options` array solved with ONE PoW for the whole set, or a
+  // single `option` string for classic single-choice polls.
+  const multiOptions: string[] | null =
+    Array.isArray(rawOptions)
+      ? rawOptions.map((o) => (typeof o === 'string' ? o : '')).filter(Boolean)
+      : null;
 
   const poll = await loadPoll(env, pollId);
   if (!poll) return json({ error: 'poll not found' }, 404);
@@ -238,7 +248,31 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
     return json({ error: 'poll does not belong to this article' }, 400);
   }
   const options = parseOptions(poll.options);
-  if (!options.includes(option)) return json({ error: 'invalid option' }, 400);
+  const isMulti = poll.multi === 1;
+  let selected: string[] | null = null;
+  if (isMulti) {
+    if (!multiOptions || multiOptions.length < 1 || multiOptions.length > MAX_POLL_OPTIONS) {
+      return json({ error: `options must be 1..${MAX_POLL_OPTIONS}` }, 400);
+    }
+    if (new Set(multiOptions).size !== multiOptions.length) {
+      return json({ error: 'options must be unique' }, 400);
+    }
+    if (multiOptions.some((o) => o.length > MAX_OPTION_BYTES)) {
+      return json({ error: 'option too long' }, 400);
+    }
+    if (multiOptions.some((o) => !options.includes(o))) {
+      return json({ error: 'invalid option' }, 400);
+    }
+    selected = sortPollOptions(multiOptions);
+  } else {
+    if (multiOptions && multiOptions.length) {
+      return json({ error: 'this poll does not support multi-select' }, 400);
+    }
+    if (!option) return json({ error: 'missing required fields' }, 400);
+    if (option.length > MAX_OPTION_BYTES) return json({ error: 'option too long' }, 400);
+    if (!options.includes(option)) return json({ error: 'invalid option' }, 400);
+    selected = [option];
+  }
 
   // Decode challenge + nonce (fail closed on bad encodings).
   let challengeId: Uint8Array;
@@ -265,19 +299,28 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
   const gateRes = timeGateResponse(env, nowSec, expiresAt);
   if (gateRes) return gateRes;
 
-  // Verify the proof of work over the canonical POLL payload.
-  const powOk = await verifyPow(
-    encodeCanonicalPollPayload({
-      version: PROTOCOL_VERSION,
-      hostContext,
-      articlePath,
-      pollId,
-      option,
-      challengeId,
-      nonce,
-    }),
-    difficulty,
-  );
+  // Verify the proof of work over the canonical POLL payload (single or multi).
+  const canonical =
+    isMulti
+      ? encodeCanonicalPollPayloadMulti({
+          version: PROTOCOL_VERSION,
+          hostContext,
+          articlePath,
+          pollId,
+          options: selected as string[],
+          challengeId,
+          nonce,
+        })
+      : encodeCanonicalPollPayload({
+          version: PROTOCOL_VERSION,
+          hostContext,
+          articlePath,
+          pollId,
+          option: option as string,
+          challengeId,
+          nonce,
+        });
+  const powOk = await verifyPow(canonical, difficulty);
   if (!powOk) return json({ error: 'proof of work not satisfied' }, 400);
 
   // Optional anonymous single-vote guard.
@@ -303,21 +346,27 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
     }
   }
 
-  // Atomic anti-replay: consume the challenge and store the vote in ONE batch.
-  const voteId = crypto.randomUUID();
+  // Atomic anti-replay: consume the challenge and store ALL votes in ONE batch.
   const nowSecForVote = Math.floor(Date.now() / 1000);
   const consume = env.DB.prepare(
     'INSERT OR IGNORE INTO used_challenges (challenge_id, used_at) VALUES (?, ?)',
   ).bind(challengeIdB64, nowSecForVote);
-  const insertVote = env.DB.prepare(
-    `INSERT INTO poll_votes (id, poll_id, option, created_at, challenge_id, voter_hash)
-     SELECT ?1, ?2, ?3, ?4, ?5, ?6
-     WHERE changes() = 1`,
-  ).bind(voteId, poll.id, option, nowSecForVote, challengeIdB64, voterHash);
+  // Only the FIRST row carries the anonymous voter hash: the UNIQUE
+  // (poll_id, voter_hash) single-vote guard keeps working for multi polls too
+  // (the remaining rows have NULL hash and never conflict). `WHERE changes()=1`
+  // chains the batch: a replayed challenge (0 rows) or a UNIQUE hit on the
+  // first insert makes every subsequent insert fail atomically.
+  const inserts = (selected as string[]).map((opt, i) =>
+    env.DB.prepare(
+      `INSERT INTO poll_votes (id, poll_id, option, created_at, challenge_id, voter_hash)
+       SELECT ?1, ?2, ?3, ?4, ?5, ?6
+       WHERE changes() = 1`,
+    ).bind(crypto.randomUUID(), poll.id, opt, nowSecForVote, challengeIdB64, i === 0 ? voterHash : null),
+  );
 
   let results: D1Result[];
   try {
-    results = await env.DB.batch([consume, insertVote]);
+    results = await env.DB.batch([consume, ...inserts]);
   } catch {
     return json({ error: 'storage error' }, 500);
   }
@@ -340,6 +389,61 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
 /* ------------------------- voter token helpers ------------------------- */
 // The anonymous voter token is `base64url(randomId).base64url(HMAC(id))`.
 // The server verifies the HMAC and stores ONLY sha256(id) — never the token.
+
+/**
+ * POST /api/polls/revoke — "Change your votes" for MULTI + single_vote polls.
+ * Body: { pollId, voterToken }. The browser owning the anonymous token revokes
+ * its own previous votes so it can vote again. Privacy: only rows matching the
+ * anonymous hash are deleted — no personal data, no cookies, and the token is
+ * never revealed to us.
+ */
+export async function handlePollRevoke(request: Request, env: Env): Promise<Response> {
+  const limited = await applyRateLimit(env.RATE_LIMITER, 'comments');
+  if (limited) return limited;
+
+  const maxBytes = envNumber(env.MAX_REQUEST_BYTES, DEFAULTS.MAX_REQUEST_BYTES);
+  const read = await readJsonBody(request, maxBytes);
+  if (!read.ok || typeof read.value !== 'object' || read.value === null) {
+    return json({ error: read.ok ? 'body must be a JSON object' : 'invalid JSON body' }, read.ok ? 400 : read.status);
+  }
+  const data = read.value as Record<string, unknown>;
+  const pollId = typeof data.pollId === 'string' ? data.pollId : '';
+  const voterToken = typeof data.voterToken === 'string' ? data.voterToken : '';
+  if (!pollId || !voterToken) return json({ error: 'pollId and voterToken are required' }, 400);
+  if (pollId.length > MAX_POLL_ID_BYTES) return json({ error: 'pollId too long' }, 400);
+
+  const id = await verifyVoterToken(voterToken, env);
+  if (!id) return json({ error: 'invalid voter token' }, 401);
+
+  const poll = await loadPoll(env, pollId);
+  if (!poll) return json({ error: 'poll not found' }, 404);
+  // Change-your-votes only applies to multi-select polls with the single-vote
+  // guard (that is the only case where a browser owns an anonymous token).
+  if (poll.multi !== 1 || poll.single_vote !== 1) {
+    return json({ error: 'this poll does not support changing votes' }, 400);
+  }
+
+  const voterHash = bytesToBase64Url(await sha256(id));
+  // A multi vote stores only ONE row with the voter_hash (the others have NULL
+  // to keep the UNIQUE(poll_id, voter_hash) guard working). They all share the
+  // same challenge_id, so revoke deletes the anchor row PLUS every sibling row
+  // of that same vote. Only rows owned by this anonymous browser are touched.
+  const res = await env.DB.prepare(
+    `DELETE FROM poll_votes
+     WHERE poll_id = ? AND (
+       voter_hash = ?
+       OR challenge_id IN (SELECT challenge_id FROM poll_votes WHERE poll_id = ? AND voter_hash = ?)
+     )`,
+  ).bind(pollId, voterHash, pollId, voterHash).run();
+
+  const counts = await loadCounts(env, pollId);
+  return json({
+    ok: true,
+    revoked: res.meta.changes,
+    poll: serializePoll(poll, counts),
+    voted: false,
+  });
+}
 
 async function verifyVoterToken(token: string, env: Env): Promise<Uint8Array | null> {
   if (!token) return null;

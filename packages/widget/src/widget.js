@@ -115,6 +115,14 @@
       pollMissing: 'Poll not found',
       alreadyVoted: 'You already voted in this poll',
       pollLoadError: 'Failed to load the poll',
+      pollVoteCountOne: '1 vote',
+      pollVoteCountMany: '{n} votes',
+      pollLeader: 'Leads by {n} votes',
+      pollVoteBtn: 'Vote ({n})',
+      pollMultiHint: 'Select one or more options',
+      pollChangeVotes: 'Change your votes',
+      pollVotesChanged: 'Votes updated — you can vote again',
+      startTitle: 'Start the conversation',
       reply: 'Reply',
       cancelReply: 'Cancel',
       replyPlaceholder: 'Write a reply…',
@@ -145,6 +153,14 @@
       pollMissing: 'Sondaggio non trovato',
       alreadyVoted: 'Hai già votato in questo sondaggio',
       pollLoadError: 'Impossibile caricare il sondaggio',
+      pollVoteCountOne: '1 voto',
+      pollVoteCountMany: '{n} voti',
+      pollLeader: 'Conduce con {n} voti',
+      pollVoteBtn: 'Vota ({n})',
+      pollMultiHint: 'Seleziona una o più opzioni',
+      pollChangeVotes: 'Modifica i tuoi voti',
+      pollVotesChanged: 'Voti aggiornati — puoi votare di nuovo',
+      startTitle: 'Inizia la conversazione',
       reply: 'Rispondi',
       cancelReply: 'Annulla',
       replyPlaceholder: 'Scrivi una risposta…',
@@ -185,6 +201,13 @@
     '.sl-body{margin:0;font-size:14.5px;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word}' +
     '.sl-empty{padding:28px 18px;text-align:center;color:var(--muted);font-size:14px;background:var(--card);' +
     'border:1px dashed var(--border);border-radius:var(--radius)}' +
+    '.sl-hidden{display:none!important}' +
+    '.sl-start{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);' +
+    'box-shadow:var(--shadow);padding:20px 16px 16px;margin-bottom:20px;text-align:center}' +
+    '.sl-start .sl-form{margin:0;box-shadow:none;text-align:left}' +
+    '.sl-start-msg{margin:0 0 14px;font-size:15px;font-weight:650;letter-spacing:-.2px}' +
+    '.sl-start-sub{display:block;margin-top:3px;font-weight:400;font-size:13px;color:var(--muted)}' +
+    '.sl-start:not(.sl-start-empty) .sl-start-msg{display:none}' +
     '.sl-form{display:flex;flex-direction:column;gap:10px;padding:16px;background:var(--card);border:1px solid var(--border);' +
     'border-radius:var(--radius);box-shadow:var(--shadow)}' +
     '.sl-nick-input,.sl-body-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:10px;' +
@@ -233,6 +256,38 @@
     'transition:width .5s ease}' +
     '.sl-poll-status{display:flex;align-items:center;gap:8px;min-height:20px;margin:10px 2px 0;font-size:13px;color:var(--muted)}' +
     '.sl-poll-status[data-kind="ok"]{color:#16a34a}.sl-poll-status[data-kind="err"]{color:#dc2626}' +
+    '.sl-poll-count{font-size:11px;font-weight:600;color:var(--muted);background:color-mix(in srgb,var(--border) 60%,transparent);' +
+    'padding:3px 10px;border-radius:999px;white-space:nowrap;font-variant-numeric:tabular-nums}' +
+    '.sl-poll-rank{flex:none;font-size:10.5px;font-weight:700;color:var(--muted);' +
+    'background:color-mix(in srgb,var(--border) 55%,transparent);border-radius:999px;padding:1px 7px;' +
+    'letter-spacing:.2px;font-variant-numeric:tabular-nums}' +
+    '.sl-poll-opt-label{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}' +
+    '.sl-poll-opt-name{font-size:14px;font-weight:600;flex:1;min-width:0}' +
+    '.sl-poll-opt-meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}' +
+    '.sl-poll-bar{height:8px;border-radius:999px;background:color-mix(in srgb,var(--border) 60%,transparent);overflow:hidden}' +
+    '.sl-poll-fill{height:100%;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-2));' +
+    'transition:width .6s cubic-bezier(.22,1,.36,1)}' +
+    '.sl-poll-option.sl-poll-leader .sl-poll-fill{background:linear-gradient(135deg,var(--accent),var(--accent-2));' +
+    'box-shadow:0 0 14px -2px color-mix(in srgb,var(--accent) 65%,transparent)}' +
+    '.sl-poll-option.sl-poll-leader .sl-poll-opt-name{color:var(--accent)}' +
+    '.sl-poll-lead-info{margin:2px 0 0;font-size:12px;font-weight:600;color:var(--accent);' +
+    'animation:sl-pop .3s ease}' +
+    '.sl-poll-check{display:flex;align-items:center;gap:10px}' +
+    '.sl-poll-check::before{content:"";flex:none;width:16px;height:16px;border-radius:5px;border:1.5px solid var(--border);' +
+    'background:var(--bg);transition:background .12s ease,border-color .12s ease}' +
+    '.sl-poll-check.selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}' +
+    '.sl-poll-check.selected::before{background:var(--accent);border-color:var(--accent);' +
+    'box-shadow:inset 0 0 0 3px var(--card)}' +
+    '.sl-poll-vote-btn{appearance:none;border:0;cursor:pointer;padding:9px 18px;border-radius:999px;font:inherit;' +
+    'font-weight:600;font-size:13px;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));' +
+    'box-shadow:0 6px 16px -6px color-mix(in srgb,var(--accent) 60%,transparent);' +
+    'transition:transform .12s ease,filter .12s ease,opacity .12s ease;margin-top:2px}' +
+    '.sl-poll-vote-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}' +
+    '.sl-poll-vote-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;filter:none}' +
+    '.sl-poll-multi-hint{margin:10px 2px 0;font-size:11.5px;color:var(--muted)}' +
+    '.sl-poll-actions{display:flex;flex-direction:column;align-items:flex-start;gap:2px}' +
+    '.sl-pop{animation:sl-pop .35s cubic-bezier(.22,1,.36,1)}' +
+    '@keyframes sl-pop{0%{transform:scale(.94)}60%{transform:scale(1.03)}100%{transform:scale(1)}}' +
     '.sl-replies{list-style:none;margin:0;padding:4px 0 0 14px;display:flex;flex-direction:column;gap:10px;' +
     'border-left:2px solid color-mix(in srgb,var(--border) 65%,transparent)}' +
     '.sl-reply{box-shadow:none;padding:12px 14px;background:color-mix(in srgb,var(--card) 55%,transparent)}' +
@@ -296,6 +351,9 @@
     function countLabel(n) {
       return String(t(n === 1 ? 'countOne' : 'countMany')).replace('{n}', String(n));
     }
+    function pollCountLabel(n) {
+      return String(t(n === 1 ? 'pollVoteCountOne' : 'pollVoteCountMany')).replace('{n}', String(n));
+    }
 
     // -------- theming: forced theme + CSS-variable overrides ------------
     // Values may arrive as numbers (programmatic API) or strings (attributes);
@@ -323,6 +381,10 @@
     var timeGateMs = 3000;
     var rawGate = opts && opts.timeGateMs != null ? String(opts.timeGateMs) : root.getAttribute('data-time-gate-ms');
     if (rawGate != null && /^\d+$/.test(rawGate)) timeGateMs = parseInt(rawGate, 10);
+    // data-reactions-position="top|bottom" — where the whole reactions bar sits
+    // relative to the comments (default bottom: under the form).
+    var reactionsPosition = String(((opts && opts.reactionsPosition) || root.getAttribute('data-reactions-position') || 'bottom')).trim();
+    if (reactionsPosition !== 'top' && reactionsPosition !== 'bottom') reactionsPosition = 'bottom';
     if (pollId) {
       initPoll();
       return;
@@ -395,16 +457,25 @@
       row.append(hint, submitBtn);
       var hpInput = makeHoneypot('website');
       form.append(nickInput, bodyInput, hpInput, row);
-      root.append(heading, list);
 
+      // "Start the conversation" card: unifies the empty message with the form.
+      var startCard = el('div', 'sl-start sl-start-empty');
+      var startMsg = el('p', 'sl-start-msg', t('startTitle'));
+      startMsg.appendChild(el('span', 'sl-start-sub', t('empty')));
+      startCard.append(startMsg, form, status);
+
+      root.append(heading);
       if (reactions && reactions.length) {
         reactStatus = el('p', 'sl-reaction-status');
         reactBar = el('div', 'sl-reactions');
         buildReactions();
+        // Whole reactions bar together, above the list when configured.
+        if (reactionsPosition === 'top') root.append(reactBar, reactStatus);
+      }
+      root.append(list, startCard);
+      if (reactions && reactions.length && reactionsPosition !== 'top') {
         root.append(reactBar, reactStatus);
       }
-
-      root.append(form, status);
     }
 
     function setStatus(message, kind) {
@@ -569,9 +640,13 @@
           count.textContent = countLabel(comments.length);
           list.replaceChildren();
           if (comments.length === 0) {
-            list.appendChild(el('li', 'sl-empty', t('empty')));
+            // Empty thread: hide the list, show the "start the conversation" card.
+            list.classList.add('sl-hidden');
+            startCard.classList.add('sl-start-empty');
             return;
           }
+          list.classList.remove('sl-hidden');
+          startCard.classList.remove('sl-start-empty');
           buildTree(comments).forEach(function (r) { list.appendChild(renderComment(r, 0)); });
         });
     }
@@ -623,8 +698,11 @@
             };
             worker.onerror = function () { URL.revokeObjectURL(url); worker.terminate(); reject(new Error('pow worker error')); };
             var msg = { challenge: challenge };
-            if (kind === 'poll') { msg.pollId = a; msg.option = b; }
-            else { msg.nickname = a; msg.body = b; }
+            if (kind === 'poll') {
+              msg.pollId = a;
+              if (Array.isArray(b)) msg.options = b; // multi-select set
+              else msg.option = b;
+            } else { msg.nickname = a; msg.body = b; }
             worker.postMessage(msg);
             return null;
           })
@@ -793,10 +871,15 @@
 
       var heading = el('div', 'sl-poll-heading');
       var qEl = el('h3', null, '…');
-      heading.appendChild(qEl);
+      var totalChip = el('span', 'sl-poll-count', '');
+      heading.append(qEl, totalChip);
       var statusEl = el('p', 'sl-poll-status');
       var listEl = el('ul', 'sl-poll-options');
-      root.append(heading, listEl, statusEl);
+      var actionsEl = el('div', 'sl-poll-actions');
+      root.append(heading, listEl, actionsEl, statusEl);
+
+      var selected = {};
+      var multiVoteBtn = null;
 
       function setStatus(message, kind) {
         statusEl.replaceChildren();
@@ -807,48 +890,148 @@
         statusEl.appendChild(document.createTextNode(message));
       }
 
+      // Count-up helper: animates a number inside `node` (0 → to) with easing.
+      function animateValue(node, to, suffix) {
+        var dur = 520, start = null;
+        function step(ts) {
+          if (!start) start = ts;
+          var p = Math.min(1, (ts - start) / dur);
+          var eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+          node.textContent = Math.round(to * eased) + (suffix || '');
+          if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+
       function renderPoll(poll) {
         qEl.textContent = poll.question || '';
+        totalChip.textContent = pollCountLabel(Number(poll.total) || 0);
         var opts = Array.isArray(poll.options) ? poll.options : [];
         var total = Number(poll.total) || 0;
         // Show results after voting (or when closed), or ALWAYS when configured.
         var showResults = poll.status !== 'open' || !!poll.voted || pollResults === 'always';
         listEl.replaceChildren();
-        opts.forEach(function (o) {
-          var c = poll.counts && poll.counts[o] ? Number(poll.counts[o]) : 0;
+        actionsEl.replaceChildren();
+        multiVoteBtn = null;
+
+        // RANKING: sort results by votes desc (stable ties keep poll order).
+        var rows = opts.map(function (o) {
+          return { option: o, count: poll.counts && poll.counts[o] ? Number(poll.counts[o]) : 0 };
+        });
+        if (showResults) {
+          rows = rows.slice().sort(function (a, b) {
+            return b.count - a.count || opts.indexOf(a.option) - opts.indexOf(b.option);
+          });
+        }
+        // LEADER: strictly ahead of the runner-up.
+        var leader = showResults && rows.length > 0 && rows[0].count > (rows[1] ? rows[1].count : 0);
+
+        rows.forEach(function (r, i) {
+          var o = r.option, c = r.count;
           var pct = total > 0 ? Math.round((c / total) * 100) : 0;
-          var li = el('li', 'sl-poll-option');
+          var li = el('li', 'sl-poll-option' + (showResults && leader && i === 0 ? ' sl-poll-leader' : ''));
           if (showResults) {
             if (pollStyle !== 'counts') {
               var label = el('div', 'sl-poll-opt-label');
-              var meta;
-              if (pollStyle === 'percent') meta = pct + '%';
-              else if (pollStyle === 'minimal') meta = '';
-              else meta = c + ' · ' + pct + '%';
-              label.append(el('span', 'sl-poll-opt-name', o), el('span', 'sl-poll-opt-meta', meta));
+              var meta = el('span', 'sl-poll-opt-meta', '');
+              if (pollStyle === 'percent') animateValue(meta, pct, '%');
+              else if (pollStyle === 'minimal') meta.textContent = '';
+              else animateValue(meta, c, ' · ' + pct + '%');
+              label.append(el('span', 'sl-poll-rank', '#' + (i + 1)), el('span', 'sl-poll-opt-name', o), meta);
               var bar = el('div', 'sl-poll-bar');
               var fill = el('div', 'sl-poll-fill');
-              fill.style.width = pct + '%';
+              fill.style.width = '0%';
+              fill.style.transitionDelay = (i * 90) + 'ms'; // staggered fill
               bar.appendChild(fill);
               li.append(label, bar);
+              requestAnimationFrame(function () {
+                requestAnimationFrame(function () { fill.style.width = pct + '%'; });
+              });
             } else {
               var cLabel = el('div', 'sl-poll-opt-label');
-              cLabel.append(el('span', 'sl-poll-opt-name', o), el('span', 'sl-poll-opt-meta', String(c)));
+              var cMeta = el('span', 'sl-poll-opt-meta', '');
+              animateValue(cMeta, c, '');
+              cLabel.append(el('span', 'sl-poll-rank', '#' + (i + 1)), el('span', 'sl-poll-opt-name', o), cMeta);
               li.appendChild(cLabel);
             }
           } else {
-            var btn = el('button', 'sl-poll-btn', o);
+            // Voting UI: multi polls use checkbox-style toggles + Vote (N).
+            var btn = el('button', 'sl-poll-btn' + (poll.multi ? ' sl-poll-check' : ''), o);
             btn.type = 'button';
-            btn.addEventListener('click', function () { vote(o, btn); });
+            if (poll.multi) {
+              btn.setAttribute('aria-pressed', 'false');
+              btn.addEventListener('click', function () { toggleSelect(o, btn); });
+            } else {
+              btn.addEventListener('click', function () { vote([o], btn); });
+            }
             li.appendChild(btn);
           }
           listEl.appendChild(li);
         });
+
         if (showResults) {
+          // LEADER GAP: "Leads by N votes" summary line.
+          if (leader) {
+            var gap = rows[0].count - (rows[1] ? rows[1].count : 0);
+            actionsEl.appendChild(el('p', 'sl-poll-lead-info', t('pollLeader').replace('{n}', String(gap))));
+          }
+          // MULTI + single-vote guard: let the same browser change its votes.
+          if (poll.multi && poll.singleVote && poll.status === 'open' && poll.voted) {
+            var changeBtn = el('button', 'sl-poll-vote-btn', t('pollChangeVotes'));
+            changeBtn.type = 'button';
+            changeBtn.addEventListener('click', changeVotes);
+            actionsEl.appendChild(changeBtn);
+          }
           setStatus(poll.status !== 'open' ? t('closed') : t('voted'), poll.status !== 'open' ? undefined : 'ok');
         } else {
+          if (poll.multi) {
+            multiVoteBtn = el('button', 'sl-poll-vote-btn', t('pollVoteBtn').replace('{n}', '0'));
+            multiVoteBtn.type = 'button';
+            multiVoteBtn.disabled = true;
+            multiVoteBtn.addEventListener('click', function () { submitMulti(); });
+            actionsEl.appendChild(multiVoteBtn);
+            actionsEl.appendChild(el('p', 'sl-poll-multi-hint', t('pollMultiHint')));
+          }
           setStatus('');
         }
+      }
+
+      function toggleSelect(o, btn) {
+        if (selected[o]) { delete selected[o]; btn.classList.remove('selected'); btn.setAttribute('aria-pressed', 'false'); }
+        else { selected[o] = true; btn.classList.add('selected'); btn.setAttribute('aria-pressed', 'true'); }
+        var n = Object.keys(selected).length;
+        if (multiVoteBtn) {
+          multiVoteBtn.disabled = n === 0;
+          multiVoteBtn.textContent = t('pollVoteBtn').replace('{n}', String(n));
+        }
+      }
+
+      function submitMulti() {
+        var opts = Object.keys(selected);
+        if (!opts.length) return;
+        vote(opts, multiVoteBtn);
+      }
+
+      // "Change your votes": the same anonymous browser token revokes its own
+      // votes (multi + single_vote polls only) so the visitor can vote again.
+      function changeVotes() {
+        setStatus(t('solving'), 'busy');
+        fetch(endpoint + '/api/polls/revoke', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ pollId: pollId, voterToken: voterToken })
+        })
+          .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+          .then(function (outcome) {
+            if (outcome.ok) {
+              selected = {};
+              setStatus(t('pollVotesChanged'), 'ok');
+              renderPoll(outcome.data.poll);
+            } else {
+              setStatus('Error: ' + (outcome.data && outcome.data.error ? outcome.data.error : 'unknown'), 'err');
+            }
+          })
+          .catch(function (err) { setStatus('Error: ' + err.message, 'err'); });
       }
 
       function findIn(data) {
@@ -875,9 +1058,8 @@
           .catch(function () { setStatus(t('pollLoadError'), 'err'); });
       }
 
-      function vote(option, btn) {
-        if (btn.disabled) return;
-        btn.disabled = true;
+      function vote(options, btn) {
+        if (btn) { btn.disabled = true; btn.classList.add('sl-pop'); }
         setStatus(t('solving'), 'busy');
         var t0 = Date.now();
         fetch(
@@ -886,7 +1068,9 @@
         )
           .then(function (res) { if (!res.ok) throw new Error('challenge request failed'); return res.json(); })
           .then(function (challenge) {
-            return solveWithWorker(challenge, 'poll', pollId, option).then(function (nonce) {
+            // Multi-set: solve ONE PoW over the whole selected set.
+            var solveArg = options.length > 1 ? options : options[0];
+            return solveWithWorker(challenge, 'poll', pollId, solveArg).then(function (nonce) {
               return { challenge: challenge, nonce: nonce };
             });
           })
@@ -897,12 +1081,13 @@
                 hostContext: solved.challenge.hostContext,
                 articlePath: solved.challenge.articlePath,
                 pollId: pollId,
-                option: option,
                 difficulty: solved.challenge.difficulty,
                 expiresAt: solved.challenge.expiresAt,
                 signature: solved.challenge.signature,
                 nonce: solved.nonce
               };
+              if (options.length > 1) payload.options = options;
+              else payload.option = options[0];
               if (voterToken) payload.voterToken = voterToken;
               return fetch(endpoint + '/api/polls/vote', {
                 method: 'POST',
@@ -920,6 +1105,7 @@
                 voterToken = outcome.data.voterToken;
                 try { localStorage.setItem(voterKey, voterToken); } catch (e) { /* private mode */ }
               }
+              selected = {};
               renderPoll(outcome.data.poll);
             } else if (outcome.status === 409) {
               setStatus(t('alreadyVoted'), 'err');
@@ -929,7 +1115,7 @@
             }
           })
           .catch(function (err) { setStatus('Error: ' + err.message, 'err'); })
-          .finally(function () { btn.disabled = false; });
+          .finally(function () { if (btn) btn.disabled = false; });
       }
 
       loadPoll();

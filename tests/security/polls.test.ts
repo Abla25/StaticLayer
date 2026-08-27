@@ -3,8 +3,10 @@ import type { Miniflare } from 'miniflare';
 import {
   base64UrlToBytes,
   minePollNonce,
+  minePollNonceMulti,
   PROTOCOL_VERSION,
   serializeNonce,
+  sortPollOptions,
 } from '@staticlayer/protocol';
 import { SECRETS, spawnWorker } from './worker.ts';
 
@@ -38,7 +40,7 @@ async function createPoll(
   mf: Miniflare,
   cookie: string,
   csrf: string,
-  overrides: Partial<{ question: string; options: string[]; articlePath: string; singleVote: boolean }> = {},
+  overrides: Partial<{ question: string; options: string[]; articlePath: string; singleVote: boolean; multi: boolean }> = {},
 ): Promise<CreatedPoll> {
   const res = await mf.dispatchFetch(`${BASE}/api/admin/polls`, {
     method: 'POST',
@@ -48,18 +50,20 @@ async function createPoll(
       question: 'Best option?',
       options: ['A', 'B', 'C'],
       singleVote: false,
+      multi: false,
       ...overrides,
     }),
   });
   expect(res.status).toBe(201);
-  const data = (await res.json()) as { poll: CreatedPoll };
+  const data = (await res.json()) as { poll: CreatedPoll & { multi?: boolean; singleVote?: boolean } };
   return data.poll;
 }
 
+/** Vote: `option` is a single string OR an array (multi-select, one PoW). */
 async function vote(
   mf: Miniflare,
   pollId: string,
-  option: string,
+  option: string | string[],
   articlePath = '/blog/x',
   voterToken?: string,
   difficulty?: number,
@@ -72,28 +76,43 @@ async function vote(
     challengeId: string; hostContext: string; articlePath: string;
     difficulty: number; expiresAt: number; signature: string;
   };
-  const nonce = await minePollNonce(
-    {
-      version: PROTOCOL_VERSION,
-      hostContext: challenge.hostContext,
-      articlePath: challenge.articlePath,
-      pollId,
-      option,
-      challengeId: base64UrlToBytes(challenge.challengeId),
-    },
-    difficulty ?? challenge.difficulty,
-  );
+  const isMulti = Array.isArray(option);
+  const options = isMulti ? sortPollOptions(option) : [option as string];
+  const nonce = isMulti
+    ? await minePollNonceMulti(
+        {
+          version: PROTOCOL_VERSION,
+          hostContext: challenge.hostContext,
+          articlePath: challenge.articlePath,
+          pollId,
+          options,
+          challengeId: base64UrlToBytes(challenge.challengeId),
+        },
+        difficulty ?? challenge.difficulty,
+      )
+    : await minePollNonce(
+        {
+          version: PROTOCOL_VERSION,
+          hostContext: challenge.hostContext,
+          articlePath: challenge.articlePath,
+          pollId,
+          option: option as string,
+          challengeId: base64UrlToBytes(challenge.challengeId),
+        },
+        difficulty ?? challenge.difficulty,
+      );
   const payload: Record<string, unknown> = {
     challengeId: challenge.challengeId,
     hostContext: challenge.hostContext,
     articlePath: challenge.articlePath,
     pollId,
-    option,
     difficulty: challenge.difficulty,
     expiresAt: challenge.expiresAt,
     signature: challenge.signature,
     nonce: serializeNonce(nonce),
   };
+  if (isMulti) payload.options = options;
+  else payload.option = option;
   if (voterToken) payload.voterToken = voterToken;
   const res = await mf.dispatchFetch(`${BASE}/api/polls/vote`, {
     method: 'POST',
@@ -102,6 +121,15 @@ async function vote(
   });
   const body = (await res.json()) as Record<string, unknown>;
   return { status: res.status, body };
+}
+
+async function revoke(mf: Miniflare, pollId: string, voterToken: string): Promise<{ status: number; body: Record<string, unknown> }> {
+  const res = await mf.dispatchFetch(`${BASE}/api/polls/revoke`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ pollId, voterToken }),
+  });
+  return { status: res.status, body: (await res.json()) as Record<string, unknown> };
 }
 
 describe('polls — public API + PoW + anti-replay', () => {
@@ -265,5 +293,150 @@ describe('polls — optional single vote per browser (anonymous token)', () => {
     expect(
       (await mf.dispatchFetch(`${BASE}/api/admin/polls`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status,
     ).toBe(401);
+  });
+});
+
+describe('polls — multi-select (one PoW for the whole set)', () => {
+  let mf: Miniflare | undefined;
+  let auth: { cookie: string; csrf: string };
+  afterEach(async () => {
+    await mf?.dispose();
+    mf = undefined;
+  });
+
+  it('accepts a multi-select vote and adds +1 to EVERY chosen option', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf, { multi: true });
+
+    const first = await vote(mf, poll.id, ['A', 'C']);
+    expect(first.status).toBe(200);
+    const p1 = first.body.poll as { counts: Record<string, number>; total: number };
+    expect(p1.counts).toEqual({ A: 1, C: 1 });
+    expect(p1.total).toBe(2);
+
+    // A second vote (fresh challenge, no single-vote guard) adds +1 to B only.
+    const second = await vote(mf, poll.id, ['B']);
+    expect(second.status).toBe(200);
+    const p2 = second.body.poll as { counts: Record<string, number>; total: number };
+    expect(p2.counts).toEqual({ A: 1, B: 1, C: 1 });
+    expect(p2.total).toBe(3);
+  });
+
+  it('rejects a duplicate option in the same multi vote', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf, { multi: true });
+    const res = await vote(mf, poll.id, ['A', 'A']);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects an options array on a NON-multi poll', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf, { multi: false });
+    const res = await vote(mf, poll.id, ['A', 'B']);
+    expect(res.status).toBe(400);
+  });
+
+  it('multi polls require the options array (even for a single choice)', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf, { multi: true });
+    const res = await vote(mf, poll.id, 'A');
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('polls — admin PATCH singleVote / multi', () => {
+  let mf: Miniflare | undefined;
+  let auth: { cookie: string; csrf: string };
+  afterEach(async () => {
+    await mf?.dispose();
+    mf = undefined;
+  });
+
+  async function patch(id: string, body: Record<string, unknown>): Promise<{ status: number; body: Record<string, unknown> }> {
+    const res = await mf!.dispatchFetch(`${BASE}/api/admin/polls/${id}`, {
+      method: 'PATCH',
+      headers: { cookie: auth.cookie, 'X-CSRF-Token': auth.csrf, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return { status: res.status, body: (await res.json()) as Record<string, unknown> };
+  }
+
+  it('toggles singleVote and multi after creation', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf);
+
+    const r1 = await patch(poll.id, { singleVote: true });
+    expect(r1.status).toBe(200);
+    expect((r1.body.poll as { singleVote: boolean }).singleVote).toBe(true);
+
+    const r2 = await patch(poll.id, { multi: true });
+    expect(r2.status).toBe(200);
+    expect((r2.body.poll as { multi: boolean }).multi).toBe(true);
+
+    const r3 = await patch(poll.id, { singleVote: false, multi: false });
+    expect(r3.status).toBe(200);
+    const p3 = r3.body.poll as { singleVote: boolean; multi: boolean };
+    expect(p3.singleVote).toBe(false);
+    expect(p3.multi).toBe(false);
+  });
+
+  it('rejects an empty PATCH and keeps status working', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf);
+
+    expect((await patch(poll.id, {})).status).toBe(400);
+    const closed = await patch(poll.id, { status: 'closed' });
+    expect(closed.status).toBe(200);
+    expect((closed.body.poll as { status: string }).status).toBe('closed');
+  });
+});
+
+describe('polls — change your votes (revoke, multi + single_vote)', () => {
+  let mf: Miniflare | undefined;
+  let auth: { cookie: string; csrf: string };
+  afterEach(async () => {
+    await mf?.dispose();
+    mf = undefined;
+  });
+
+  it('revokes the browser\'s own votes and allows voting again', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf, { multi: true, singleVote: true });
+
+    const first = await vote(mf, poll.id, ['A', 'C']);
+    expect(first.status).toBe(200);
+    const token = (first.body as { voterToken?: string }).voterToken as string;
+    expect(typeof token).toBe('string');
+
+    // The guard still blocks a second vote with the same token.
+    expect((await vote(mf, poll.id, ['B'], '/blog/x', token)).status).toBe(409);
+
+    // Change your votes: revoke, then vote again with the SAME token.
+    const rv = await revoke(mf, poll.id, token);
+    expect(rv.status).toBe(200);
+    expect((rv.body.poll as { counts: Record<string, number>; total: number }).total).toBe(0);
+    expect((rv.body as { voted: boolean }).voted).toBe(false);
+
+    const again = await vote(mf, poll.id, ['B'], '/blog/x', token);
+    expect(again.status).toBe(200);
+    const p = again.body.poll as { counts: Record<string, number>; total: number };
+    expect(p.counts).toEqual({ B: 1 });
+  });
+
+  it('rejects revoke on non-multi polls and with a bad token', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const single = await createPoll(mf, auth.cookie, auth.csrf, { singleVote: true });
+    const first = await vote(mf, single.id, 'A');
+    const token = (first.body as { voterToken?: string }).voterToken as string;
+    expect((await revoke(mf, single.id, token)).status).toBe(400);
+    expect((await revoke(mf, single.id, 'bad.token')).status).toBe(401);
   });
 });

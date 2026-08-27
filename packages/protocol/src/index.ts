@@ -14,14 +14,14 @@
  *   - verifyPow()
  */
 
-export { PROTOCOL_VERSION, CHALLENGE_ID_BYTES, HASH_BYTES, NONCE_BYTES, UINT64_MAX, MAX_HOST_CONTEXT_BYTES, MAX_ARTICLE_PATH_BYTES, MAX_NICKNAME_BYTES, MAX_BODY_BYTES, MAX_POLL_ID_BYTES, MAX_OPTION_BYTES, MIN_DIFFICULTY, MAX_DIFFICULTY, DEFAULT_DIFFICULTY, HMAC_SHA256_BYTES } from './constants.ts';
+export { PROTOCOL_VERSION, CHALLENGE_ID_BYTES, HASH_BYTES, NONCE_BYTES, UINT64_MAX, MAX_HOST_CONTEXT_BYTES, MAX_ARTICLE_PATH_BYTES, MAX_NICKNAME_BYTES, MAX_BODY_BYTES, MAX_POLL_ID_BYTES, MAX_OPTION_BYTES, MAX_POLL_OPTIONS, MIN_DIFFICULTY, MAX_DIFFICULTY, DEFAULT_DIFFICULTY, HMAC_SHA256_BYTES } from './constants.ts';
 export { ProtocolError } from './errors.ts';
 export { hasUnpairedSurrogate, utf8EncodeStrict, utf8DecodeStrict } from './utf8.ts';
-export { encodeCanonicalPayload, decodeCanonicalPayload, encodeCanonicalPollPayload, serializeNonce, parseNonce, type CanonicalPayload, type PollCanonicalPayload } from './encoding.ts';
+export { encodeCanonicalPayload, decodeCanonicalPayload, encodeCanonicalPollPayload, encodeCanonicalPollPayloadMulti, sortPollOptions, serializeNonce, parseNonce, type CanonicalPayload, type PollCanonicalPayload, type PollMultiCanonicalPayload } from './encoding.ts';
 export { randomBytes, sha256, hmacSha256, constantTimeEqual, verifyHmacSha256 } from './crypto.ts';
 export { bytesToBase64Url, base64UrlToBytes, bytesToHex, hexToBytes } from './base64url.ts';
 export { encodeCanonicalChallenge, signChallenge, verifyChallenge, assertDifficulty, type ChallengeFields, type Secret } from './challenge.ts';
-export { verifyPow, verifyPowFields, mineNonce, minePollNonce, leadingZeroBits, type MineOptions } from './pow.ts';
+export { verifyPow, verifyPowFields, mineNonce, minePollNonce, minePollNonceMulti, leadingZeroBits, type MineOptions } from './pow.ts';
 
 import { sha256 as sha256Impl } from './crypto.ts';
 import { utf8EncodeStrict } from './utf8.ts';

@@ -344,7 +344,7 @@ describe('admin moderation v2 — blocked terms + updates', () => {
     const res = await mf.dispatchFetch(`${BASE}/api/admin/updates`, { headers: { cookie } });
     expect(res.status).toBe(200);
     const data = (await res.json()) as { current: string; updateAvailable: boolean };
-    expect(data.current).toBe('1.4.0');
+    expect(data.current).toBe('1.5.0');
     expect(typeof data.updateAvailable).toBe('boolean');
   });
 });

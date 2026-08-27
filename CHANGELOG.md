@@ -13,6 +13,26 @@ Versioning: [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Polls v2 (1.5.0)** — total-votes chip in the heading ("N votes"), ranked
+  results (highest first, #1/#2 badges, stable ties), leader highlight with a
+  "Leads by N votes" gap line, and animated bars (staggered fill + count-up).
+  **Multi-select polls**: visitors pick several options and cast ONE vote (a
+  single Proof-of-Work over the whole set) — new canonical "poll-multi"
+  payload schema in `@staticlayer/protocol` (`encodeCanonicalPollPayloadMulti`,
+  `minePollNonceMulti`), runtime accepts `options` arrays, batch stores one row
+  per chosen option (+1 each). **Change your votes**: guarded multi polls let a
+  returning anonymous browser revoke its own votes (`POST /api/polls/revoke`)
+  and vote again. Admin: "Multi-select" toggle at creation and after (PATCH
+  now updates `singleVote` and `multi` too), chip + toggles on poll cards, live
+  multi preview. Tests: multi-vote, PATCH, revoke, ranking, widget poll v2.
+- **Comment layout (1.5.0)** — unified "Start the conversation" card (empty
+  message + form as one block) and `data-reactions-position="top|bottom"`
+  (default bottom) so the whole reactions bar sits together, above or below the
+  comments (widget builder field added). Tests: start card + positions.
+- **Zero-data anti-spam (1.4.0)** — hidden honeypot field (silently dropped
+  bots, fake "pending") + 3s challenge time gate (429 on too-fast submissions;
+  issue time recovered from the signed challenge, zero server state). Widget
+  mirrors the gate client-side (`data-time-gate-ms`). Tests: antiabuse.
 - **Comments and reactions are now fully separable** — the widget supports
   three modes: comments only (default), comments + reactions
   (<code>data-reactions</code>), and a standalone reactions bar

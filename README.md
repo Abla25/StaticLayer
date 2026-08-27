@@ -54,10 +54,11 @@ StaticLayer is a source-available, Cloudflare-native comment system designed for
 - 🕵️ **No tracking** — the public widget sets no cookies and stores nothing in the browser.
 - 🔁 **Idempotent, verifiable deploys** — a Desired State Engine observes → plans → applies → verifies. It never fails silently.
 - 🔔 **Telegram alerts (optional)** — get a private notification when a comment awaits moderation; GDPR-minimal (no comment data in the message), configured from the admin panel.
-- 🗳️ **Polls** — StrawPoll-style, privacy-first (no IP, no cookies), PoW-protected votes; optional anonymous **one-vote-per-browser** guard, created & managed from the admin.
+- 🗳️ **Polls** — StrawPoll-style, privacy-first (no IP, no cookies), PoW-protected votes; optional anonymous **one-vote-per-browser** guard, optional **multi-select** (pick several options, one PoW), ranked results with leader + total-votes chip, and **Change your votes** on guarded multi polls. Created & managed from the admin.
 - 🧵 **Nested replies** — up to 3 levels, with "Reply" inline, moderator-aware (pending parents hide the thread; deleted parents keep replies with a placeholder).
 - 🧑‍💻 **Owner replies** — answer comments right from the admin console; your replies are approved instantly and shown with an **Author** badge (owner nickname is configurable in Settings).
 - 🧩 **Drop-in widget** — a few lines of HTML on any static site (Astro, Hugo, Jekyll, plain HTML…).
+- 🗂️ **Comment layout (v1.5)** — a unified **"Start the conversation"** card (empty message + form) and `data-reactions-position="top|bottom"` to place the whole reactions bar together, above or below the comments.
 
 ---
 
@@ -117,7 +118,7 @@ Done. Moderate comments at `https://comments.yourdomain.com/admin.html`.
 ## 🗳️ Polls (optional)
 
 Create StrawPoll-style polls from the admin (**Polls** tab): article path, question, 2–10
-options, and an optional **one vote per browser** guard. Then embed on any page:
+options, and optional **one vote per browser** / **multi-select** toggles. Then embed on any page:
 
 ```html
 <div data-staticlayer
@@ -127,9 +128,17 @@ options, and an optional **one vote per browser** guard. Then embed on any page:
 ```
 
 Votes are anonymous (no IP, no cookies), protected by the same Proof-of-Work + atomic
-anti-replay as comments. With the single-vote guard, the server issues an **anonymous** token
-that lives only in the visitor's browser (localStorage) and stores only a hash of it — so a
-returning visitor cannot vote twice, and no personal data ever leaves the device.
+anti-replay as comments, and results are shown as a **ranking** (highest first, #1/#2
+badges) with the **leader highlighted**, a **"Leads by N votes"** gap line and a
+**total-votes chip** in the heading. With the single-vote guard, the server issues an
+**anonymous** token that lives only in the visitor's browser (localStorage) and stores
+only a hash of it — so a returning visitor cannot vote twice, and no personal data ever
+leaves the device.
+
+**Multi-select:** visitors pick several options and cast **one vote (a single
+Proof-of-Work)** for the whole set; every chosen option gets +1. On guarded multi polls
+they can also **"Change your votes"** — revoking their own previous anonymous votes
+(no new data stored).
 
 **Global polls:** leave the article path empty when creating a poll and it appears on **any**
 page where you embed its id. Optional display: `data-poll-style="bars|percent|counts|minimal"`

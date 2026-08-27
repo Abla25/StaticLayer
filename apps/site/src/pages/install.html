@@ -129,12 +129,12 @@
         <p>Alerts are off by default and never expose comment data. You can disable them anytime from the same settings.</p>
 
         <h2>11 · Polls (optional)</h2>
-        <p>StrawPoll-style polls for any page. In the admin open the <b>Polls</b> tab, enter the article path, the question and 2–10 options, optionally enable <b>one vote per browser</b>, then copy the poll snippet into your page:</p>
+        <p>StrawPoll-style polls for any page. In the admin open the <b>Polls</b> tab, enter the article path, the question and 2–10 options, optionally enable <b>one vote per browser</b> and/or <b>Multi-select</b>, then copy the poll snippet into your page:</p>
 <pre><code>&lt;div data-staticlayer
      data-endpoint="https://comments.example.com"
      data-poll-id="&lt;poll id from the admin&gt;">&lt;/div&gt;
 &lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
-        <p>Votes are anonymous (no IP, no cookies) and protected by the same Proof-of-Work + anti-replay as comments. The optional <b>one vote per browser</b> guard stores an <b>anonymous</b> token only in the visitor's browser (no personal data). Honest limitation: a visitor who clears browser storage can vote again — same trade-off as every anonymous poll (StrawPoll included).</p>
+        <p>Votes are anonymous (no IP, no cookies) and protected by the same Proof-of-Work + anti-replay as comments. Results are ranked (highest first) with the leader highlighted and a total-votes chip. With <b>Multi-select</b> a visitor picks several options and casts <b>one vote (single PoW)</b> for the whole set. The optional <b>one vote per browser</b> guard stores an <b>anonymous</b> token only in the visitor's browser (no personal data) and, on multi polls, offers <b>Change your votes</b> (revoke + vote again). Honest limitation: a visitor who clears browser storage can vote again — same trade-off as every anonymous poll (StrawPoll included).</p>
         <p><b>Global poll:</b> leave the article path empty in the admin to make a poll appear on <b>any</b> page where you embed its snippet. Optional attributes: <code>data-poll-style="bars|percent|counts|minimal"</code> (result display) and <code>data-poll-results="after|always"</code> (when to reveal results).</p>
 
         <h2>12 · Nested replies</h2>

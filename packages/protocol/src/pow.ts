@@ -1,6 +1,13 @@
 import { MAX_DIFFICULTY, MIN_DIFFICULTY, UINT64_MAX } from './constants.ts';
 import { sha256 } from './crypto.ts';
-import { encodeCanonicalPayload, encodeCanonicalPollPayload, type CanonicalPayload, type PollCanonicalPayload } from './encoding.ts';
+import {
+  encodeCanonicalPayload,
+  encodeCanonicalPollPayload,
+  encodeCanonicalPollPayloadMulti,
+  type CanonicalPayload,
+  type PollCanonicalPayload,
+  type PollMultiCanonicalPayload,
+} from './encoding.ts';
 import { ProtocolError } from './errors.ts';
 
 /**
@@ -117,4 +124,30 @@ export async function minePollNonce(
     nonce += 1n;
   }
   throw new ProtocolError(`minePollNonce: no nonce satisfying difficulty ${difficulty} within ${maxAttempts} attempts`);
+}
+
+/** Same as minePollNonce but over the MULTI-SELECT poll schema. */
+export async function minePollNonceMulti(
+  base: Omit<PollMultiCanonicalPayload, 'nonce'>,
+  difficulty: number,
+  options: MineOptions = {},
+): Promise<bigint> {
+  assertDifficulty(difficulty);
+  const start = options.startNonce ?? 0n;
+  const maxAttempts = options.maxAttempts ?? (1n << 32n);
+  if (start < 0n || start > UINT64_MAX) {
+    throw new ProtocolError('startNonce out of uint64 range');
+  }
+
+  let nonce = start;
+  for (let i = 0n; i < maxAttempts; i++) {
+    if (nonce > UINT64_MAX) break;
+    const payload = encodeCanonicalPollPayloadMulti({ ...base, nonce });
+    const digest = await sha256(payload);
+    if (leadingZeroBits(digest) >= difficulty) {
+      return nonce;
+    }
+    nonce += 1n;
+  }
+  throw new ProtocolError(`minePollNonceMulti: no nonce satisfying difficulty ${difficulty} within ${maxAttempts} attempts`);
 }

@@ -473,6 +473,14 @@
             <label for="w-reactions">Reaction emoji</label>
             <input type="text" id="w-reactions" maxlength="120" placeholder="👍,❤️,🎉">
           </div>
+          <div class="w-field" id="w-reactions-position-field">
+            <label for="w-reactions-position">Reactions position</label>
+            <select id="w-reactions-position">
+              <option value="bottom">Bottom — under the comment form</option>
+              <option value="top">Top — above the comments</option>
+            </select>
+            <p class="hint">Where the whole reactions bar sits relative to the comments.</p>
+          </div>
           <div class="w-field">
             <label for="w-path">Article path (optional)</label>
             <input type="text" id="w-path" placeholder="leave empty = use the page's own URL">
@@ -605,6 +613,10 @@
           <div class="switch-row">
             <label class="switch"><input type="checkbox" id="poll-single-vote"><span class="slider"></span></label>
             <span class="switch-label">One vote per browser — stores an <b>anonymous</b> token in the visitor's browser (no cookies, no personal data)</span>
+          </div>
+          <div class="switch-row">
+            <label class="switch"><input type="checkbox" id="poll-multi"><span class="slider"></span></label>
+            <span class="switch-label">Multi-select — visitors can pick <b>several options</b> and vote once for the whole set (single Proof-of-Work, one vote per option)</span>
           </div>
           <div class="privacy-callout">
             <b>Privacy &amp; GDPR — read before enabling.</b>

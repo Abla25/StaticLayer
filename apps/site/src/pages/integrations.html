@@ -71,6 +71,7 @@
 
 &lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
         <p>Because each host element is independent, you can place <b>reactions under the headline</b> and <b>comments at the end of the article</b> on the same page: two elements, one <code>widget.js</code>.</p>
+        <p><b>Reactions position (v1.5):</b> by default the whole reactions bar sits <b>under the comment form</b>. Set <code>data-reactions-position="top"</code> to place it <b>above the comments</b> instead — the bar is always kept together, never interleaved with the empty state or the form. Programmatic equivalent: <code>StaticLayer.mount(el, { …, reactionsPosition: 'top' })</code>.</p>
         <p>Every click solves a <b>real Proof-of-Work</b> at the difficulty the server issues for that article. Abuse resistance comes from cost, not identity: each reaction is a single-use challenge (atomic anti-replay), reactions are rate-limited per article, a minimum interval is enforced, and difficulty <b>escalates</b> as an article accumulates reactions (base → ceiling, +1 every <code>REACTION_ESCALATION_VOTES</code>).</p>
         <p><b>Privacy:</b> a reaction is an anonymous event (article, reaction, timestamp). No user id, no IP, no cookie, no fingerprint. Honest limit: repeated votes by the same person are not detectable by design — the guarantee is cost, not identity.</p>
         <p><b>Customization (all optional vars, in your worker config):</b></p>
@@ -90,6 +91,8 @@
      data-poll-id="&lt;poll id from the admin&gt;"&gt;&lt;/div&gt;
 &lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
         <p>Votes are anonymous (no IP, no cookie) and protected by the same <b>Proof-of-Work + atomic anti-replay</b> as comments. The optional <b>one vote per browser</b> guard issues an <b>anonymous</b> token that lives only in the visitor's browser and stores only a hash on your D1 — a returning visitor cannot vote twice, and no personal data is collected. Honest limit: clearing browser storage resets the guard, as with every anonymous poll.</p>
+        <p><b>Multi-select (v1.5):</b> toggle <b>Multi-select</b> in the admin and visitors can pick <b>several options</b>, then vote once for the whole set — a <b>single Proof-of-Work</b> covers every selected option (+1 each). Results are shown as a <b>ranking</b> (highest first, #1/#2 badges), the leader is highlighted, and the heading shows the <b>total votes</b> (e.g. “9 votes”).</p>
+        <p><b>Change your votes:</b> on multi-select polls with the one-vote-per-browser guard, a returning visitor sees <b>“Change your votes”</b> — revoking their own previous (anonymous) votes so they can vote again. Nothing is stored about who they are.</p>
         <p><b>Global poll:</b> leave the article path empty when creating the poll and it appears on <b>any</b> page where you embed its id. Optional display attributes: <code>data-poll-style="bars|percent|counts|minimal"</code> and <code>data-poll-results="after|always"</code>.</p>
         <p>Programmatic equivalent: <code>StaticLayer.mount(el, { …, pollId: '&lt;id&gt;' })</code>.</p>
 

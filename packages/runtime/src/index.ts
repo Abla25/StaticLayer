@@ -27,7 +27,7 @@ import type { Env } from './env.ts';
 import { json, SECURITY_HEADERS } from './http.ts';
 import { purgeUsedChallenges } from './retention.ts';
 import { handleListReactions, handlePostReaction, handleReactionChallenge } from './reactions.ts';
-import { handleListPolls, handlePollChallenge, handlePollVote } from './polls.ts';
+import { handleListPolls, handlePollChallenge, handlePollVote, handlePollRevoke } from './polls.ts';
 import {
   handleAdminCreatePoll,
   handleAdminDeletePoll,
@@ -146,6 +146,9 @@ const worker: ExportedHandler<Env> = {
     }
     if (pathname === '/api/polls/vote' && method === 'POST') {
       return respond(handlePollVote(request, env));
+    }
+    if (pathname === '/api/polls/revoke' && method === 'POST') {
+      return respond(handlePollRevoke(request, env));
     }
     if (pathname === '/api/admin/login' && method === 'POST') {
       return respond(handleAdminLogin(request, env));

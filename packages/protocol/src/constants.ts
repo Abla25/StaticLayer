@@ -39,6 +39,9 @@ export const MAX_POLL_ID_BYTES = 64;
 /** Max poll option length (UTF-8 bytes). */
 export const MAX_OPTION_BYTES = 100;
 
+/** Max number of options selectable in ONE multi-vote PoW. */
+export const MAX_POLL_OPTIONS = 10;
+
 /** PoW difficulty bounds, in leading-zero bits of the SHA-256 digest. */
 export const MIN_DIFFICULTY = 0;
 export const MAX_DIFFICULTY = 256;

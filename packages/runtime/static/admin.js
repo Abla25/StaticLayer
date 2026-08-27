@@ -619,16 +619,17 @@
   // Generates the copy-paste embed snippet. All options are stored locally in
   // the browser (localStorage) — nothing is sent to the server.
   var WIDGET_KEY = 'sl-widget-config';
-  var widgetFields = ['w-reactions', 'w-path', 'w-lang', 'w-theme', 'w-accent-text', 'w-radius', 'w-maxwidth', 'w-texts', 'w-poll', 'w-poll-style', 'w-poll-results'];
+  var widgetFields = ['w-reactions', 'w-reactions-position', 'w-path', 'w-lang', 'w-theme', 'w-accent-text', 'w-radius', 'w-maxwidth', 'w-texts', 'w-poll', 'w-poll-style', 'w-poll-results'];
 
   function widgetDefaults() {
-    return { mode: 'both', reactions: '👍,❤️,🎉', path: '', lang: 'auto', theme: 'auto', accent: '#f57d1f', radius: '14', maxwidth: '640', texts: '', pollId: '', pollStyle: 'bars', pollResults: 'after' };
+    return { mode: 'both', reactions: '👍,❤️,🎉', reactionsPosition: 'bottom', path: '', lang: 'auto', theme: 'auto', accent: '#f57d1f', radius: '14', maxwidth: '640', texts: '', pollId: '', pollStyle: 'bars', pollResults: 'after' };
   }
   function widgetState() {
     var s = widgetDefaults();
     var checked = document.querySelector('input[name="w-mode"]:checked');
     s.mode = checked ? checked.value : 'both';
     s.reactions = document.getElementById('w-reactions').value.trim();
+    s.reactionsPosition = document.getElementById('w-reactions-position').value || 'bottom';
     s.path = document.getElementById('w-path').value.trim();
     s.lang = document.getElementById('w-lang').value;
     s.theme = document.getElementById('w-theme').value;
@@ -674,6 +675,9 @@
     lines.push('     data-endpoint="' + escAttr(origin) + '"');
     if (s.path) lines.push('     data-article-path="' + escAttr(s.path) + '"');
     if (s.mode !== 'comments' && s.reactions) lines.push('     data-reactions="' + escAttr(s.reactions) + '"');
+    if (s.mode !== 'comments' && s.reactions && s.reactionsPosition && s.reactionsPosition !== 'bottom') {
+      lines.push('     data-reactions-position="' + escAttr(s.reactionsPosition) + '"');
+    }
     if (s.mode === 'reactions') lines.push('     data-reactions-only');
     if (s.lang && s.lang !== 'auto') lines.push('     data-lang="' + escAttr(s.lang) + '"');
     if (s.theme && s.theme !== 'auto') lines.push('     data-theme="' + escAttr(s.theme) + '"');
@@ -698,6 +702,7 @@
     var radios = document.querySelectorAll('input[name="w-mode"]');
     radios.forEach(function (r) { r.checked = r.value === s.mode; });
     document.getElementById('w-reactions').value = s.reactions;
+    document.getElementById('w-reactions-position').value = s.reactionsPosition || 'bottom';
     document.getElementById('w-path').value = s.path;
     document.getElementById('w-lang').value = s.lang;
     document.getElementById('w-theme').value = s.theme;
@@ -714,8 +719,11 @@
       var f = document.getElementById(fid);
       if (f) f.classList.toggle('hidden', !s.pollId);
     });
-    var reactionsField = document.getElementById('w-reactions-field');
-    if (reactionsField) reactionsField.classList.toggle('hidden', s.mode === 'comments');
+    var reactionsFields = ['w-reactions-field', 'w-reactions-position-field'];
+    reactionsFields.forEach(function (fid) {
+      var f = document.getElementById(fid);
+      if (f) f.classList.toggle('hidden', s.mode === 'comments');
+    });
     renderWidgetSnippet();
     renderPreview();
   }
@@ -763,8 +771,10 @@
     r.addEventListener('change', function () {
       var mode = widgetState().mode;
       document.querySelectorAll('#w-mode label').forEach(function (l) { l.classList.toggle('sel', (l.querySelector('input') || {}).value === mode); });
-      var reactionsField = document.getElementById('w-reactions-field');
-      if (reactionsField) reactionsField.classList.toggle('hidden', mode === 'comments');
+      ['w-reactions-field', 'w-reactions-position-field'].forEach(function (fid) {
+        var f = document.getElementById(fid);
+        if (f) f.classList.toggle('hidden', mode === 'comments');
+      });
       saveWidgetState();
       renderWidgetSnippet();
     });
@@ -889,6 +899,7 @@
       var row = el('div', 'poll-actions');
       row.appendChild(el('span', 'poll-status-pill ' + p.status, p.status));
       if (p.singleVote) row.appendChild(el('span', 'poll-status-pill open', '1 vote/browser'));
+      if (p.multi) row.appendChild(el('span', 'poll-status-pill open', 'multi'));
       var toggle = el('button', 'btn ghost sm', p.status === 'open' ? 'Close' : 'Reopen');
       toggle.addEventListener('click', function () {
         api('/api/admin/polls/' + encodeURIComponent(p.id), {
@@ -899,6 +910,27 @@
           .catch(function (err) { showStatus(document.getElementById('polls-status'), 'Error: ' + err.message, true); });
       });
       row.appendChild(toggle);
+      // Toggle the single-vote guard and multi-select AFTER creation (PATCH).
+      var singleBtn = el('button', 'btn ghost sm', '1 vote/browser: ' + (p.singleVote ? 'on' : 'off'));
+      singleBtn.addEventListener('click', function () {
+        api('/api/admin/polls/' + encodeURIComponent(p.id), {
+          method: 'PATCH',
+          body: JSON.stringify({ singleVote: !p.singleVote })
+        })
+          .then(function () { loadPolls(); })
+          .catch(function (err) { showStatus(document.getElementById('polls-status'), 'Error: ' + err.message, true); });
+      });
+      row.appendChild(singleBtn);
+      var multiBtn = el('button', 'btn ghost sm', 'multi: ' + (p.multi ? 'on' : 'off'));
+      multiBtn.addEventListener('click', function () {
+        api('/api/admin/polls/' + encodeURIComponent(p.id), {
+          method: 'PATCH',
+          body: JSON.stringify({ multi: !p.multi })
+        })
+          .then(function () { loadPolls(); })
+          .catch(function (err) { showStatus(document.getElementById('polls-status'), 'Error: ' + err.message, true); });
+      });
+      row.appendChild(multiBtn);
       var copy = el('button', 'btn ghost sm', 'Copy snippet');
       copy.addEventListener('click', function () { copyPollsText(pollSnippet(p), 'Poll snippet copied ✓'); });
       row.appendChild(copy);
@@ -930,12 +962,19 @@
     showStatus(document.getElementById('polls-status'), '');
     api('/api/admin/polls', {
       method: 'POST',
-      body: JSON.stringify({ articlePath: article, question: question, options: options, singleVote: document.getElementById('poll-single-vote').checked })
+      body: JSON.stringify({
+        articlePath: article,
+        question: question,
+        options: options,
+        singleVote: document.getElementById('poll-single-vote').checked,
+        multi: document.getElementById('poll-multi').checked
+      })
     })
       .then(function () {
         document.getElementById('poll-question').value = '';
         document.getElementById('poll-options').value = '';
         document.getElementById('poll-single-vote').checked = false;
+        document.getElementById('poll-multi').checked = false;
         loadPolls();
         renderPollPreview();
         showStatus(document.getElementById('polls-status'), 'Poll created ✓');
@@ -962,20 +1001,38 @@
       var li = document.createElement('li');
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'sl-poll-btn';
+      if (document.getElementById('poll-multi') && document.getElementById('poll-multi').checked) {
+        // Multi-select preview: checkbox-like buttons + a Vote button below.
+        b.className = 'sl-poll-btn sl-poll-check';
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', function () {
+          b.classList.toggle('selected');
+          b.setAttribute('aria-pressed', b.classList.contains('selected') ? 'true' : 'false');
+        });
+      } else {
+        b.className = 'sl-poll-btn';
+      }
       b.textContent = o;
       li.appendChild(b);
       ul.appendChild(li);
     });
     box.appendChild(ul);
+    if (document.getElementById('poll-multi') && document.getElementById('poll-multi').checked) {
+      var voteBtn = document.createElement('button');
+      voteBtn.type = 'button';
+      voteBtn.className = 'sl-poll-vote-btn';
+      voteBtn.textContent = 'Vote (0)';
+      box.appendChild(voteBtn);
+    }
     var status = document.createElement('p');
     status.className = 'sl-poll-status';
     status.textContent = '…';
     box.appendChild(status);
   }
-  ['poll-question', 'poll-options'].forEach(function (id) {
+  ['poll-question', 'poll-options', 'poll-multi'].forEach(function (id) {
     var node = document.getElementById(id);
     if (node) node.addEventListener('input', renderPollPreview);
+    if (node && node.type === 'checkbox') node.addEventListener('change', renderPollPreview);
   });
   renderPollPreview();
 })();

@@ -8,7 +8,7 @@ import { json, readJsonBody } from './http.ts';
  *
  *   GET    /api/admin/polls            list polls (with counts)
  *   POST   /api/admin/polls            { articlePath, question, options, multi, singleVote }
- *   PATCH  /api/admin/polls/:id        { status: 'open' | 'closed' }
+ *   PATCH  /api/admin/polls/:id        { status?, singleVote?, multi? } — any subset
  *   DELETE /api/admin/polls/:id        delete poll + votes
  */
 
@@ -150,15 +150,65 @@ export async function handleAdminPatchPoll(request: Request, env: Env, id: strin
   if (!read.ok || typeof read.value !== 'object' || read.value === null) {
     return json({ error: 'invalid body' }, read.ok ? 400 : read.status);
   }
-  const status = (read.value as Record<string, unknown>).status;
-  if (status !== 'open' && status !== 'closed') return json({ error: 'status must be open or closed' }, 400);
+  const body = read.value as Record<string, unknown>;
+
+  // Accepted fields: status ('open'|'closed'), singleVote (bool), multi (bool).
+  const hasStatus = typeof body.status === 'string' && (body.status === 'open' || body.status === 'closed');
+  const hasSingle = typeof body.singleVote === 'boolean';
+  const hasMulti = typeof body.multi === 'boolean';
+  if (!hasStatus && !hasSingle && !hasMulti) {
+    return json({ error: 'nothing to update: send status, singleVote and/or multi' }, 400);
+  }
+
+  const sets: string[] = [];
+  const binds: unknown[] = [];
+  if (hasStatus) {
+    sets.push('status = ?');
+    binds.push(body.status);
+  }
+  if (hasSingle) {
+    sets.push('single_vote = ?');
+    binds.push(body.singleVote ? 1 : 0);
+  }
+  if (hasMulti) {
+    sets.push('multi = ?');
+    binds.push(body.multi ? 1 : 0);
+  }
+  binds.push(id);
 
   const result = await env.DB
-    .prepare('UPDATE polls SET status = ? WHERE id = ?')
-    .bind(status, id)
+    .prepare(`UPDATE polls SET ${sets.join(', ')} WHERE id = ?`)
+    .bind(...binds)
     .run();
   if (result.meta.changes === 0) return json({ error: 'poll not found' }, 404);
-  return json({ ok: true, id, status });
+
+  const row = await env.DB.prepare('SELECT * FROM polls WHERE id = ?').bind(id).first<PollRow>();
+  if (!row) return json({ error: 'poll not found' }, 404);
+  const counts = await countsFor(env.DB, id);
+  let options: string[] = [];
+  try {
+    const arr = JSON.parse(row.options);
+    if (Array.isArray(arr)) options = arr.map(String);
+  } catch {
+    /* keep [] */
+  }
+  const total = Object.values(counts).reduce((n, c) => n + c, 0);
+  return json({
+    ok: true,
+    id,
+    poll: {
+      id: row.id,
+      article_path: row.article_path,
+      question: row.question,
+      options,
+      multi: row.multi === 1,
+      singleVote: row.single_vote === 1,
+      status: row.status,
+      created_at: row.created_at,
+      counts,
+      total,
+    },
+  });
 }
 
 export async function handleAdminDeletePoll(request: Request, env: Env, id: string): Promise<Response> {

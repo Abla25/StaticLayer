@@ -12,10 +12,13 @@
 import {
   base64UrlToBytes,
   encodeCanonicalPollPayload,
+  encodeCanonicalPollPayloadMulti,
   mineNonce,
   minePollNonce,
+  minePollNonceMulti,
   PROTOCOL_VERSION,
   serializeNonce,
+  sortPollOptions,
   verifyPow,
   verifyPowFields,
 } from '@staticlayer/protocol';
@@ -29,8 +32,22 @@ self.onmessage = async function (event) {
       throw new Error('malformed solve request');
     }
     var nonce;
-    if (typeof msg.pollId === 'string' && typeof msg.option === 'string') {
-      // Poll vote: use the dedicated poll payload schema.
+    if (typeof msg.pollId === 'string' && Array.isArray(msg.options)) {
+      // MULTI-select poll vote: ONE PoW over the whole (sorted) set.
+      var mbase = {
+        version: PROTOCOL_VERSION,
+        hostContext: challenge.hostContext,
+        articlePath: challenge.articlePath,
+        pollId: msg.pollId,
+        options: sortPollOptions(msg.options),
+        challengeId: base64UrlToBytes(challenge.challengeId)
+      };
+      nonce = await minePollNonceMulti(mbase, challenge.difficulty);
+      if (!(await verifyPow(encodeCanonicalPollPayloadMulti({ ...mbase, nonce: nonce }), challenge.difficulty))) {
+        throw new Error('internal: mined nonce failed verification');
+      }
+    } else if (typeof msg.pollId === 'string' && typeof msg.option === 'string') {
+      // Single-choice poll vote: dedicated single poll payload schema.
       var pbase = {
         version: PROTOCOL_VERSION,
         hostContext: challenge.hostContext,

@@ -223,3 +223,91 @@ describe('widget reactions bar', () => {
     expect(host.querySelector('.sl-form')).toBeNull();
   });
 });
+
+/* -------- comment layout: start-the-conversation card + reactions position -------- */
+
+interface CommentRow {
+  id: string;
+  nickname: string;
+  body: string;
+  created_at: number;
+}
+
+function makeLayoutDom(html: string, comments: CommentRow[]) {
+  const dom = new JSDOM(html, { url: 'https://site.example.com/blog/x', runScripts: 'outside-only' });
+  const { window } = dom;
+  window.fetch = async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.startsWith('https://comments.example.com/api/comments')) {
+      return { ok: true, status: 200, json: async () => ({ comments }) } as Response;
+    }
+    if (url.startsWith('https://comments.example.com/api/reactions?article_path')) {
+      return { ok: true, status: 200, json: async () => ({ reactions: [] }) } as Response;
+    }
+    if (url.endsWith('pow-worker.js')) {
+      return { ok: true, status: 200, blob: async () => new Blob(['// mock pow worker'], { type: 'application/javascript' }) } as Response;
+    }
+    throw new Error('unexpected fetch: ' + url);
+  };
+  window.eval(WIDGET_JS);
+  return dom;
+}
+
+const LAYOUT_HOST =
+  `<div id="host" data-staticlayer
+        data-endpoint="https://comments.example.com"
+        data-article-path="/blog/x"
+        data-time-gate-ms="0" {reactions} {position}></div>`;
+
+describe('widget comment layout — start card + reactions position', () => {
+  it('shows the "start the conversation" card (message + form) when empty', async () => {
+    const dom = makeLayoutDom(LAYOUT_HOST.replace('{reactions}', '').replace('{position}', ''), []);
+    await flushAsync();
+    const host = dom.window.document.getElementById('host')!;
+    const start = host.querySelector('.sl-start');
+    expect(start).not.toBeNull();
+    expect(start!.classList.contains('sl-start-empty')).toBe(true);
+    expect(start!.querySelector('.sl-start-msg')?.textContent).toContain('Start the conversation');
+    expect(start!.querySelector('.sl-form')).not.toBeNull(); // form is inside the card
+    expect(host.querySelector('.sl-list')?.classList.contains('sl-hidden')).toBe(true);
+  });
+
+  it('shows the list and hides the empty message when comments exist (form stays below)', async () => {
+    const dom = makeLayoutDom(LAYOUT_HOST.replace('{reactions}', '').replace('{position}', ''), [
+      { id: 'c1', nickname: 'Alice', body: 'hello', created_at: 1 },
+    ]);
+    await flushAsync();
+    const host = dom.window.document.getElementById('host')!;
+    const start = host.querySelector('.sl-start');
+    expect(host.querySelector('.sl-list')?.classList.contains('sl-hidden')).toBe(false);
+    expect(start!.classList.contains('sl-start-empty')).toBe(false);
+    // Form still present, under the list.
+    expect(start!.querySelector('.sl-form')).not.toBeNull();
+  });
+
+  it('data-reactions-position="top" places the whole reactions bar ABOVE the list', async () => {
+    const dom = makeLayoutDom(
+      LAYOUT_HOST.replace('{reactions}', 'data-reactions="👍"').replace('{position}', 'data-reactions-position="top"'),
+      [],
+    );
+    await flushAsync();
+    const host = dom.window.document.getElementById('host')!;
+    const bar = host.querySelector('.sl-reactions') as Element;
+    const list = host.querySelector('.sl-list') as Element;
+    expect(bar).not.toBeNull();
+    expect((bar.compareDocumentPosition(list) & 4) !== 0).toBe(true); // list FOLLOWS bar
+  });
+
+  it('default position (bottom) places the reactions bar BELOW the form', async () => {
+    const dom = makeLayoutDom(
+      LAYOUT_HOST.replace('{reactions}', 'data-reactions="👍"').replace('{position}', ''),
+      [],
+    );
+    await flushAsync();
+    const host = dom.window.document.getElementById('host')!;
+    const bar = host.querySelector('.sl-reactions') as Element;
+    const form = host.querySelector('.sl-form') as Element;
+    expect(bar).not.toBeNull();
+    expect((form.compareDocumentPosition(bar) & 4) !== 0).toBe(true); // bar FOLLOWS form
+  });
+});
