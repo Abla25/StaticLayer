@@ -13,6 +13,21 @@ Versioning: [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Comment engagement (1.6.0)** — anonymous **likes** on comments (new
+  canonical "comment-action" payload: action byte discriminates flag vs vote;
+  `POST /api/comments/vote` with PoW + atomic anti-replay + per-browser guard
+  storing only a hash); **pin** comments from the admin (`PATCH { pinned }`,
+  new `comments.pinned` column, migration 009); visitor **Report**
+  (`POST /api/comments/flag`, `comment_flags` table, migration 010 — stores
+  only {comment, time}); thread **sort** `data-comments-sort="newest|oldest|best"`
+  with a widget selector and pinned always on top; **relative timestamps**;
+  **"Read more"** for long comments; **GDPR data export**
+  (`GET /api/admin/export?format=csv|json`, formula-injection guarded).
+  Tests: comment-actions.test.ts, widget-comments-v2.test.ts.
+- **Polish (1.6.0)** — loading skeletons (comments + polls), visible
+  `:focus-visible` states, `prefers-reduced-motion` support, refined
+  micro-copy; **framework templates** in `integrations/` (Astro, React/Next,
+  Vue/Nuxt, Hugo, Jekyll).
 - **Polls v2 (1.5.0)** — total-votes chip in the heading ("N votes"), ranked
   results (highest first, #1/#2 badges, stable ties), leader highlight with a
   "Leads by N votes" gap line, and animated bars (staggered fill + count-up).

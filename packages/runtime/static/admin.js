@@ -235,8 +235,24 @@
       var pn = (c.parent_nickname && c.parent_nickname.trim()) || '…';
       head.appendChild(el('span', 'chip allow', '↳ reply to ' + pn));
     }
+    if (c.pinned) head.appendChild(el('span', 'chip allow', '📌 pinned'));
+    if (c.flags > 0) head.appendChild(el('span', 'chip block', '⚠ ' + c.flags + (c.flags === 1 ? ' report' : ' reports')));
     var body = el('p', 'body', c.body); // textContent only — XSS-safe
     var actions = el('div', 'actions');
+    // Pin / unpin to the top of the thread.
+    var pinBtn = el('button', 'btn ghost sm', c.pinned ? 'Unpin' : 'Pin');
+    pinBtn.title = 'Pin to the top of the thread';
+    pinBtn.addEventListener('click', function () {
+      api('/api/admin/comments/' + encodeURIComponent(c.id), {
+        method: 'PATCH',
+        body: JSON.stringify({ pinned: !c.pinned })
+      })
+        .then(function () { if (kind === 'queue') loadQueue(); else loadPublished(); })
+        .catch(function (err) {
+          showStatus(document.getElementById(kind === 'queue' ? 'queue-status' : 'pub-status'), 'Error: ' + err.message, true);
+        });
+    });
+    actions.appendChild(pinBtn);
     // Reply as the site owner (marked with an "Author" badge on the widget).
     var replyBtn = el('button', 'btn ghost sm', 'Reply');
     replyBtn.addEventListener('click', function () {
@@ -1035,5 +1051,33 @@
     if (node && node.type === 'checkbox') node.addEventListener('change', renderPollPreview);
   });
   renderPollPreview();
+
+  // ---- data export (GDPR portability) --------------------------------
+  function downloadExport(format) {
+    var statusEl = document.getElementById('export-status');
+    if (statusEl) showStatus(statusEl, 'Preparing export…');
+    fetch('/api/admin/export?format=' + encodeURIComponent(format))
+      .then(function (res) {
+        if (!res.ok) throw new Error('export failed');
+        if (format === 'csv') {
+          return res.text().then(function (t) { return { blob: new Blob([t], { type: 'text/csv' }), name: 'staticlayer-comments.csv' }; });
+        }
+        return res.json().then(function (j) { return { blob: new Blob([JSON.stringify(j, null, 2)], { type: 'application/json' }), name: 'staticlayer-export.json' }; });
+      })
+      .then(function (file) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(file.blob);
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+        if (statusEl) showStatus(statusEl, 'Export downloaded ✓');
+      })
+      .catch(function (err) { if (statusEl) showStatus(statusEl, 'Error: ' + err.message, true); });
+  }
+  var exportCsv = document.getElementById('export-csv');
+  if (exportCsv) exportCsv.addEventListener('click', function () { downloadExport('csv'); });
+  var exportJson = document.getElementById('export-json');
+  if (exportJson) exportJson.addEventListener('click', function () { downloadExport('json'); });
 })();
 

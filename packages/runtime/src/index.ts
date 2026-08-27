@@ -14,6 +14,7 @@ import { handleAdminLogin, handleAdminLogout, handleAdminSession } from './admin
 import {
   handleAdminBulkComments,
   handleAdminDeleteComment,
+  handleAdminExport,
   handleAdminListArticles,
   handleAdminListComments,
   handleAdminPatchComment,
@@ -21,7 +22,7 @@ import {
 } from './admin-comments.ts';
 import { handleChallenge } from './challenge.ts';
 import { handleListComments } from './comments-read.ts';
-import { handleSubmitComment } from './comments.ts';
+import { handleFlagComment, handleSubmitComment, handleVoteComment } from './comments.ts';
 import { decideCors, handlePreflight, parseAllowedOrigins, withCors } from './cors.ts';
 import type { Env } from './env.ts';
 import { json, SECURITY_HEADERS } from './http.ts';
@@ -128,6 +129,12 @@ const worker: ExportedHandler<Env> = {
     if (pathname === '/api/comments' && method === 'POST') {
       return respond(handleSubmitComment(request, env));
     }
+    if (pathname === '/api/comments/flag' && method === 'POST') {
+      return respond(handleFlagComment(request, env));
+    }
+    if (pathname === '/api/comments/vote' && method === 'POST') {
+      return respond(handleVoteComment(request, env));
+    }
     if (pathname === '/api/reactions' && method === 'GET') {
       return respond(handleListReactions(request, env));
     }
@@ -202,6 +209,10 @@ const worker: ExportedHandler<Env> = {
     }
     if (pathname === '/api/admin/updates' && method === 'GET') {
       return respond(handleAdminCheckUpdates(request, env));
+    }
+    /* Admin export (GDPR portability): CSV/JSON download of all user content. */
+    if (pathname === '/api/admin/export' && method === 'GET') {
+      return respond(handleAdminExport(request, env));
     }
     /* Polls (admin): list / create / patch / delete */
     if (pathname === '/api/admin/polls' && method === 'GET') {

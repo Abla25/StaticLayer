@@ -59,6 +59,10 @@ StaticLayer is a source-available, Cloudflare-native comment system designed for
 - 🧑‍💻 **Owner replies** — answer comments right from the admin console; your replies are approved instantly and shown with an **Author** badge (owner nickname is configurable in Settings).
 - 🧩 **Drop-in widget** — a few lines of HTML on any static site (Astro, Hugo, Jekyll, plain HTML…).
 - 🗂️ **Comment layout (v1.5)** — a unified **"Start the conversation"** card (empty message + form) and `data-reactions-position="top|bottom"` to place the whole reactions bar together, above or below the comments.
+- 💬 **Comment engagement (v1.6)** — anonymous **likes** (PoW + per-browser guard), **pin** from the admin, visitor **Report** (zero data), thread **sort** (newest/oldest/best), relative timestamps, "Read more" for long comments.
+- 📦 **GDPR data export** — download everything (comments CSV / full JSON) from the admin (Settings → Export).
+- ♿ **Accessibility + polish** — visible focus states, `prefers-reduced-motion` support, loading skeletons, refined micro-copy.
+- 🧩 **Framework templates** — ready-made components for Astro, React/Next, Vue/Nuxt, Hugo and Jekyll in [`integrations/`](integrations/README.md).
 
 ---
 
@@ -148,6 +152,17 @@ and `data-poll-results="after|always"`.
 > visitors who clear their browser storage — the same trade-off every anonymous poll (StrawPoll
 > included) accepts.
 
+## 💬 Comment engagement (v1.6)
+
+Beyond plain comments, the widget and admin now offer:
+
+- **Likes** — visitors can like a comment with one anonymous tap (same PoW + anti-replay as everything else). A per-browser guard stores only a hash of an anonymous token, so a returning browser can like each comment once; no personal data, no cookies.
+- **Thread sort** — `data-comments-sort="newest|oldest|best"` (default newest), with a small selector in the widget heading. **Pinned** comments always stay on top.
+- **Pin** — from the admin (Pin/Unpin on any comment card) to highlight a comment at the top of the thread.
+- **Report** — visitors can flag a comment with a signed proof-of-work; the admin sees the count (⚠ N reports) in moderation. A flag stores only {comment, time} — zero data.
+- **Relative timestamps** ("3 h ago") and **"Read more"** for long comments.
+- **Data export (GDPR)** — Settings → Export: comments as CSV or the full dataset (comments, reactions, polls, votes, flags) as JSON. You are the data controller; move your data whenever you like.
+
 ## 🧵 Nested replies
 
 Comments support replies up to **3 levels** (comment → reply → reply). Click **Reply** on any
@@ -164,6 +179,17 @@ owner nickname in **Settings → Owner nickname** (default "Site owner").
 > 🧙 No terminal? The **Web Installer** (`npm run dev:installer`) guides you
 > through the same deploy with OAuth — scopes are least-privilege by design
 > ([`docs/oauth-scopes.md`](docs/oauth-scopes.md)).
+
+## 🧩 Framework templates
+
+Ready-made drop-in components that render the widget with the attributes you
+configure — see [`integrations/README.md`](integrations/README.md):
+
+- **Astro** — `integrations/astro/Comment.astro` (`<Comment endpoint="…" />`)
+- **React / Next.js** — `integrations/react/Comment.tsx` (`<Comments endpoint="…" />`)
+- **Vue / Nuxt** — `integrations/vue/Comment.vue` (`<Comments endpoint="…" />`)
+- **Hugo** — `integrations/hugo/comments.html` (partial)
+- **Jekyll** — `integrations/jekyll/comments.html` (include)
 
 ---
 

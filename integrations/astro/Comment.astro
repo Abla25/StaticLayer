@@ -1,0 +1,58 @@
+---
+// StaticLayer — Astro component.
+// Usage:
+//   <Comment endpoint="https://comments.example.com" reactions="👍,❤️,🎉" />
+interface Props {
+  endpoint: string;
+  articlePath?: string;
+  reactions?: string;
+  pollId?: string;
+  pollStyle?: string;
+  pollResults?: string;
+  sort?: string;
+  reactionsPosition?: string;
+  lang?: string;
+  theme?: string;
+  accent?: string;
+  accent2?: string;
+  radius?: string;
+  maxWidth?: string;
+}
+const {
+  endpoint,
+  articlePath,
+  reactions,
+  pollId,
+  pollStyle,
+  pollResults,
+  sort,
+  reactionsPosition,
+  lang,
+  theme,
+  accent,
+  accent2,
+  radius,
+  maxWidth,
+} = Astro.props;
+const attrs = [
+  'data-staticlayer',
+  `data-endpoint="${endpoint}"`,
+  articlePath && `data-article-path="${articlePath}"`,
+  reactions && `data-reactions="${reactions}"`,
+  pollId && `data-poll-id="${pollId}"`,
+  pollStyle && `data-poll-style="${pollStyle}"`,
+  pollResults && `data-poll-results="${pollResults}"`,
+  sort && `data-comments-sort="${sort}"`,
+  reactionsPosition && `data-reactions-position="${reactionsPosition}"`,
+  lang && lang !== 'auto' && `data-lang="${lang}"`,
+  theme && theme !== 'auto' && `data-theme="${theme}"`,
+  accent && `data-accent="${accent}"`,
+  accent2 && `data-accent-2="${accent2}"`,
+  radius && `data-radius="${radius}"`,
+  maxWidth && `data-max-width="${maxWidth}"`,
+]
+  .filter(Boolean)
+  .join(' ');
+---
+<div set:html={`<div ${attrs}></div>`} />
+<script src={`${endpoint}/widget.js`} defer />

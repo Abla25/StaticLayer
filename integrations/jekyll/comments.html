@@ -1,0 +1,12 @@
+<!-- StaticLayer — Jekyll include. -->
+<!-- Usage: {% include comments.html endpoint="https://comments.example.com" reactions="👍,❤️,🎉" %} -->
+{% assign attrs = "data-staticlayer" %}
+{% assign attrs = attrs | append: ' data-endpoint="' | append: include.endpoint | append: '"' %}
+{% if include.articlePath %}{% assign attrs = attrs | append: ' data-article-path="' | append: include.articlePath | append: '"' %}{% endif %}
+{% if include.reactions %}{% assign attrs = attrs | append: ' data-reactions="' | append: include.reactions | append: '"' %}{% endif %}
+{% if include.pollId %}{% assign attrs = attrs | append: ' data-poll-id="' | append: include.pollId | append: '"' %}{% endif %}
+{% if include.sort %}{% assign attrs = attrs | append: ' data-comments-sort="' | append: include.sort | append: '"' %}{% endif %}
+{% if include.reactionsPosition %}{% assign attrs = attrs | append: ' data-reactions-position="' | append: include.reactionsPosition | append: '"' %}{% endif %}
+{% if include.accent %}{% assign attrs = attrs | append: ' data-accent="' | append: include.accent | append: '"' %}{% endif %}
+<div {{ attrs }}></div>
+<script src="{{ include.endpoint }}/widget.js" defer></script>

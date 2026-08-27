@@ -1,13 +1,18 @@
 import {
   base64UrlToBytes,
+  bytesToBase64Url,
+  encodeCanonicalCommentActionPayload,
   encodeCanonicalPayload,
   MAX_ARTICLE_PATH_BYTES,
   MAX_BODY_BYTES,
+  MAX_COMMENT_ID_BYTES,
   MAX_HOST_CONTEXT_BYTES,
   MAX_NICKNAME_BYTES,
   parseNonce,
   PROTOCOL_VERSION,
   ProtocolError,
+  randomBytes,
+  sha256,
   utf8EncodeStrict,
   verifyChallenge,
   verifyPow,
@@ -22,6 +27,7 @@ import { decide, readLists } from './moderation-lists.ts';
 import { findBlockedTerm, readBlockedTerms } from './blocked-terms.ts';
 import { notifyPendingComment } from './telegram.ts';
 import { fakePendingComment, isHoneypotTriggered, timeGateResponse } from './antiabuse.ts';
+import { signVoterToken, verifyVoterToken } from './polls.ts';
 
 /**
  * POST /api/comments
@@ -292,5 +298,249 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
       status,
       created_at: createdAt,
     },
+  });
+}
+
+/**
+ * POST /api/comments/flag
+ *
+ * Minimal, privacy-first visitor "report". Body mirrors a comment submission
+ * but targets a commentId and is bound to a dedicated canonical action schema
+ * (action 'flag'). The same pipeline applies: rate limit → signed challenge →
+ * expiry → time gate → PoW → ATOMIC anti-replay. On success a row is added to
+ * `comment_flags`; the owner sees the count in moderation. The flag stores ONLY
+ * { comment_id, created_at, challenge_id } — no reason text, no identity.
+ */
+export async function handleFlagComment(request: Request, env: Env): Promise<Response> {
+  const limited = await applyRateLimit(env.RATE_LIMITER, 'comments');
+  if (limited) return limited;
+
+  const maxBytes = envNumber(env.MAX_REQUEST_BYTES, DEFAULTS.MAX_REQUEST_BYTES);
+  const read = await readJsonBody(request, maxBytes);
+  if (!read.ok || typeof read.value !== 'object' || read.value === null) {
+    return json({ error: read.ok ? 'body must be a JSON object' : 'invalid JSON body' }, read.ok ? 400 : read.status);
+  }
+  const data = read.value as Record<string, unknown>;
+  const challengeIdB64 = requireString(data, 'challengeId');
+  const hostContext = requireString(data, 'hostContext');
+  const articlePath = requireString(data, 'articlePath');
+  const commentId = requireString(data, 'commentId');
+  const signatureB64 = requireString(data, 'signature');
+  const difficulty = data.difficulty;
+  const expiresAt = data.expiresAt;
+  if (!challengeIdB64 || !hostContext || !articlePath || !commentId || !signatureB64) {
+    return json({ error: 'missing required fields' }, 400);
+  }
+  if (typeof difficulty !== 'number' || !Number.isSafeInteger(difficulty) || difficulty < 0) {
+    return json({ error: 'difficulty must be a non-negative integer' }, 400);
+  }
+  if (typeof expiresAt !== 'number' || !Number.isSafeInteger(expiresAt) || expiresAt < 0) {
+    return json({ error: 'expiresAt must be a non-negative integer' }, 400);
+  }
+  if (commentId.length > MAX_COMMENT_ID_BYTES) {
+    return json({ error: 'commentId too long' }, 400);
+  }
+  if (!validField(articlePath, MAX_ARTICLE_PATH_BYTES) || !validField(hostContext, MAX_HOST_CONTEXT_BYTES)) {
+    return json({ error: 'invalid hostContext or articlePath' }, 400);
+  }
+
+  // The flagged comment must exist and be publicly visible.
+  const comment = await env.DB.prepare(
+    'SELECT id FROM comments WHERE id = ? AND status = ? LIMIT 1',
+  ).bind(commentId, 'approved').first<{ id: string }>();
+  if (!comment) return json({ error: 'comment not found' }, 404);
+
+  let challengeId: Uint8Array;
+  let signature: Uint8Array;
+  let nonce: bigint;
+  try {
+    challengeId = base64UrlToBytes(challengeIdB64);
+    signature = base64UrlToBytes(signatureB64);
+    nonce = parseNonce(data.nonce);
+  } catch {
+    return json({ error: 'invalid challengeId, signature or nonce encoding' }, 400);
+  }
+
+  const ok = await verifyChallenge(
+    { version: PROTOCOL_VERSION, hostContext, articlePath, challengeId, expiresAt: BigInt(expiresAt), difficulty },
+    signature,
+    env.POW_SECRET,
+  );
+  if (!ok) return json({ error: 'invalid challenge signature' }, 400);
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const gateRes = timeGateResponse(env, nowSec, expiresAt);
+  if (gateRes) return gateRes;
+
+  const powOk = await verifyPow(
+    encodeCanonicalCommentActionPayload({
+      version: PROTOCOL_VERSION,
+      action: 'flag',
+      hostContext,
+      articlePath,
+      commentId,
+      challengeId,
+      nonce,
+    }),
+    difficulty,
+  );
+  if (!powOk) return json({ error: 'proof of work not satisfied' }, 400);
+
+  // Atomic anti-replay: consume the challenge + insert the flag in ONE batch.
+  const consume = env.DB.prepare(
+    'INSERT OR IGNORE INTO used_challenges (challenge_id, used_at) VALUES (?, ?)',
+  ).bind(challengeIdB64, nowSec);
+  const insertFlag = env.DB.prepare(
+    `INSERT INTO comment_flags (id, comment_id, created_at, challenge_id)
+     SELECT ?1, ?2, ?3, ?4
+     WHERE changes() = 1`,
+  ).bind(crypto.randomUUID(), commentId, nowSec, challengeIdB64);
+
+  let results: D1Result[];
+  try {
+    results = await env.DB.batch([consume, insertFlag]);
+  } catch {
+    return json({ error: 'storage error' }, 500);
+  }
+  if (results[0].meta.changes === 0) {
+    return json({ error: 'Challenge Already Used' }, 409);
+  }
+  if (results[1].meta.changes !== 1) {
+    return json({ error: 'flag not stored' }, 500);
+  }
+  return json({ ok: true, flagged: true });
+}
+
+/**
+ * POST /api/comments/vote
+ *
+ * Anonymous like/upvote for a comment. Same PoW + anti-replay pipeline as the
+ * flag, bound to the canonical action 'vote'. The optional per-browser guard
+ * (always on for votes) stores ONLY a hash of an anonymous token — a returning
+ * browser can like each comment once; no personal data, no cookies.
+ */
+export async function handleVoteComment(request: Request, env: Env): Promise<Response> {
+  const limited = await applyRateLimit(env.RATE_LIMITER, 'comments');
+  if (limited) return limited;
+
+  const maxBytes = envNumber(env.MAX_REQUEST_BYTES, DEFAULTS.MAX_REQUEST_BYTES);
+  const read = await readJsonBody(request, maxBytes);
+  if (!read.ok || typeof read.value !== 'object' || read.value === null) {
+    return json({ error: read.ok ? 'body must be a JSON object' : 'invalid JSON body' }, read.ok ? 400 : read.status);
+  }
+  const data = read.value as Record<string, unknown>;
+  const challengeIdB64 = requireString(data, 'challengeId');
+  const hostContext = requireString(data, 'hostContext');
+  const articlePath = requireString(data, 'articlePath');
+  const commentId = requireString(data, 'commentId');
+  const signatureB64 = requireString(data, 'signature');
+  const voterToken = requireString(data, 'voterToken') ?? '';
+  const difficulty = data.difficulty;
+  const expiresAt = data.expiresAt;
+  if (!challengeIdB64 || !hostContext || !articlePath || !commentId || !signatureB64) {
+    return json({ error: 'missing required fields' }, 400);
+  }
+  if (typeof difficulty !== 'number' || !Number.isSafeInteger(difficulty) || difficulty < 0) {
+    return json({ error: 'difficulty must be a non-negative integer' }, 400);
+  }
+  if (typeof expiresAt !== 'number' || !Number.isSafeInteger(expiresAt) || expiresAt < 0) {
+    return json({ error: 'expiresAt must be a non-negative integer' }, 400);
+  }
+  if (commentId.length > MAX_COMMENT_ID_BYTES) {
+    return json({ error: 'commentId too long' }, 400);
+  }
+  if (!validField(articlePath, MAX_ARTICLE_PATH_BYTES) || !validField(hostContext, MAX_HOST_CONTEXT_BYTES)) {
+    return json({ error: 'invalid hostContext or articlePath' }, 400);
+  }
+
+  const comment = await env.DB.prepare(
+    'SELECT id FROM comments WHERE id = ? AND status = ? LIMIT 1',
+  ).bind(commentId, 'approved').first<{ id: string }>();
+  if (!comment) return json({ error: 'comment not found' }, 404);
+
+  let challengeId: Uint8Array;
+  let signature: Uint8Array;
+  let nonce: bigint;
+  try {
+    challengeId = base64UrlToBytes(challengeIdB64);
+    signature = base64UrlToBytes(signatureB64);
+    nonce = parseNonce(data.nonce);
+  } catch {
+    return json({ error: 'invalid challengeId, signature or nonce encoding' }, 400);
+  }
+
+  const ok = await verifyChallenge(
+    { version: PROTOCOL_VERSION, hostContext, articlePath, challengeId, expiresAt: BigInt(expiresAt), difficulty },
+    signature,
+    env.POW_SECRET,
+  );
+  if (!ok) return json({ error: 'invalid challenge signature' }, 400);
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const gateRes = timeGateResponse(env, nowSec, expiresAt);
+  if (gateRes) return gateRes;
+
+  const powOk = await verifyPow(
+    encodeCanonicalCommentActionPayload({
+      version: PROTOCOL_VERSION,
+      action: 'vote',
+      hostContext,
+      articlePath,
+      commentId,
+      challengeId,
+      nonce,
+    }),
+    difficulty,
+  );
+  if (!powOk) return json({ error: 'proof of work not satisfied' }, 400);
+
+  // Per-browser guard: anonymous token, only its hash is stored.
+  let voterHash: string | null = null;
+  let issuedToken: string | null = null;
+  const existing = await verifyVoterToken(voterToken, env);
+  if (existing) {
+    voterHash = bytesToBase64Url(await sha256(existing));
+    const already = await env.DB.prepare(
+      'SELECT 1 FROM comment_votes WHERE comment_id = ? AND voter_hash = ? LIMIT 1',
+    ).bind(commentId, voterHash).first();
+    if (already) return json({ error: 'already voted' }, 409);
+  } else {
+    const id = randomBytes(16);
+    const sig = await signVoterToken(id, env);
+    issuedToken = `${bytesToBase64Url(id)}.${bytesToBase64Url(sig)}`;
+    voterHash = bytesToBase64Url(await sha256(id));
+  }
+
+  // Atomic anti-replay: consume the challenge + insert the vote in ONE batch.
+  const consume = env.DB.prepare(
+    'INSERT OR IGNORE INTO used_challenges (challenge_id, used_at) VALUES (?, ?)',
+  ).bind(challengeIdB64, nowSec);
+  const insertVote = env.DB.prepare(
+    `INSERT INTO comment_votes (id, comment_id, created_at, challenge_id, voter_hash)
+     SELECT ?1, ?2, ?3, ?4, ?5
+     WHERE changes() = 1`,
+  ).bind(crypto.randomUUID(), commentId, nowSec, challengeIdB64, voterHash);
+
+  let results: D1Result[];
+  try {
+    results = await env.DB.batch([consume, insertVote]);
+  } catch {
+    return json({ error: 'storage error' }, 500);
+  }
+  if (results[0].meta.changes === 0) {
+    return json({ error: 'Challenge Already Used' }, 409);
+  }
+  if (results[1].meta.changes !== 1) {
+    return json({ error: 'vote not stored' }, 500);
+  }
+
+  const countRow = await env.DB.prepare(
+    'SELECT COUNT(*) AS c FROM comment_votes WHERE comment_id = ?',
+  ).bind(commentId).first<{ c: number }>();
+  return json({
+    ok: true,
+    votes: Number(countRow?.c ?? 0),
+    voted: true,
+    voterToken: issuedToken,
   });
 }

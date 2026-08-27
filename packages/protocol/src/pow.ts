@@ -4,9 +4,11 @@ import {
   encodeCanonicalPayload,
   encodeCanonicalPollPayload,
   encodeCanonicalPollPayloadMulti,
+  encodeCanonicalCommentActionPayload,
   type CanonicalPayload,
   type PollCanonicalPayload,
   type PollMultiCanonicalPayload,
+  type CommentActionCanonicalPayload,
 } from './encoding.ts';
 import { ProtocolError } from './errors.ts';
 
@@ -150,4 +152,30 @@ export async function minePollNonceMulti(
     nonce += 1n;
   }
   throw new ProtocolError(`minePollNonceMulti: no nonce satisfying difficulty ${difficulty} within ${maxAttempts} attempts`);
+}
+
+/** Same as mineNonce but over the COMMENT ACTION schema (flag / vote). */
+export async function mineCommentActionNonce(
+  base: Omit<CommentActionCanonicalPayload, 'nonce'>,
+  difficulty: number,
+  options: MineOptions = {},
+): Promise<bigint> {
+  assertDifficulty(difficulty);
+  const start = options.startNonce ?? 0n;
+  const maxAttempts = options.maxAttempts ?? (1n << 32n);
+  if (start < 0n || start > UINT64_MAX) {
+    throw new ProtocolError('startNonce out of uint64 range');
+  }
+
+  let nonce = start;
+  for (let i = 0n; i < maxAttempts; i++) {
+    if (nonce > UINT64_MAX) break;
+    const payload = encodeCanonicalCommentActionPayload({ ...base, nonce });
+    const digest = await sha256(payload);
+    if (leadingZeroBits(digest) >= difficulty) {
+      return nonce;
+    }
+    nonce += 1n;
+  }
+  throw new ProtocolError(`mineCommentActionNonce: no nonce satisfying difficulty ${difficulty} within ${maxAttempts} attempts`);
 }

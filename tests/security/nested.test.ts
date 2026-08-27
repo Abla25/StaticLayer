@@ -230,6 +230,6 @@ describe('nested replies — API', () => {
     const comments = await listPublic(mf);
     const ownerReply = comments.find((c) => c.id === created.comment.id);
     expect(ownerReply).toBeTruthy();
-    expect((ownerReply as unknown as { is_owner: number }).is_owner).toBe(1);
+    expect((ownerReply as unknown as { is_owner: boolean }).is_owner).toBe(true);
   });
 });

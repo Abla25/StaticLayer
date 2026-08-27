@@ -1,6 +1,6 @@
 {
-  "latest": "1.5.0",
+  "latest": "1.6.0",
   "date": "2026-08-27",
-  "notes": "v1.5.0 — Polls v2: total votes chip, ranked results (#1, #2…), leader highlight + \"Leads by N votes\", animated bars; multi-select polls (one PoW per set); \"Change your votes\" for guarded multi polls; comments: unified \"start the conversation\" card + data-reactions-position top/bottom. Privacy unchanged (no cookies, no IP, no content reading).",
+  "notes": "v1.6.0 — Comment likes (anonymous, per-browser guard) + \"best\" sorting; pinned comments; visitor \"Report\" (zero data); thread sort newest/oldest/best; relative timestamps; \"Read more\" for long comments; GDPR data export (CSV/JSON); loading skeletons, accessibility + reduced-motion; framework templates (Astro/React/Vue/Hugo/Jekyll).",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }

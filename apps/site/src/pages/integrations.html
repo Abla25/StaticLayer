@@ -100,6 +100,19 @@
         <p>Comments support replies up to <b>3 levels</b>: click <b>Reply</b> on any comment to open an inline form with the same Proof-of-Work + moderation pipeline. A reply becomes public only when it <b>and its parent</b> are approved; if a parent is deleted, its replies stay visible with a <i>"comment removed"</i> placeholder. The admin queue shows a <b>↳ reply to</b> badge on replies.</p>
         <p><b>Owner replies:</b> answer from the admin console with <b>Reply</b> — the reply is approved instantly and marked with an <b>Author</b> badge on the widget. The owner nickname is configurable (<b>Settings → Owner nickname</b>).</p>
 
+        <h2>Comment engagement (v1.6)</h2>
+        <ul>
+          <li><b>Likes:</b> visitors like a comment with one anonymous tap (PoW-protected). A per-browser guard stores only a hash of an anonymous token, so a browser can like each comment once.</li>
+          <li><b>Thread sort:</b> <code>data-comments-sort="newest|oldest|best"</code> (default newest) — a small selector appears in the widget heading once there is more than one comment. <b>Pinned</b> comments always stay on top.</li>
+          <li><b>Pin:</b> from the admin, press <b>Pin</b> on any comment card to keep a comment at the top of its thread.</li>
+          <li><b>Report:</b> visitors can flag a comment with a signed proof-of-work — the admin sees <b>⚠ N reports</b> in moderation. A flag stores only {comment, time}: zero data.</li>
+          <li><b>Relative timestamps</b> ("3 h ago") and <b>"Read more"</b> for long comments.</li>
+          <li><b>GDPR export:</b> admin → <b>Settings → Export your data</b> — comments as CSV or the full dataset as JSON. No IPs, no tracking data.</li>
+        </ul>
+
+        <h2>Framework templates</h2>
+        <p>Drop-in components that render the widget with the same attributes — see <a href="{{REPO}}/tree/main/integrations" target="_blank" rel="noopener">integrations/</a> in the repository: <b>Astro</b> (<code>Comment.astro</code>), <b>React/Next</b> (<code>Comment.tsx</code>), <b>Vue/Nuxt</b> (<code>Comment.vue</code>), <b>Hugo</b> (partial) and <b>Jekyll</b> (include). Every option maps 1:1 to the widget's <code>data-*</code> attributes.</p>
+
         <h2>Where to place it on your page</h2>
         <p>The widget renders exactly where you put the host element in your HTML — the script tag can stay once in your layout. Two jobs, two placements:</p>
         <ul>

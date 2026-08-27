@@ -123,6 +123,25 @@
       pollChangeVotes: 'Change your votes',
       pollVotesChanged: 'Votes updated — you can vote again',
       startTitle: 'Start the conversation',
+      pinned: 'Pinned',
+      flag: 'Report',
+      flagBusy: 'Sending report…',
+      flagDone: 'Thanks — report sent',
+      flagErr: 'Report failed',
+      sortNewest: 'Newest',
+      sortOldest: 'Oldest',
+      sortBest: 'Best',
+      timeNow: 'now',
+      timeMinAgo: '{n} min ago',
+      timeHourAgo: '{n} h ago',
+      timeDayAgo: '{n} d ago',
+      timeWeekAgo: '{n} w ago',
+      timeMonthAgo: '{n} mo ago',
+      timeYearAgo: '{n} y ago',
+      readMore: 'Read more',
+      showLess: 'Show less',
+      like: 'Like',
+      liked: 'Liked',
       reply: 'Reply',
       cancelReply: 'Cancel',
       replyPlaceholder: 'Write a reply…',
@@ -161,6 +180,25 @@
       pollChangeVotes: 'Modifica i tuoi voti',
       pollVotesChanged: 'Voti aggiornati — puoi votare di nuovo',
       startTitle: 'Inizia la conversazione',
+      pinned: 'In evidenza',
+      flag: 'Segnala',
+      flagBusy: 'Invio segnalazione…',
+      flagDone: 'Grazie — segnalazione inviata',
+      flagErr: 'Segnalazione non riuscita',
+      sortNewest: 'Più recenti',
+      sortOldest: 'Più vecchi',
+      sortBest: 'Migliori',
+      timeNow: 'ora',
+      timeMinAgo: '{n} min fa',
+      timeHourAgo: '{n} h fa',
+      timeDayAgo: '{n} g fa',
+      timeWeekAgo: '{n} sett fa',
+      timeMonthAgo: '{n} mesi fa',
+      timeYearAgo: '{n} anni fa',
+      readMore: 'Leggi tutto',
+      showLess: 'Mostra meno',
+      like: 'Mi piace',
+      liked: 'Ti piace',
       reply: 'Rispondi',
       cancelReply: 'Annulla',
       replyPlaceholder: 'Scrivi una risposta…',
@@ -303,7 +341,43 @@
     '.sl-reply-form{margin-top:12px}' +
     '.sl-parent-removed{color:var(--muted);font-style:italic}' +
     '.sl-show-more{list-style:none}' +
-    '@keyframes sl-spin{to{transform:rotate(360deg)}}';
+    '.sl-sort{appearance:none;font:inherit;font-size:11.5px;color:var(--muted);background:var(--card);' +
+    'border:1px solid var(--border);border-radius:999px;padding:3px 9px;cursor:pointer;margin-left:8px;' +
+    'transition:border-color .15s}' +
+    '.sl-sort:hover,.sl-sort:focus-visible{border-color:var(--accent);outline:none}' +
+    '.sl-pin-badge{display:inline-block;margin-left:7px;font-size:10px;font-weight:700;letter-spacing:.3px;' +
+    'color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);' +
+    'border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);padding:1px 7px;border-radius:999px;vertical-align:1px}' +
+    '.sl-pinned{border-color:color-mix(in srgb,var(--accent) 35%,var(--border))}' +
+    '.sl-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}' +
+    '.sl-vote-btn{appearance:none;cursor:pointer;font:inherit;font-size:12px;font-weight:600;color:var(--muted);' +
+    'background:transparent;border:1px solid var(--border);border-radius:999px;padding:3px 10px;' +
+    'transition:color .12s ease,border-color .12s ease,transform .12s ease}' +
+    '.sl-vote-btn:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-1px)}' +
+    '.sl-vote-btn.liked{color:var(--accent);border-color:var(--accent);' +
+    'background:color-mix(in srgb,var(--accent) 10%,transparent)}' +
+    '.sl-vote-btn:disabled{opacity:.6;cursor:progress;transform:none}' +
+    '.sl-flag-btn{appearance:none;cursor:pointer;font:inherit;font-size:11.5px;color:var(--muted);' +
+    'background:transparent;border:0;padding:3px 6px;border-radius:8px}' +
+    '.sl-flag-btn:hover{color:#dc2626;background:color-mix(in srgb,#dc2626 8%,transparent)}' +
+    '.sl-flag-btn:disabled{opacity:.6;cursor:progress}' +
+    '.sl-flag-btn.done{color:#16a34a}' +
+    '.sl-more-btn{appearance:none;cursor:pointer;font:inherit;font-size:12px;font-weight:600;color:var(--accent);' +
+    'background:none;border:0;padding:0 0 0 4px}' +
+    // Loading skeletons (comments + polls).
+    '.sl-skeleton-card{pointer-events:none}' +
+    '.sl-sk{height:12px;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--border) 55%,transparent),color-mix(in srgb,var(--border) 22%,transparent),color-mix(in srgb,var(--border) 55%,transparent));' +
+    'background-size:200% 100%;animation:sl-shimmer 1.3s infinite linear}' +
+    '.sl-sk-nick{width:30%;height:10px;margin-bottom:10px}' +
+    '.sl-sk-line{width:100%;margin-bottom:8px}' +
+    '.sl-sk-line.short{width:70%}' +
+    '.sl-sk-bar{height:8px;border-radius:999px}' +
+    '@keyframes sl-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}' +
+    '@keyframes sl-spin{to{transform:rotate(360deg)}}' +
+    // Accessibility: visible focus everywhere + reduced motion support.
+    '.sl-root :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}' +
+    '@media (prefers-reduced-motion: reduce){.sl-root *{transition:none!important;animation:none!important}' +
+    '.sl-poll-fill{transition:none!important}}';
 
   function injectStyles() {
     if (document.getElementById('sl-styles')) return;
@@ -354,6 +428,19 @@
     function pollCountLabel(n) {
       return String(t(n === 1 ? 'pollVoteCountOne' : 'pollVoteCountMany')).replace('{n}', String(n));
     }
+    // Relative timestamps for comments ("3 h ago"), falling back to a locale
+    // date for very old comments. Pure presentation — no data stored.
+    function relativeTime(ts) {
+      var diff = Math.floor(Date.now() / 1000) - ts;
+      if (diff < 60) return t('timeNow');
+      if (diff < 3600) return t('timeMinAgo').replace('{n}', String(Math.floor(diff / 60)));
+      if (diff < 86400) return t('timeHourAgo').replace('{n}', String(Math.floor(diff / 3600)));
+      if (diff < 604800) return t('timeDayAgo').replace('{n}', String(Math.floor(diff / 86400)));
+      if (diff < 2592000) return t('timeWeekAgo').replace('{n}', String(Math.floor(diff / 604800)));
+      if (diff < 31536000) return t('timeMonthAgo').replace('{n}', String(Math.floor(diff / 2592000)));
+      if (diff < 315360000) return t('timeYearAgo').replace('{n}', String(Math.floor(diff / 31536000)));
+      return new Date(ts * 1000).toLocaleDateString();
+    }
 
     // -------- theming: forced theme + CSS-variable overrides ------------
     // Values may arrive as numbers (programmatic API) or strings (attributes);
@@ -385,6 +472,10 @@
     // relative to the comments (default bottom: under the form).
     var reactionsPosition = String(((opts && opts.reactionsPosition) || root.getAttribute('data-reactions-position') || 'bottom')).trim();
     if (reactionsPosition !== 'top' && reactionsPosition !== 'bottom') reactionsPosition = 'bottom';
+    // data-comments-sort="newest|oldest|best" — root comment ordering.
+    // Pinned comments always stay on top; `best` uses comment votes (v1.6).
+    var commentsSort = String(((opts && opts.commentsSort) || root.getAttribute('data-comments-sort') || 'newest')).trim();
+    if (commentsSort !== 'newest' && commentsSort !== 'oldest' && commentsSort !== 'best') commentsSort = 'newest';
     if (pollId) {
       initPoll();
       return;
@@ -410,6 +501,14 @@
     var submitBtn = null, status = null, form = null;
     var reactBar = null, reactStatus = null;
     var reactBtns = {}, reactBusy = false;
+    var sortSelect = null;
+    var loadedOnce = false;
+    // Anonymous voter token for comment likes — lives only in the visitor's
+    // browser (localStorage), never sent to us except as a signed proof, and
+    // only its hash is stored (same pattern as poll single-vote).
+    var commentVoterKey = 'sl-comment-voter-token';
+    var commentVoterToken = null;
+    try { commentVoterToken = localStorage.getItem(commentVoterKey); } catch (e) { commentVoterToken = null; }
 
     function buildReactions() {
       if (!reactBar || !reactions) return;
@@ -436,6 +535,22 @@
       heading.appendChild(el('h3', null, t('title')));
       count = el('span', 'sl-count', '…');
       heading.appendChild(count);
+      // Thread sort selector (newest / oldest / best) — shown once >1 comment.
+      sortSelect = el('select', 'sl-sort');
+      sortSelect.setAttribute('aria-label', t('title') + ' — sort');
+      [['newest', t('sortNewest')], ['oldest', t('sortOldest')], ['best', t('sortBest')]].forEach(function (opt) {
+        var o = document.createElement('option');
+        o.value = opt[0];
+        o.textContent = opt[1];
+        sortSelect.appendChild(o);
+      });
+      sortSelect.value = commentsSort;
+      sortSelect.style.display = 'none';
+      sortSelect.addEventListener('change', function () {
+        commentsSort = sortSelect.value;
+        loadComments();
+      });
+      heading.appendChild(sortSelect);
       list = el('ul', 'sl-list');
 
       nickInput = el('input');
@@ -505,8 +620,40 @@
       return roots;
     }
 
+    var READ_MORE_CHARS = 400;
+
+    // Loading skeleton for the comment list (shown only on the first load).
+    function skeletonItem() {
+      var li = el('li', 'sl-comment sl-skeleton-card');
+      var nick = el('div', 'sl-sk sl-sk-nick');
+      var line1 = el('div', 'sl-sk sl-sk-line');
+      var line2 = el('div', 'sl-sk sl-sk-line short');
+      li.append(nick, line1, line2);
+      return li;
+    }
+
+    // Long comments: show a truncated preview with "Read more / Show less".
+    function makeBody(text) {
+      var p = el('p', 'sl-body');
+      if (text.length <= READ_MORE_CHARS) { p.textContent = text; return p; }
+      var short = text.slice(0, READ_MORE_CHARS).replace(/\s+\S*$/, '') + '…';
+      var shown = el('span', null, short);
+      var full = el('span', null, text);
+      full.style.display = 'none';
+      var btn = el('button', 'sl-more-btn', t('readMore'));
+      btn.type = 'button';
+      btn.addEventListener('click', function () {
+        var isCollapsed = full.style.display === 'none';
+        shown.style.display = isCollapsed ? 'none' : 'inline';
+        full.style.display = isCollapsed ? 'inline' : 'none';
+        btn.textContent = isCollapsed ? t('showLess') : t('readMore');
+      });
+      p.append(shown, full, btn);
+      return p;
+    }
+
     function renderComment(c, depth) {
-      var li = el('li', 'sl-comment' + (depth > 0 ? ' sl-reply' : ''));
+      var li = el('li', 'sl-comment' + (depth > 0 ? ' sl-reply' : '') + (c.pinned && depth === 0 ? ' sl-pinned' : ''));
       var nick = (c.nickname && c.nickname.trim()) || t('anonymous');
       var avatar = el('div', 'sl-avatar', nick.charAt(0).toUpperCase());
       avatar.style.background = AVATAR_GRADIENTS[hashString(nick) % AVATAR_GRADIENTS.length];
@@ -514,15 +661,30 @@
       var head = el('div', 'sl-head');
       var nickWrap = el('span', 'sl-nick', nick);
       if (c.is_owner) nickWrap.appendChild(el('span', 'sl-owner-badge', t('author')));
-      head.append(nickWrap, el('span', 'sl-time', new Date(c.created_at * 1000).toLocaleString()));
-      var bodyEl = c.parentMissing ? el('p', 'sl-body sl-parent-removed', t('parentRemoved')) : el('p', 'sl-body', c.body);
+      if (c.pinned && depth === 0) nickWrap.appendChild(el('span', 'sl-pin-badge', '📌 ' + t('pinned')));
+      head.append(nickWrap, el('span', 'sl-time', relativeTime(c.created_at)));
+      var bodyEl = c.parentMissing ? el('p', 'sl-body sl-parent-removed', t('parentRemoved')) : makeBody(c.body);
       main.append(head, bodyEl);
+      // Actions: like / reply / report (anonymous, PoW-protected).
+      var actions = el('div', 'sl-actions');
+      var votes = Number(c.votes) || 0;
+      var voteBtn = el('button', 'sl-vote-btn' + (c.voted ? ' liked' : ''), (c.voted ? '✓ ' : '▲ ') + votes);
+      voteBtn.type = 'button';
+      voteBtn.setAttribute('aria-pressed', c.voted ? 'true' : 'false');
+      voteBtn.title = c.voted ? t('liked') : t('like');
+      voteBtn.addEventListener('click', function () { voteComment(c, voteBtn); });
+      actions.appendChild(voteBtn);
       if (depth < MAX_DEPTH) {
         var replyBtn = el('button', 'sl-reply-btn', t('reply'));
         replyBtn.type = 'button';
         replyBtn.addEventListener('click', function () { toggleReplyForm(c, main, replyBtn); });
-        main.appendChild(replyBtn);
+        actions.appendChild(replyBtn);
       }
+      var flagBtn = el('button', 'sl-flag-btn', t('flag'));
+      flagBtn.type = 'button';
+      flagBtn.addEventListener('click', function () { flagComment(c, flagBtn); });
+      actions.appendChild(flagBtn);
+      main.appendChild(actions);
       var top = el('div', 'sl-top');
       top.append(avatar, main);
       li.append(top);
@@ -545,6 +707,102 @@
         li.appendChild(ul);
       }
       return li;
+    }
+
+    // Shared signed-challenge fetch for comment actions (like / report).
+    function commentActionChallenge() {
+      return fetch(
+        endpoint + '/api/comments/challenge?hostContext=' + encodeURIComponent(hostContext) +
+        '&articlePath=' + encodeURIComponent(articlePath)
+      ).then(function (res) { if (!res.ok) throw new Error('challenge request failed'); return res.json(); });
+    }
+
+    // Anonymous like/upvote: one PoW, one challenge, per-browser guard.
+    function voteComment(c, btn) {
+      if (btn.disabled || c.voted) return;
+      btn.disabled = true;
+      commentActionChallenge()
+        .then(function (challenge) {
+          return solveWithWorker(challenge, 'comment-action', 'vote', c.id).then(function (nonce) {
+            return { challenge: challenge, nonce: nonce };
+          });
+        })
+        .then(function (solved) {
+          var payload = {
+            challengeId: solved.challenge.challengeId,
+            hostContext: solved.challenge.hostContext,
+            articlePath: solved.challenge.articlePath,
+            commentId: c.id,
+            difficulty: solved.challenge.difficulty,
+            expiresAt: solved.challenge.expiresAt,
+            signature: solved.challenge.signature,
+            nonce: solved.nonce
+          };
+          if (commentVoterToken) payload.voterToken = commentVoterToken;
+          return fetch(endpoint + '/api/comments/vote', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        })
+        .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, status: res.status, data: d }; }); })
+        .then(function (outcome) {
+          if (outcome.ok) {
+            if (outcome.data.voterToken) {
+              commentVoterToken = outcome.data.voterToken;
+              try { localStorage.setItem(commentVoterKey, commentVoterToken); } catch (e) { /* private mode */ }
+            }
+            c.voted = true;
+            c.votes = Number(outcome.data.votes) || Number(c.votes) + 1;
+            btn.classList.add('liked');
+            btn.setAttribute('aria-pressed', 'true');
+            btn.textContent = '✓ ' + c.votes;
+            btn.title = t('liked');
+          } else if (outcome.status === 409) {
+            // Already liked from this browser — reflect it without an error.
+            c.voted = true;
+            btn.classList.add('liked');
+            btn.setAttribute('aria-pressed', 'true');
+            btn.textContent = '✓ ' + (Number(c.votes) || 0);
+          }
+        })
+        .catch(function () { /* keep state; never fail the UI */ })
+        .finally(function () { btn.disabled = false; });
+    }
+
+    // Minimal visitor report (zero data — just a signed proof-of-work).
+    function flagComment(c, btn) {
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = t('flagBusy');
+      commentActionChallenge()
+        .then(function (challenge) {
+          return solveWithWorker(challenge, 'comment-action', 'flag', c.id).then(function (nonce) {
+            return { challenge: challenge, nonce: nonce };
+          });
+        })
+        .then(function (solved) {
+          return fetch(endpoint + '/api/comments/flag', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              challengeId: solved.challenge.challengeId,
+              hostContext: solved.challenge.hostContext,
+              articlePath: solved.challenge.articlePath,
+              commentId: c.id,
+              difficulty: solved.challenge.difficulty,
+              expiresAt: solved.challenge.expiresAt,
+              signature: solved.challenge.signature,
+              nonce: solved.nonce
+            })
+          });
+        })
+        .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+        .then(function (outcome) {
+          if (outcome.ok) { btn.textContent = t('flagDone'); btn.classList.add('done'); }
+          else { btn.textContent = t('flag'); btn.disabled = false; }
+        })
+        .catch(function () { btn.textContent = t('flag'); btn.disabled = false; });
     }
 
     function toggleReplyForm(c, main, btn) {
@@ -630,9 +888,19 @@
     }
 
     function loadComments() {
+      if (!loadedOnce) {
+        loadedOnce = true;
+        // First load: show a skeleton instead of the start card until we know.
+        list.classList.remove('sl-hidden');
+        startCard.classList.add('sl-hidden');
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < 3; i += 1) frag.appendChild(skeletonItem());
+        list.appendChild(frag);
+      }
+      var suffix = commentVoterToken ? '&voterToken=' + encodeURIComponent(commentVoterToken) : '';
       return fetch(
         endpoint + '/api/comments?article_path=' + encodeURIComponent(articlePath) +
-        '&host_context=' + encodeURIComponent(hostContext)
+        '&host_context=' + encodeURIComponent(hostContext) + suffix
       )
         .then(function (res) { if (!res.ok) throw new Error('failed to load comments'); return res.json(); })
         .then(function (data) {
@@ -642,12 +910,29 @@
           if (comments.length === 0) {
             // Empty thread: hide the list, show the "start the conversation" card.
             list.classList.add('sl-hidden');
+            startCard.classList.remove('sl-hidden');
             startCard.classList.add('sl-start-empty');
+            if (sortSelect) sortSelect.style.display = 'none';
             return;
           }
           list.classList.remove('sl-hidden');
+          startCard.classList.remove('sl-hidden');
           startCard.classList.remove('sl-start-empty');
-          buildTree(comments).forEach(function (r) { list.appendChild(renderComment(r, 0)); });
+          if (sortSelect) sortSelect.style.display = comments.length > 1 ? '' : 'none';
+          // Pinned roots always stay on top; the rest follow the chosen order
+          // (newest/oldest by time, best by comment votes). Replies keep their
+          // natural tree order.
+          var roots = buildTree(comments);
+          var pinnedRoots = roots.filter(function (r) { return r.pinned; });
+          var restRoots = roots.filter(function (r) { return !r.pinned; });
+          var dir = commentsSort === 'oldest' ? 1 : -1;
+          restRoots.sort(function (a, b) {
+            if (commentsSort === 'best') {
+              return (Number(b.votes) || 0) - (Number(a.votes) || 0) || (a.created_at - b.created_at);
+            }
+            return (a.created_at - b.created_at) * dir;
+          });
+          pinnedRoots.concat(restRoots).forEach(function (r) { list.appendChild(renderComment(r, 0)); });
         });
     }
 
@@ -702,6 +987,9 @@
               msg.pollId = a;
               if (Array.isArray(b)) msg.options = b; // multi-select set
               else msg.option = b;
+            } else if (kind === 'comment-action') {
+              msg.action = a; // 'flag' | 'vote'
+              msg.commentId = b;
             } else { msg.nickname = a; msg.body = b; }
             worker.postMessage(msg);
             return null;
@@ -877,9 +1165,20 @@
       var listEl = el('ul', 'sl-poll-options');
       var actionsEl = el('div', 'sl-poll-actions');
       root.append(heading, listEl, actionsEl, statusEl);
+      renderPollSkeleton();
 
       var selected = {};
       var multiVoteBtn = null;
+
+      // Poll loading skeleton (bar placeholders until the poll arrives).
+      function renderPollSkeleton() {
+        listEl.replaceChildren();
+        for (var i = 0; i < 3; i += 1) {
+          var li = el('li', 'sl-poll-option');
+          li.appendChild(el('div', 'sl-sk sl-sk-bar'));
+          listEl.appendChild(li);
+        }
+      }
 
       function setStatus(message, kind) {
         statusEl.replaceChildren();

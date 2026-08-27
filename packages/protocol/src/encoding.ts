@@ -2,6 +2,7 @@ import {
   CHALLENGE_ID_BYTES,
   MAX_ARTICLE_PATH_BYTES,
   MAX_BODY_BYTES,
+  MAX_COMMENT_ID_BYTES,
   MAX_HOST_CONTEXT_BYTES,
   MAX_NICKNAME_BYTES,
   MAX_OPTION_BYTES,
@@ -253,6 +254,128 @@ export function encodeCanonicalPollPayload(p: PollCanonicalPayload): Uint8Array 
 /** Canonical sort: byte-wise ascending, stable for equal strings. */
 export function sortPollOptions(options: string[]): string[] {
   return [...options].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
+/**
+ * Canonical binary encoding of a MULTI-SELECT POLL VOTE payload (schema
+ * "poll-multi"). Distinct from the single-option schema so existing polls are
+ * never affected:
+ *
+ *   offset  size  field
+ *   0       1     version          uint8
+ *   1       2     host_context_len uint16 BE   (max 255)
+ *   3       n     host_context     UTF-8
+ *   ...     2     article_path_len uint16 BE   (max 255)
+ *   ...     n     article_path     UTF-8
+ *   ...     2     poll_id_len      uint16 BE   (max 64)
+ *   ...     n     poll_id          UTF-8
+ *   ...     1     option_count     uint8       (1..MAX_POLL_OPTIONS)
+ *   ...     2     option_len       uint16 BE   (max 100)   × count
+ *   ...     n     option           UTF-8                  × count
+ *   ...     32    challenge_id     raw bytes
+ *   ...     8     nonce            uint64 BE
+ */
+
+/**
+ * PoW payload for a COMMENT ACTION: visitor flag ("report") or anonymous
+ * like/upvote. Same fields as a comment but WITHOUT the body — the action byte
+ * discriminates the two so a nonce mined for one is never valid for the other.
+ */
+export interface CommentActionCanonicalPayload {
+  version: number;
+  action: 'flag' | 'vote';
+  hostContext: string;
+  articlePath: string;
+  commentId: string;
+  challengeId: Uint8Array; // exactly CHALLENGE_ID_BYTES
+  nonce: bigint; // 0 <= nonce <= UINT64_MAX
+}
+
+const ACTION_BYTE: Record<'flag' | 'vote', number> = { flag: 1, vote: 2 };
+
+/**
+ * Canonical binary encoding of a COMMENT ACTION payload (schema "comment-action"):
+ *
+ *   offset  size  field
+ *   0       1     version          uint8
+ *   1       1     action           uint8 (1=flag, 2=vote)
+ *   2       2     host_context_len uint16 BE   (max 255)
+ *   4       n     host_context     UTF-8
+ *   ...     2     article_path_len uint16 BE   (max 255)
+ *   ...     n     article_path     UTF-8
+ *   ...     2     comment_id_len   uint16 BE   (max 64)
+ *   ...     n     comment_id       UTF-8
+ *   ...     32    challenge_id     raw bytes
+ *   ...     8     nonce            uint64 BE
+ */
+export function encodeCanonicalCommentActionPayload(p: CommentActionCanonicalPayload): Uint8Array {
+  if (p.version !== PROTOCOL_VERSION) {
+    throw new ProtocolError(`Unsupported protocol version: ${p.version}`);
+  }
+
+  const host = utf8EncodeStrict(p.hostContext);
+  const path = utf8EncodeStrict(p.articlePath);
+  const commentId = utf8EncodeStrict(p.commentId);
+  const actionByte = ACTION_BYTE[p.action];
+
+  assertByteLen('hostContext', host.length, MAX_HOST_CONTEXT_BYTES);
+  assertByteLen('articlePath', path.length, MAX_ARTICLE_PATH_BYTES);
+  assertByteLen('commentId', commentId.length, MAX_COMMENT_ID_BYTES);
+
+  if (p.challengeId.length !== CHALLENGE_ID_BYTES) {
+    throw new ProtocolError(
+      `challengeId must be exactly ${CHALLENGE_ID_BYTES} bytes, got ${p.challengeId.length}`,
+    );
+  }
+  if (p.nonce < 0n || p.nonce > UINT64_MAX) {
+    throw new ProtocolError('nonce out of uint64 range');
+  }
+
+  const total =
+    1 +
+    1 +
+    2 + host.length +
+    2 + path.length +
+    2 + commentId.length +
+    CHALLENGE_ID_BYTES +
+    NONCE_BYTES;
+
+  const out = new Uint8Array(total);
+  const view = new DataView(out.buffer);
+  let o = 0;
+
+  view.setUint8(o, p.version);
+  o += 1;
+
+  view.setUint8(o, actionByte);
+  o += 1;
+
+  view.setUint16(o, host.length, false);
+  o += 2;
+  out.set(host, o);
+  o += host.length;
+
+  view.setUint16(o, path.length, false);
+  o += 2;
+  out.set(path, o);
+  o += path.length;
+
+  view.setUint16(o, commentId.length, false);
+  o += 2;
+  out.set(commentId, o);
+  o += commentId.length;
+
+  out.set(p.challengeId, o);
+  o += CHALLENGE_ID_BYTES;
+
+  view.setBigUint64(o, p.nonce, false);
+  o += NONCE_BYTES;
+
+  if (o !== total) {
+    throw new ProtocolError(`internal comment-action encoding error: wrote ${o} of ${total} bytes`);
+  }
+
+  return out;
 }
 
 /**

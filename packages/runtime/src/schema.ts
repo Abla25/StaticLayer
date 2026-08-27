@@ -1,7 +1,7 @@
 import type { Env } from './env.ts';
 
 /**
- * Idempotent D1 schema bootstrap (migrations 001..008).
+ * Idempotent D1 schema bootstrap (migrations 001..011).
  *
  * The installers create the D1 database and bind it as `DB`, but they cannot
  * run `wrangler d1 migrations apply` inside the customer's account — so the
@@ -87,6 +87,25 @@ const SCHEMA_STATEMENTS: string[] = [
     UNIQUE (poll_id, voter_hash)
   ) WITHOUT ROWID`,
   `CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes (poll_id, option)`,
+  // 010_flags.sql — visitor "report" flags (zero personal data)
+  `CREATE TABLE IF NOT EXISTS comment_flags (
+    id TEXT PRIMARY KEY,
+    comment_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    challenge_id TEXT NOT NULL UNIQUE
+  ) WITHOUT ROWID`,
+  `CREATE INDEX IF NOT EXISTS idx_comment_flags_comment
+    ON comment_flags (comment_id, created_at)`,
+  // 011_votes.sql — anonymous comment votes (like/upvote)
+  `CREATE TABLE IF NOT EXISTS comment_votes (
+    id TEXT PRIMARY KEY,
+    comment_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    challenge_id TEXT NOT NULL UNIQUE,
+    voter_hash TEXT,
+    UNIQUE (comment_id, voter_hash)
+  ) WITHOUT ROWID`,
+  `CREATE INDEX IF NOT EXISTS idx_comment_votes_comment ON comment_votes (comment_id)`,
 ];
 
 let schemaReady = false;
@@ -109,6 +128,12 @@ export async function ensureSchema(env: Env): Promise<void> {
   // Migration 008: owner-reply flag (same idempotent approach).
   try {
     await env.DB.prepare('ALTER TABLE comments ADD COLUMN is_owner INTEGER NOT NULL DEFAULT 0').run();
+  } catch {
+    /* column already exists — safe on re-deploy */
+  }
+  // Migration 009: pinned comment flag (same idempotent approach).
+  try {
+    await env.DB.prepare('ALTER TABLE comments ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0').run();
   } catch {
     /* column already exists — safe on re-deploy */
   }

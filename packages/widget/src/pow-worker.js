@@ -11,8 +11,10 @@
  */
 import {
   base64UrlToBytes,
+  encodeCanonicalCommentActionPayload,
   encodeCanonicalPollPayload,
   encodeCanonicalPollPayloadMulti,
+  mineCommentActionNonce,
   mineNonce,
   minePollNonce,
   minePollNonceMulti,
@@ -58,6 +60,20 @@ self.onmessage = async function (event) {
       };
       nonce = await minePollNonce(pbase, challenge.difficulty);
       if (!(await verifyPow(encodeCanonicalPollPayload({ ...pbase, nonce: nonce }), challenge.difficulty))) {
+        throw new Error('internal: mined nonce failed verification');
+      }
+    } else if (typeof msg.action === 'string' && typeof msg.commentId === 'string') {
+      // Comment action (flag / vote): dedicated comment-action schema.
+      var cbase = {
+        version: PROTOCOL_VERSION,
+        hostContext: challenge.hostContext,
+        articlePath: challenge.articlePath,
+        action: msg.action === 'vote' ? 'vote' : 'flag',
+        commentId: msg.commentId,
+        challengeId: base64UrlToBytes(challenge.challengeId)
+      };
+      nonce = await mineCommentActionNonce(cbase, challenge.difficulty);
+      if (!(await verifyPow(encodeCanonicalCommentActionPayload({ ...cbase, nonce: nonce }), challenge.difficulty))) {
         throw new Error('internal: mined nonce failed verification');
       }
     } else {

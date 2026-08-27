@@ -28,10 +28,14 @@ interface CommentRow {
   parent_id?: string | null;
   parent_nickname?: string | null;
   is_owner?: number;
+  pinned?: number;
+  flags?: number;
 }
 
 const LIST_SELECT =
-  'SELECT c.id, c.article_path, c.nickname, c.body, c.status, c.created_at, c.parent_id, c.is_owner, p.nickname AS parent_nickname ' +
+  'SELECT c.id, c.article_path, c.nickname, c.body, c.status, c.created_at, c.parent_id, c.is_owner, c.pinned, ' +
+  '(SELECT COUNT(*) FROM comment_flags f WHERE f.comment_id = c.id) AS flags, ' +
+  'p.nickname AS parent_nickname ' +
   'FROM comments c LEFT JOIN comments p ON p.id = c.parent_id';
 
 /**
@@ -191,13 +195,30 @@ export async function handleAdminPatchComment(
   if (!read.ok || typeof read.value !== 'object' || read.value === null) {
     return json({ error: 'invalid body' }, 400);
   }
-  const status = (read.value as Record<string, unknown>).status;
-  if (status !== 'approved' && status !== 'pending') {
-    return json({ error: 'status must be approved or pending' }, 400);
+  const body = read.value as Record<string, unknown>;
+  const status = body.status;
+  const pinned = body.pinned;
+  const hasStatus = status === 'approved' || status === 'pending';
+  const hasPinned = typeof pinned === 'boolean';
+  if (!hasStatus && !hasPinned) {
+    return json({ error: 'send status (approved|pending) and/or pinned (boolean)' }, 400);
   }
 
-  const result = await env.DB.prepare('UPDATE comments SET status = ? WHERE id = ?')
-    .bind(status, id)
+  const sets: string[] = [];
+  const binds: (string | number)[] = [];
+  if (hasStatus) {
+    sets.push('status = ?');
+    binds.push(status as string);
+  }
+  if (hasPinned) {
+    sets.push('pinned = ?');
+    binds.push(pinned ? 1 : 0);
+  }
+  binds.push(id);
+
+  const result = await env.DB
+    .prepare(`UPDATE comments SET ${sets.join(', ')} WHERE id = ?`)
+    .bind(...binds)
     .run();
   if (result.meta.changes === 0) {
     return json({ error: 'comment not found' }, 404);
@@ -278,4 +299,71 @@ export async function handleAdminDeleteComment(
     return json({ error: 'comment not found' }, 404);
   }
   return json({ ok: true });
+}
+
+/**
+ * GET /api/admin/export?format=csv|json  (session required)
+ *
+ * Data portability (GDPR): lets the owner download everything their visitors
+ * wrote. `csv` = comments as a spreadsheet-friendly CSV (formula-injection
+ * guarded); `json` = the full dataset (comments, reactions, polls, votes,
+ * flags). Never includes IPs or any infrastructure metadata.
+ */
+function csvCell(value: unknown): string {
+  const s = value == null ? '' : String(value);
+  // Formula-injection guard for spreadsheets (CSV injection).
+  const guarded = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+  return /[",\n\r]/.test(guarded) ? `"${guarded.replace(/"/g, '""')}"` : guarded;
+}
+
+export async function handleAdminExport(request: Request, env: Env): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return auth.response;
+
+  const format = new URL(request.url).searchParams.get('format') ?? 'json';
+  if (format !== 'csv' && format !== 'json') {
+    return json({ error: 'format must be csv or json' }, 400);
+  }
+
+  if (format === 'csv') {
+    const { results } = await env.DB.prepare(
+      'SELECT id, article_path, nickname, body, status, created_at, parent_id, is_owner, pinned FROM comments ORDER BY created_at ASC',
+    ).all<Record<string, unknown>>();
+    const header = 'id,article_path,nickname,body,status,created_at,parent_id,is_owner,pinned';
+    const lines = results.map((r) =>
+      [r.id, r.article_path, r.nickname, r.body, r.status, r.created_at, r.parent_id ?? '', r.is_owner ?? 0, r.pinned ?? 0]
+        .map(csvCell)
+        .join(','),
+    );
+    return new Response(`${header}\n${lines.join('\n')}\n`, {
+      headers: {
+        'content-type': 'text/csv; charset=utf-8',
+        'content-disposition': 'attachment; filename="staticlayer-comments.csv"',
+        'cache-control': 'no-store',
+      },
+    });
+  }
+
+  const [comments, reactions, polls, pollVotes, flags, votes] = await Promise.all([
+    env.DB.prepare('SELECT * FROM comments ORDER BY created_at ASC').all(),
+    env.DB.prepare('SELECT * FROM reactions ORDER BY created_at ASC').all(),
+    env.DB.prepare('SELECT * FROM polls ORDER BY created_at ASC').all(),
+    env.DB.prepare('SELECT * FROM poll_votes ORDER BY created_at ASC').all(),
+    env.DB.prepare('SELECT * FROM comment_flags ORDER BY created_at ASC').all(),
+    env.DB.prepare('SELECT * FROM comment_votes ORDER BY created_at ASC').all(),
+  ]);
+  return json(
+    {
+      exported_at: new Date().toISOString(),
+      product: 'staticlayer',
+      comments: comments.results,
+      reactions: reactions.results,
+      polls: polls.results,
+      poll_votes: pollVotes.results,
+      comment_flags: flags.results,
+      comment_votes: votes.results,
+    },
+    200,
+    { 'content-disposition': 'attachment; filename="staticlayer-export.json"', 'cache-control': 'no-store' },
+  );
 }

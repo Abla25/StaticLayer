@@ -54,6 +54,12 @@
         <h2>Nested replies</h2>
         <p>Replies store the same fields as comments plus the <b>id of the parent comment</b> (only a routing reference, never a new data type). No additional personal data.</p>
 
+        <h2>Comment likes (v1.6, optional by default)</h2>
+        <p>Each like is an anonymous event (comment id, timestamp, challenge id). The <b>per-browser guard</b> issues an <b>anonymous</b> token that lives only in the visitor's browser and stores only a <b>hash</b> of it on your D1 — same pattern as poll single-vote. No personal data; the widget recognises "this browser already liked this comment" locally.</p>
+
+        <h2>Visitor reports (v1.6)</h2>
+        <p>A visitor <b>Report</b> stores only the flagged comment id and a timestamp — no reason text, no identity, no IP. It is a count that surfaces in your moderation queue; you decide what to do.</p>
+
         <h2>Privacy template</h2>
         <p>Adapt the provided template for your site's privacy policy: <a href="{{REPO}}/blob/main/docs/PRIVACY_POLICY_TEMPLATE.md" target="_blank" rel="noopener">docs/PRIVACY_POLICY_TEMPLATE.md</a>.</p>
       </article>

@@ -1,0 +1,15 @@
+{{/* StaticLayer — Hugo partial. */}
+{{/* Usage: {{ partial "comments.html" (dict "endpoint" "https://comments.example.com" "reactions" "👍,❤️,🎉") }} */}}
+{{ $attrs := slice "data-staticlayer" }}
+{{ $attrs = $attrs | append (printf "data-endpoint=\"%s\"" .endpoint) }}
+{{ with .articlePath }}{{ $attrs = $attrs | append (printf "data-article-path=\"%s\"" .) }}{{ end }}
+{{ with .reactions }}{{ $attrs = $attrs | append (printf "data-reactions=\"%s\"" .) }}{{ end }}
+{{ with .pollId }}{{ $attrs = $attrs | append (printf "data-poll-id=\"%s\"" .) }}{{ end }}
+{{ with .sort }}{{ $attrs = $attrs | append (printf "data-comments-sort=\"%s\"" .) }}{{ end }}
+{{ with .reactionsPosition }}{{ $attrs = $attrs | append (printf "data-reactions-position=\"%s\"" .) }}{{ end }}
+{{ with .lang }}{{ if ne . "auto" }}{{ $attrs = $attrs | append (printf "data-lang=\"%s\"" .) }}{{ end }}{{ end }}
+{{ with .theme }}{{ if ne . "auto" }}{{ $attrs = $attrs | append (printf "data-theme=\"%s\"" .) }}{{ end }}{{ end }}
+{{ with .accent }}{{ $attrs = $attrs | append (printf "data-accent=\"%s\"" .) }}{{ end }}
+{{ with .accent2 }}{{ $attrs = $attrs | append (printf "data-accent-2=\"%s\"" .) }}{{ end }}
+<div {{ delimit $attrs " " }}></div>
+<script src="{{ .endpoint }}/widget.js" defer></script>

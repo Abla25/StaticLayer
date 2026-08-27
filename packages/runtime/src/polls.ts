@@ -445,7 +445,7 @@ export async function handlePollRevoke(request: Request, env: Env): Promise<Resp
   });
 }
 
-async function verifyVoterToken(token: string, env: Env): Promise<Uint8Array | null> {
+export async function verifyVoterToken(token: string, env: Env): Promise<Uint8Array | null> {
   if (!token) return null;
   const parts = token.split('.');
   if (parts.length !== 2) return null;
@@ -460,6 +460,6 @@ async function verifyVoterToken(token: string, env: Env): Promise<Uint8Array | n
   }
 }
 
-async function signVoterToken(id: Uint8Array, env: Env): Promise<Uint8Array> {
+export async function signVoterToken(id: Uint8Array, env: Env): Promise<Uint8Array> {
   return hmacSha256(utf8EncodeStrict(env.POW_SECRET), id);
 }
