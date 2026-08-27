@@ -32,6 +32,8 @@ export interface WorkerOptions {
   reactionEscalationVotes?: number;
   reactionIntervalSeconds?: number;
   reactionOptions?: string;
+  /** Skip applying migrations/*.sql — leaves the D1 database completely empty (installer scenario). */
+  skipMigrations?: boolean;
 }
 // Passed INLINE via `script:` (not `scriptPath:`): in the installed Miniflare
 // v4, loading a bundled file through `scriptPath` fails with an opaque workerd
@@ -100,7 +102,7 @@ export async function spawnWorker(
   );
 
   const db = await mf.getD1Database('DB');
-  await applyMigrations(db);
+  if (!options.skipMigrations) await applyMigrations(db);
   return mf;
 }
 

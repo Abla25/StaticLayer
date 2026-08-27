@@ -28,6 +28,7 @@ import { purgeUsedChallenges } from './retention.ts';
 import { handleListReactions, handlePostReaction, handleReactionChallenge } from './reactions.ts';
 import { handleStatic } from './static.ts';
 import { handleAdminCheckUpdates } from './updates.ts';
+import { ensureSchema } from './schema.ts';
 import { healthPayload } from './version.ts';
 
 /**
@@ -97,6 +98,18 @@ const worker: ExportedHandler<Env> = {
           headers,
         });
       });
+
+    // Lazily bootstrap the D1 schema (migrations 001..005). The installer
+    // creates the database and binding but cannot run `wrangler d1 migrations
+    // apply` on the customer account — the runtime applies the same idempotent
+    // DDL itself, once per isolate, before any DB-backed API call.
+    if (pathname.startsWith('/api/') && pathname !== '/api/health') {
+      try {
+        await ensureSchema(env);
+      } catch (err) {
+        return respond(json({ error: 'database bootstrap failed', detail: (err as Error).message }, 500));
+      }
+    }
 
     if (pathname === '/api/comments' && method === 'GET') {
       return respond(handleListComments(request, env));
