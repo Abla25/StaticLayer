@@ -1,5 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type { Miniflare } from 'miniflare';
+import { base64UrlToBytes } from '@staticlayer/protocol';
 import { verifyAccessJwt } from '../../packages/runtime/src/admin-access.ts';
 import { SECRETS, spawnWorker } from './worker.ts';
 
@@ -80,9 +81,13 @@ describe('verifyAccessJwt (pure, RS256)', () => {
 
   it('rejects a tampered signature', async () => {
     const token = await signJwt({ iss: ISSUER, exp: NOW + 3600, email: 'a@b.com' }, keyPair, 'kid-1');
+    // Deterministic tamper: flip a byte in the MIDDLE of the decoded signature,
+    // then re-encode. Flipping the final base64 character is unreliable for
+    // RSA signatures (256 bytes => the last char only carries padding bits).
     const parts = token.split('.');
-    const sig = parts[2].endsWith('A') ? parts[2].slice(0, -1) + 'B' : parts[2].slice(0, -1) + 'A';
-    const tampered = `${parts[0]}.${parts[1]}.${sig}`;
+    const sigBytes = base64UrlToBytes(parts[2]);
+    sigBytes[Math.floor(sigBytes.length / 2)] ^= 0x01;
+    const tampered = `${parts[0]}.${parts[1]}.${b64urlBytes(sigBytes)}`;
     expect(await verifyAccessJwt(tampered, { jwks: [jwk], issuer: ISSUER, nowSec: NOW })).toMatchObject({ ok: false, reason: 'invalid signature' });
   });
 

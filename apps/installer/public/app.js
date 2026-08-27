@@ -129,6 +129,7 @@ async function computePlan() {
     ratelimitNamespaceId: $('rl-ns').value.trim() || undefined,
     cfAccessTeam: $('cf-access-team').value.trim() || undefined,
     cfAccessAud: $('cf-access-aud').value.trim() || undefined,
+    siteUrl: $('site-url').value.trim() || undefined,
     dryRun: true,
   };
   const plan = await api('/api/deploy', { method: 'POST', body: JSON.stringify(body) });
@@ -174,6 +175,7 @@ $('deploy').addEventListener('click', async () => {
     ratelimitNamespaceId: $('rl-ns').value.trim() || undefined,
     cfAccessTeam: $('cf-access-team').value.trim() || undefined,
     cfAccessAud: $('cf-access-aud').value.trim() || undefined,
+    siteUrl: $('site-url').value.trim() || undefined,
     dryRun: false,
   };
   try {
@@ -189,11 +191,17 @@ $('deploy').addEventListener('click', async () => {
       $('admin-secret-box').classList.remove('hidden');
       reportEmbedHeight();
     }
+    // Use the site URL (if provided) as the host context in the snippet.
+    let hostContext = 'yourdomain.com';
+    const siteUrl = $('site-url').value.trim();
+    if (siteUrl) {
+      hostContext = siteUrl.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+    }
     const snippet = [
       `<script src="${result.endpoint}/widget.js" data-staticlayer`,
       `  data-endpoint="${result.endpoint}"`,
       '  data-article-path="/your-article"',
-      '  data-host-context="yourdomain.com"></script>',
+      `  data-host-context="${hostContext}"></script>`,
     ].join('\n');
     $('snippet').textContent = snippet;
   } catch (err) {
@@ -205,6 +213,33 @@ $('deploy').addEventListener('click', async () => {
 $('copy').addEventListener('click', async () => {
   await navigator.clipboard.writeText($('snippet').textContent);
   $('copy').textContent = 'Copied ✓';
+});
+
+/* ---- Step 3: pick your site from your Cloudflare domains ---- */
+$('load-domains').addEventListener('click', async () => {
+  const sel = $('site-domains');
+  try {
+    const data = await api('/api/domains');
+    sel.replaceChildren();
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Select a domain…';
+    sel.appendChild(placeholder);
+    for (const d of data.domains || []) {
+      const o = document.createElement('option');
+      o.value = 'https://' + d;
+      o.textContent = d;
+      sel.appendChild(o);
+    }
+    sel.classList.remove('hidden');
+    sel.focus();
+  } catch (err) {
+    setText('plan-result', 'Domains: ' + err.message);
+  }
+});
+$('site-domains').addEventListener('change', () => {
+  const v = $('site-domains').value;
+  if (v) $('site-url').value = v;
 });
 
 $('copy-secret').addEventListener('click', async () => {

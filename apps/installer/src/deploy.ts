@@ -46,6 +46,8 @@ export interface InstallerInput {
   cfAccessTeam?: string;
   /** Optional Access Application AUID enforced in the JWT `aud` claim. */
   cfAccessAud?: string;
+  /** Optional site URL — pre-configures ALLOWED_ORIGINS (CORS) for the widget. */
+  siteUrl?: string;
   dryRun: boolean;
 }
 
@@ -83,6 +85,20 @@ export function generateSecrets(): Record<string, string> {
   return out;
 }
 
+/** Normalize a site URL to an origin for the CORS allowlist (e.g. https://x.com). */
+export function normalizeSiteUrl(raw: string | undefined): string | null {
+  if (!raw) return null;
+  let s = raw.trim().replace(/\/$/, '');
+  if (!s) return null;
+  if (!/^https?:\/\//i.test(s)) s = `https://${s}`;
+  try {
+    const u = new URL(s);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return null;
+  }
+}
+
 export async function runInstallerDeploy(
   options: InstallerDeployOptions,
 ): Promise<InstallerDeployResult> {
@@ -98,12 +114,17 @@ export async function runInstallerDeploy(
     d1: { binding: 'DB', databaseName },
     secrets: [...INSTALLER_SECRETS],
     workerEntry: options.workerEntry ?? 'packages/runtime/src/index.ts',
-  };  // Guided Cloudflare Access: when the operator provides a team, pre-configure
+  };
+  // Guided Cloudflare Access: when the operator provides a team, pre-configure
   // the worker var so the admin login shows "Sign in with Cloudflare".
   const team = options.input.cfAccessTeam?.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
   if (team) config.vars.CF_ACCESS_TEAM = team;
   const aud = options.input.cfAccessAud?.trim();
-  if (aud) config.vars.CF_ACCESS_AUD = aud;  if (options.input.ratelimitNamespaceId) {
+  if (aud) config.vars.CF_ACCESS_AUD = aud;
+  // Site URL -> CORS allowlist so the widget can call this Worker from the site.
+  const siteUrl = normalizeSiteUrl(options.input.siteUrl);
+  if (siteUrl) config.vars.ALLOWED_ORIGINS = siteUrl;
+  if (options.input.ratelimitNamespaceId) {
     config.ratelimit = {
       binding: 'RATE_LIMITER',
       namespaceId: options.input.ratelimitNamespaceId,

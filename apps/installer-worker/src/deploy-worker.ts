@@ -32,6 +32,8 @@ export interface InstallerInput {
   cfAccessTeam?: string;
   /** Optional Access Application AUID enforced in the JWT `aud` claim. */
   cfAccessAud?: string;
+  /** Optional site URL — pre-configures ALLOWED_ORIGINS (CORS) for the widget. */
+  siteUrl?: string;
   dryRun: boolean;
 }
 
@@ -39,6 +41,20 @@ function bytesToBase64Url(bytes: Uint8Array): string {
   let bin = '';
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+/** Normalize a site URL to an origin for the CORS allowlist (e.g. https://x.com). */
+export function normalizeSiteUrl(raw: string | undefined): string | null {
+  if (!raw) return null;
+  let s = raw.trim().replace(/\/$/, '');
+  if (!s) return null;
+  if (!/^https?:\/\//i.test(s)) s = `https://${s}`;
+  try {
+    const u = new URL(s);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return null;
+  }
 }
 
 export function generateSecrets(): Record<string, string> {
@@ -81,6 +97,9 @@ export async function runInstallerDeployWorker(options: {
   if (team) config.vars.CF_ACCESS_TEAM = team;
   const aud = options.input.cfAccessAud?.trim();
   if (aud) config.vars.CF_ACCESS_AUD = aud;
+  // Site URL -> CORS allowlist so the widget can call this Worker from the site.
+  const siteUrl = normalizeSiteUrl(options.input.siteUrl);
+  if (siteUrl) config.vars.ALLOWED_ORIGINS = siteUrl;
   if (options.input.ratelimitNamespaceId) {
     config.ratelimit = {
       binding: 'RATE_LIMITER',

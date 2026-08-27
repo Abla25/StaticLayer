@@ -331,6 +331,30 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
     return;
   }
 
+  /* ---------- list Cloudflare domains (site URL picker) ---------- */
+  if (url.pathname === '/api/domains' && req.method === 'GET') {
+    const got = getSession(req);
+    if (!got || !got.session.accessToken) {
+      json(res, 401, { error: 'unauthorized' });
+      return;
+    }
+    try {
+      const dr = await fetch('https://api.cloudflare.com/client/v4/zones?per_page=50', {
+        headers: { authorization: `Bearer ${got.session.accessToken}` },
+      });
+      const body = (await dr.json()) as { success?: boolean; result?: Array<{ name?: string }> };
+      if (!dr.ok || body.success !== true || !Array.isArray(body.result)) {
+        json(res, 403, { error: 'cannot list domains — token needs Zone:Read, or type the URL manually' });
+        return;
+      }
+      const domains = body.result.map((z) => z.name).filter((n): n is string => typeof n === 'string');
+      json(res, 200, { domains });
+    } catch (err) {
+      json(res, 502, { error: `could not list domains: ${(err as Error).message}` });
+    }
+    return;
+  }
+
   /* ---------- deploy ---------- */
   if (url.pathname === '/api/deploy' && req.method === 'POST') {
     const got = getSession(req);
@@ -356,6 +380,7 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
           : undefined,
       cfAccessTeam: typeof body.cfAccessTeam === 'string' && body.cfAccessTeam.trim() ? body.cfAccessTeam.trim() : undefined,
       cfAccessAud: typeof body.cfAccessAud === 'string' && body.cfAccessAud.trim() ? body.cfAccessAud.trim() : undefined,
+      siteUrl: typeof body.siteUrl === 'string' && body.siteUrl.trim() ? body.siteUrl.trim() : undefined,
       dryRun,
     };
 

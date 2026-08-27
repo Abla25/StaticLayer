@@ -87,6 +87,23 @@ describe('installer deploy — dry run', () => {
     expect(varMap.CF_ACCESS_TEAM).toBe('myteam.cloudflareaccess.com'); // normalized
     expect(varMap.CF_ACCESS_AUD).toBe('aud-123');
   });
+
+  it('pre-configures ALLOWED_ORIGINS (CORS) from the site URL', async () => {
+    const api = makeApi();
+    await runInstallerDeploy({
+      accessToken: 'tok-1',
+      input: { ...baseInput, workerName: 'pc', databaseName: 'pc-db', dryRun: false, siteUrl: 'mysite.com/blog' },
+      apiFactory: () => api,
+      workerCode: WORKER_CODE,
+      generateSecrets: fixedSecrets,
+    });
+    const bindings = api.lastDeployRequest?.metadata?.bindings ?? [];
+    const varMap: Record<string, string> = {};
+    for (const b of bindings) {
+      if (b.type === 'plain_text' && typeof b.name === 'string') varMap[b.name] = String((b as { text?: unknown }).text ?? '');
+    }
+    expect(varMap.ALLOWED_ORIGINS).toBe('https://mysite.com'); // normalized to origin
+  });
 });
 
 describe('installer deploy — apply (secrets never returned)', () => {
