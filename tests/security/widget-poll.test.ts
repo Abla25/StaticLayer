@@ -88,8 +88,11 @@ function makeDom(initial: Partial<PollState> = {}, pollId = 'poll-1') {
       const opts = Array.isArray(body.options) ? (body.options as string[]) : [body.option as string];
       opts.forEach((o) => { poll.counts[o] = (poll.counts[o] || 0) + 1; });
       poll.total = Object.values(poll.counts).reduce((a, b) => a + b, 0);
-      poll.voted = true;
-      return { ok: true, status: 200, json: async () => ({ ok: true, poll, voted: true, voterToken: 'tok.abc' }) } as Response;
+      // REALISTIC server shape: `voted` is TOP-LEVEL, the poll object itself
+      // carries NO voted flag. The widget must mirror it to render results.
+      const respPoll = JSON.parse(JSON.stringify(poll)) as PollState;
+      delete respPoll.voted;
+      return { ok: true, status: 200, json: async () => ({ ok: true, poll: respPoll, voted: true, voterToken: 'tok.abc' }) } as Response;
     }
     if (url === 'https://comments.example.com/api/polls/revoke' && init?.method === 'POST') {
       revoked.push(JSON.parse(String(init.body)) as Record<string, unknown>);
@@ -221,6 +224,9 @@ describe('widget polls v2 — single vs multi voting', () => {
     expect(postedVotes.length).toBe(1);
     expect([...(postedVotes[0].options as string[])].sort()).toEqual(['A', 'C']);
     expect(postedVotes[0].option).toBeUndefined();
+    // After voting the widget lands on the ranked results (voted flag mirrored).
+    expect(host.querySelector('.sl-poll-rank')).not.toBeNull();
+    expect(host.querySelector('.sl-poll-status')?.textContent).toContain('voted');
   });
 
   it('multi + single-vote guard: shows "Change your votes" and revokes', async () => {

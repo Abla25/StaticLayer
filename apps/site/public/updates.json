@@ -1,6 +1,6 @@
 {
-  "latest": "1.6.1",
+  "latest": "1.6.2",
   "date": "2026-08-27",
-  "notes": "v1.6.1 — Polls: new \"View results\" button lets anyone peek at the live ranked results without voting (and go back to vote).",
+  "notes": "v1.6.2 — Fix: after voting, the widget now lands directly on the ranked results even without the \"one vote per browser\" guard (the \"voted\" flag from the vote response is mirrored into the poll).",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }

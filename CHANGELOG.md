@@ -12,6 +12,13 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Polls: results after voting (1.6.2)** — the widget now mirrors the top-level
+  `voted` flag from the vote response into the poll, so it lands on the ranked
+  results right after voting — even when "one vote per browser" is off (no
+  token needed). Previously it fell back to the voting screen (the poll object
+  itself carried no `voted` flag). Tests use a realistic server-shaped mock.
+
 ### Added
 - **Polls: "View results" (1.6.1)** — a small "View results" button under the
   voting buttons reveals the live ranked results even without voting (with a

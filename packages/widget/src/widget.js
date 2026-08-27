@@ -1433,7 +1433,13 @@
                 try { localStorage.setItem(voterKey, voterToken); } catch (e) { /* private mode */ }
               }
               selected = {};
-              renderPoll(outcome.data.poll);
+              // The server returns `voted` at the TOP level of the response
+              // ({ poll, voted, voterToken }) — the poll object itself has no
+              // voted flag. Mirror it so the results render right after voting
+              // (works even without the anonymous token / single-vote guard).
+              var updatedPoll = outcome.data.poll;
+              if (updatedPoll) updatedPoll.voted = !!outcome.data.voted;
+              renderPoll(updatedPoll);
             } else if (outcome.status === 409) {
               setStatus(t('alreadyVoted'), 'err');
               loadPoll();
