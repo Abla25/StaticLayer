@@ -20,6 +20,8 @@ export interface Env {
   // Tunables (vars in wrangler.jsonc; overridable per test).
   POW_DIFFICULTY?: number;
   CHALLENGE_TTL_SECONDS?: number;
+  /** Minimum seconds between challenge issue and submit (anti-bot time gate). */
+  CHALLENGE_TIME_GATE_SECONDS?: number;
   SESSION_TTL_SECONDS?: number;
   MAX_REQUEST_BYTES?: number;
   /**
@@ -60,6 +62,7 @@ export interface Env {
 export const DEFAULTS = {
   POW_DIFFICULTY: 16,
   CHALLENGE_TTL_SECONDS: 300,
+  CHALLENGE_TIME_GATE_SECONDS: 3,
   SESSION_TTL_SECONDS: 7200,
   MAX_REQUEST_BYTES: 65536,
   REACTION_OPTIONS: '👍,❤️,🎉',

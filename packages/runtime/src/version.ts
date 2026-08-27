@@ -5,7 +5,7 @@
  */
 
 /** Keep in sync with the npm release version (CHANGELOG.md). */
-export const RUNTIME_VERSION = '1.3.0';
+export const RUNTIME_VERSION = '1.4.0';
 
 /** Number of applied migrations (001..008). */
 export const SCHEMA_VERSION = 8;

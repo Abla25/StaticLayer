@@ -21,6 +21,7 @@ import { readSettings, settingModerationMode, settingNumber } from './settings.t
 import { decide, readLists } from './moderation-lists.ts';
 import { findBlockedTerm, readBlockedTerms } from './blocked-terms.ts';
 import { notifyPendingComment } from './telegram.ts';
+import { fakePendingComment, isHoneypotTriggered, timeGateResponse } from './antiabuse.ts';
 
 /**
  * POST /api/comments
@@ -83,6 +84,13 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
     return json({ error: 'body must be a JSON object' }, 400);
   }
   const record = data as Record<string, unknown>;
+
+  // ---- 0.5 honeypot (anti-bot, zero data): silently drop filled honeypots ---
+  // A hidden field that real humans never see. Triggered => return a plausible
+  // fake "pending" so the bot learns nothing; nothing is stored or consumed.
+  if (isHoneypotTriggered(record)) {
+    return fakePendingComment();
+  }
 
   // ---- strict field extraction (fail closed on wrong types) ----
   const challengeIdB64 = requireString(record, 'challengeId');
@@ -165,6 +173,10 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
   if (expiresAt <= nowSec) {
     return json({ error: 'challenge expired' }, 410);
   }
+
+  // ---- 4.1 time gate (anti-bot, zero data) ----
+  const gateRes = timeGateResponse(env, nowSec, expiresAt);
+  if (gateRes) return gateRes;
 
   // ---- 4.5 live settings (the admin panel can change difficulty without a redeploy) ----
   const settings = await readSettings(env.DB);

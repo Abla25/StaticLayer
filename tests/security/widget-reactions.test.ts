@@ -30,6 +30,7 @@ function makeDom() {
        <div id="host" data-staticlayer
             data-endpoint="https://comments.example.com"
             data-article-path="/blog/x"
+            data-time-gate-ms="0"
             data-reactions="👍,❤️"></div>
      </body></html>`,
     { url: 'https://site.example.com/blog/x', runScripts: 'outside-only' },
@@ -160,7 +161,8 @@ describe('widget reactions bar', () => {
       `<!doctype html><html><body>
          <div id="host" data-staticlayer
               data-endpoint="https://comments.example.com"
-              data-article-path="/blog/x"></div>
+              data-article-path="/blog/x"
+              data-time-gate-ms="0"></div>
        </body></html>`,
       { url: 'https://site.example.com/blog/x', runScripts: 'outside-only' },
     );
@@ -179,6 +181,7 @@ describe('widget reactions bar', () => {
          <div id="host" data-staticlayer
               data-endpoint="https://comments.example.com"
               data-article-path="/blog/x"
+              data-time-gate-ms="0"
               data-reactions="👍,❤️"
               data-reactions-only></div>
        </body></html>`,

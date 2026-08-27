@@ -39,6 +39,14 @@
         <h2>Reactions</h2>
         <p>Reactions use the same cost-based integrity model as comments: single-use signed challenges, real Proof-of-Work, atomic anti-replay, per-article rate limiting and a minimum interval. Difficulty escalates per article to make stuffing progressively more expensive. A reaction row is an anonymous event — no user identifier, no IP. This is anti-stuffing by cost, not identity-based voting: repeated votes by one person are not detectable by design.</p>
 
+        <h2>Zero-data anti-spam (v1.4)</h2>
+        <p>Two behavioural layers sit <b>on top of the Proof-of-Work</b>, both designed to never read, store or persist any content or personal data (GDPR-neutral by default):</p>
+        <ul>
+          <li><b>Honeypot</b> — the widget renders a hidden field that humans never see but bots fill. If it arrives filled, the server <b>silently drops</b> the submission and returns a plausible fake "pending" — the bot learns nothing and nothing is stored.</li>
+          <li><b>Time gate (3s)</b> — submissions arriving sooner than 3 seconds after the challenge was issued are rejected with <code>429</code>. The issue time is recovered from the <b>signed</b> challenge (<code>expiresAt − TTL</code>), so the check keeps <b>zero server state</b>. The widget waits the gate client-side, so humans never notice.</li>
+        </ul>
+        <p>Content heuristics and duplicate-content hashing are deliberately <b>not</b> enabled — they would require reading the comment text, against the zero-data principle.</p>
+
         <h2>Operational controls</h2>
         <ul>
           <li>Route-scoped rate limiting (challenge / comments / login) — edge-local backstop, never IP-only.</li>

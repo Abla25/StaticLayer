@@ -316,6 +316,13 @@
     var pollId = String(((opts && opts.pollId) || root.getAttribute('data-poll-id') || '')).trim();
     var pollStyle = String(((opts && opts.pollStyle) || root.getAttribute('data-poll-style') || 'bars')).trim();
     var pollResults = String(((opts && opts.pollResults) || root.getAttribute('data-poll-results') || 'after')).trim();
+    // Client-side mirror of the server time gate: submissions are held until
+    // this many ms have passed since the challenge request, so legitimate
+    // users never trip the server's 429 (default 3000ms).
+    // data-time-gate-ms="0" (or opts.timeGateMs: 0) disables it (tests/demos).
+    var timeGateMs = 3000;
+    var rawGate = opts && opts.timeGateMs != null ? String(opts.timeGateMs) : root.getAttribute('data-time-gate-ms');
+    if (rawGate != null && /^\d+$/.test(rawGate)) timeGateMs = parseInt(rawGate, 10);
     if (pollId) {
       initPoll();
       return;
@@ -386,7 +393,8 @@
       form = el('form', 'sl-form');
       var row = el('div', 'sl-form-row');
       row.append(hint, submitBtn);
-      form.append(nickInput, bodyInput, row);
+      var hpInput = makeHoneypot('website');
+      form.append(nickInput, bodyInput, hpInput, row);
       root.append(heading, list);
 
       if (reactions && reactions.length) {
@@ -489,7 +497,8 @@
       cancel.type = 'button';
       cancel.addEventListener('click', function () { form.remove(); btn.textContent = t('reply'); });
       row.append(cancel, submit);
-      form.append(nickInput, bodyInput, row);
+      var hpInput = makeHoneypot('website');
+      form.append(nickInput, bodyInput, hpInput, row);
       var statusEl = el('p', 'sl-status');
       form.appendChild(statusEl);
       var busy = false;
@@ -577,6 +586,29 @@
         .then(function (blob) { return URL.createObjectURL(blob); });
     }
 
+    // Hidden honeypot field: invisible to humans, filled by naive bots.
+    // Server silently drops submissions that include a value (zero data).
+    function makeHoneypot(name) {
+      var hp = el('input');
+      hp.type = 'text';
+      hp.name = name || 'website';
+      hp.tabIndex = -1;
+      hp.autocomplete = 'off';
+      hp.setAttribute('aria-hidden', 'true');
+      hp.className = 'sl-hp';
+      hp.style.cssText = 'position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important;';
+      return hp;
+    }
+
+    // Holds the submission until `timeGateMs` (+ 500ms margin) have elapsed
+    // since `startMs`, mirroring the server-side gate so real users never 429.
+    function waitForGate(startMs) {
+      if (timeGateMs <= 0) return Promise.resolve();
+      var wait = Math.max(0, timeGateMs + 500 - (Date.now() - startMs));
+      if (wait <= 0) return Promise.resolve();
+      return new Promise(function (resolveGate) { setTimeout(resolveGate, wait); });
+    }
+
     function solveWithWorker(challenge, kind, a, b) {
       return new Promise(function (resolve, reject) {
         createPowWorkerUrl()
@@ -607,6 +639,7 @@
       if (!body) { setStatus(t('emptyComment'), 'err'); return; }
       submitBtn.disabled = true;
       setStatus(t('solving'), 'busy');
+      var t0 = Date.now();
 
       fetch(
         endpoint + '/api/comments/challenge?hostContext=' + encodeURIComponent(hostContext) +
@@ -619,20 +652,23 @@
           });
         })
         .then(function (solved) {
-          return fetch(endpoint + '/api/comments', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              challengeId: solved.challenge.challengeId,
-              hostContext: solved.challenge.hostContext,
-              articlePath: solved.challenge.articlePath,
-              nickname: nickname,
-              body: body,
-              difficulty: solved.challenge.difficulty,
-              expiresAt: solved.challenge.expiresAt,
-              signature: solved.challenge.signature,
-              nonce: solved.nonce
-            })
+          return waitForGate(t0).then(function () {
+            return fetch(endpoint + '/api/comments', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                challengeId: solved.challenge.challengeId,
+                hostContext: solved.challenge.hostContext,
+                articlePath: solved.challenge.articlePath,
+                nickname: nickname,
+                body: body,
+                difficulty: solved.challenge.difficulty,
+                expiresAt: solved.challenge.expiresAt,
+                signature: solved.challenge.signature,
+                nonce: solved.nonce,
+                honeypot: hpInput.value
+              })
+            });
           });
         })
         .then(function (res) {
@@ -696,6 +732,7 @@
       if (reactBusy || !reactBtns[r]) return;
       setReactBusy(true);
       setReactStatus(t('solving'));
+      var t0 = Date.now();
       fetch(
         endpoint + '/api/reactions/challenge?hostContext=' + encodeURIComponent(hostContext) +
         '&articlePath=' + encodeURIComponent(articlePath)
@@ -707,19 +744,21 @@
           });
         })
         .then(function (solved) {
-          return fetch(endpoint + '/api/reactions', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              challengeId: solved.challenge.challengeId,
-              hostContext: solved.challenge.hostContext,
-              articlePath: solved.challenge.articlePath,
-              reaction: r,
-              difficulty: solved.challenge.difficulty,
-              expiresAt: solved.challenge.expiresAt,
-              signature: solved.challenge.signature,
-              nonce: solved.nonce
-            })
+          return waitForGate(t0).then(function () {
+            return fetch(endpoint + '/api/reactions', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                challengeId: solved.challenge.challengeId,
+                hostContext: solved.challenge.hostContext,
+                articlePath: solved.challenge.articlePath,
+                reaction: r,
+                difficulty: solved.challenge.difficulty,
+                expiresAt: solved.challenge.expiresAt,
+                signature: solved.challenge.signature,
+                nonce: solved.nonce
+              })
+            });
           });
         })
         .then(function (res) {
@@ -840,6 +879,7 @@
         if (btn.disabled) return;
         btn.disabled = true;
         setStatus(t('solving'), 'busy');
+        var t0 = Date.now();
         fetch(
           endpoint + '/api/polls/challenge?hostContext=' + encodeURIComponent(hostContext) +
           '&articlePath=' + encodeURIComponent(articlePath)
@@ -851,22 +891,24 @@
             });
           })
           .then(function (solved) {
-            var payload = {
-              challengeId: solved.challenge.challengeId,
-              hostContext: solved.challenge.hostContext,
-              articlePath: solved.challenge.articlePath,
-              pollId: pollId,
-              option: option,
-              difficulty: solved.challenge.difficulty,
-              expiresAt: solved.challenge.expiresAt,
-              signature: solved.challenge.signature,
-              nonce: solved.nonce
-            };
-            if (voterToken) payload.voterToken = voterToken;
-            return fetch(endpoint + '/api/polls/vote', {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify(payload)
+            return waitForGate(t0).then(function () {
+              var payload = {
+                challengeId: solved.challenge.challengeId,
+                hostContext: solved.challenge.hostContext,
+                articlePath: solved.challenge.articlePath,
+                pollId: pollId,
+                option: option,
+                difficulty: solved.challenge.difficulty,
+                expiresAt: solved.challenge.expiresAt,
+                signature: solved.challenge.signature,
+                nonce: solved.nonce
+              };
+              if (voterToken) payload.voterToken = voterToken;
+              return fetch(endpoint + '/api/polls/vote', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
             });
           })
           .then(function (res) {

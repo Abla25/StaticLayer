@@ -21,6 +21,7 @@ import { DEFAULTS, envNumber, type Env } from './env.ts';
 import { json, readJsonBody } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
 import { readSettings, settingNumber } from './settings.ts';
+import { timeGateResponse } from './antiabuse.ts';
 
 /**
  * Polls (StrawPoll-style, privacy-first — Round 21.15).
@@ -259,6 +260,11 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
   );
   if (!ok) return json({ error: 'invalid challenge signature' }, 400);
 
+  // Time gate (anti-bot, zero data): reject submissions faster than the gate.
+  const nowSec = Math.floor(Date.now() / 1000);
+  const gateRes = timeGateResponse(env, nowSec, expiresAt);
+  if (gateRes) return gateRes;
+
   // Verify the proof of work over the canonical POLL payload.
   const powOk = await verifyPow(
     encodeCanonicalPollPayload({
@@ -299,15 +305,15 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
 
   // Atomic anti-replay: consume the challenge and store the vote in ONE batch.
   const voteId = crypto.randomUUID();
-  const nowSec = Math.floor(Date.now() / 1000);
+  const nowSecForVote = Math.floor(Date.now() / 1000);
   const consume = env.DB.prepare(
     'INSERT OR IGNORE INTO used_challenges (challenge_id, used_at) VALUES (?, ?)',
-  ).bind(challengeIdB64, nowSec);
+  ).bind(challengeIdB64, nowSecForVote);
   const insertVote = env.DB.prepare(
     `INSERT INTO poll_votes (id, poll_id, option, created_at, challenge_id, voter_hash)
      SELECT ?1, ?2, ?3, ?4, ?5, ?6
      WHERE changes() = 1`,
-  ).bind(voteId, poll.id, option, nowSec, challengeIdB64, voterHash);
+  ).bind(voteId, poll.id, option, nowSecForVote, challengeIdB64, voterHash);
 
   let results: D1Result[];
   try {

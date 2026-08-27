@@ -25,6 +25,8 @@ export const SECRETS = {
 export interface WorkerOptions {
   difficulty?: number;
   challengeTtlSeconds?: number;
+  /** Min seconds between challenge issue and submit; default 0 in tests. */
+  timeGateSeconds?: number;
   withRateLimiter?: boolean;
   allowedOrigins?: string;
   reactionBase?: number;
@@ -74,6 +76,8 @@ export async function spawnWorker(
   if (options.challengeTtlSeconds !== undefined) {
     bindings.CHALLENGE_TTL_SECONDS = options.challengeTtlSeconds;
   }
+  // Time gate OFF by default so existing tests stay fast.
+  bindings.CHALLENGE_TIME_GATE_SECONDS = options.timeGateSeconds ?? 0;
   if (options.allowedOrigins !== undefined) {
     bindings.ALLOWED_ORIGINS = options.allowedOrigins;
   }

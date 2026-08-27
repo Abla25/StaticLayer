@@ -37,7 +37,7 @@ StaticLayer is a source-available, Cloudflare-native comment system designed for
 | **Personal data handled** | Processed by Disqus under their DPA/terms | Minimal: nickname + plain-text comment + timestamp; **no IP persistence** |
 | **Cost** | Free (ad-supported) and paid tiers | **Cloudflare free tier** (Worker + D1) |
 | **License / lock-in** | Proprietary | **Source-available (Elastic License 2.0)**, deterministic protocol |
-| **Spam protection** | CAPTCHA / ML on their side | **Client-side Proof-of-Work** — no CAPTCHA, no friction |
+| **Spam protection** | CAPTCHA / ML on their side | **Client-side Proof-of-Work** + honeypot + time gate — no CAPTCHA, no friction, zero data |
 
 **TL;DR:** Disqus is a centralized third-party comment SaaS. StaticLayer keeps the entire comment system inside your own Cloudflare account.
 
@@ -46,6 +46,7 @@ StaticLayer is a source-available, Cloudflare-native comment system designed for
 ## ✨ Features
 
 - 🪙 **Proof-of-Work anti-spam** — visitors solve a tiny client-side puzzle; no CAPTCHA, no forms of friction.
+- 🧲 **Zero-data anti-spam** — hidden **honeypot** field (bots get silently dropped) + a 3-second **time gate** on challenge submissions (429 on too-fast posts). Pure behavioural checks: no content reading, no storage, no personal data.
 - 🛡️ **Anti-replay by design** — a solved challenge can never be reused, even under concurrent races (proven by tests).
 - 🧑‍💼 **Moderation queue** — new comments are `pending` until an admin approves them.
 - 🔒 **XSS-safe** — comments are **plain text only** (no Markdown, no HTML). Rendered exclusively with `textContent`.
@@ -179,6 +180,29 @@ The runtime never calls any StaticLayer server. **Your data never leaves your ac
 
 ---
 
+## 🪄 Zero-data anti-spam
+
+Two behavioural layers **on top of the PoW**, both designed to never read, store or
+persist any content or personal data (GDPR-neutral by default):
+
+1. **Honeypot** — the widget renders a hidden field that real humans never see but
+   naive bots love to fill. If it arrives filled, the server **silently drops** the
+   submission and answers with a *plausible fake "pending"* — the bot learns nothing,
+   and nothing is stored or consumed. 0 data.
+2. **Time gate (3s)** — a human takes seconds to type a comment; a scripted bot can
+   solve the puzzle and POST in milliseconds. The server rejects any submission
+   arriving **sooner than 3 seconds after the challenge was issued** with `429`. The
+   issue time is recovered from the **signed** challenge (`expiresAt − TTL`), so the
+   server keeps **zero state** for the check. The widget waits the gate client-side,
+   so real users never notice it.
+
+Already in place: **Proof-of-Work** (cost-based integrity), **atomic anti-replay**,
+**edge rate limiting** (`RATE_LIMITER`) and **human moderation**. Content heuristics
+and duplicate-content hashing are deliberately **not** enabled by default — they would
+require reading the comment text, against the project's zero-data principle.
+
+---
+
 ## 🔐 Security
 
 Security is a first-class feature, not an afterthought — **123 tests, all invariants
@@ -190,6 +214,7 @@ proven empirically** (anti-replay concurrency, XSS, CSRF, retention, no-IP-persi
 | XSS | Plain text only; `textContent` rendering; strict UTF-8 |
 | CSRF | Session-bound, constant-time double-submit on all admin mutations |
 | No app-level IP persistence | The application DB stores no IP addresses |
+| Zero-data anti-spam | Honeypot + time gate never read, store or persist content (behavioural only) |
 | Never fail silently | The deploy engine re-verifies the live state after every apply |
 
 > 📄 [`SECURITY_REVIEW.md`](SECURITY_REVIEW.md) (threat model + evidence) ·

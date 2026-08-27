@@ -18,6 +18,7 @@ import type { D1Result } from '@cloudflare/workers-types';
 import { DEFAULTS, envNumber, type Env } from './env.ts';
 import { json, readJsonBody, validField } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
+import { timeGateResponse } from './antiabuse.ts';
 import { readSettings } from './settings.ts';
 
 /**
@@ -302,6 +303,9 @@ export async function handlePostReaction(request: Request, env: Env): Promise<Re
   if (expiresAt <= nowSec) {
     return json({ error: 'challenge expired' }, 410);
   }
+  // Time gate (anti-bot, zero data): reject submissions faster than the gate.
+  const gateRes = timeGateResponse(env, nowSec, expiresAt);
+  if (gateRes) return gateRes;
 
   // ---- proof of work over the canonical payload (at the SIGNED difficulty) ----
   let canonical: Uint8Array;
