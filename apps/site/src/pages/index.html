@@ -8,13 +8,13 @@
       <div>
         <span class="hero-eyebrow">Private · Static-site native · 5-minute install</span>
         <h1>Private comments for static sites.<br><span class="grad">Without the comment SaaS.</span></h1>
-        <p class="hero-sub">StaticLayer adds <b>moderated comments</b> and <b>anonymous, PoW-protected reactions</b> to static websites — no trackers, no comment SaaS, live in about five minutes. Deployed into your Cloudflare account, owned by you.</p>
+        <p class="hero-sub">StaticLayer adds <b>moderated comments</b>, <b>anonymous reactions</b> and <b>StrawPoll-style polls</b> to static websites — no trackers, no comment SaaS, live in about five minutes. Deployed into your Cloudflare account, owned by you.</p>
         <div class="hero-cta">
           <a class="btn btn-primary" href="{{BASE}}demo.html">Try the live demo →</a>
           <a class="btn" href="{{BASE}}docs.html">Get started</a>
         </div>
         <p class="hero-meta">
-          <span class="live-dot">Comments + reactions · no trackers</span>
+          <span class="live-dot">Comments + reactions + polls · no trackers</span>
           <span>5-minute install</span>
           <a href="{{BASE}}security.html">Security model</a>
           <a href="{{REPO}}" target="_blank" rel="noopener">GitHub ↗</a>
@@ -141,7 +141,7 @@
       </div>
       <div class="benefit">
         <h3>Anti-spam without CAPTCHA</h3>
-        <p>Proof-of-Work raises the cost of automated submissions — for comments and for every reaction. No CAPTCHA, no friction for readers.</p>
+        <p>Proof-of-Work plus a hidden honeypot field and a 3-second time gate — all behavioural checks, zero data. No CAPTCHA, no friction for readers.</p>
       </div>
     </div>
   </div>
@@ -152,7 +152,7 @@
     <div class="section-head">
       <span class="kicker">03 — Engagement</span>
       <h2>Three ways to engage. One privacy model.</h2>
-      <p>Comments, reactions and (coming) votes share the same architecture: anonymous, PoW-protected, running in your Cloudflare account.</p>
+      <p>Comments, reactions and polls share the same architecture: anonymous, PoW-protected, running in your Cloudflare account.</p>
     </div>
     <div class="products">
       <div class="product">
@@ -178,15 +178,15 @@
         <a href="{{BASE}}integrations.html">Guide →</a>
       </div>
       <div class="product">
-        <span class="product-tag">Votes</span>
-        <h3>Up / down — coming</h3>
-        <p>Up/down ratings on the same engine (PoW + anti-replay + rate limits). Planned, not yet shipped.</p>
+        <span class="product-tag">Polls</span>
+        <h3>StrawPoll-style, private</h3>
+        <p>Anonymous, PoW-protected votes created in the admin and embedded anywhere — even globally, on every page. Optional one-vote-per-browser guard.</p>
         <ul>
-          <li>Same integrity model as reactions</li>
-          <li>Optional identity mode for strict 1-vote</li>
-          <li>On the roadmap</li>
+          <li>No IP, no cookies, no identity</li>
+          <li>Optional one-vote-per-browser</li>
+          <li>Global polls + display styles</li>
         </ul>
-        <a href="{{BASE}}faq.html">FAQ →</a>
+        <a href="{{BASE}}integrations.html">Guide →</a>
       </div>
     </div>
   </div>
@@ -220,6 +220,7 @@
       <div class="sec-cat"><h3>Public runtime</h3><p>Plain-text comments, prepared SQL, strict input limits.</p><a href="{{BASE}}security.html">Read →</a></div>
       <div class="sec-cat"><h3>Admin authentication</h3><p>Stateless HMAC-signed session, `__Host-` cookie, absolute TTL.</p><a href="{{BASE}}security.html">Read →</a></div>
       <div class="sec-cat"><h3>PoW anti-spam</h3><p>Server-authoritative difficulty, signed challenge, single-use.</p><a href="{{BASE}}security.html">Read →</a></div>
+      <div class="sec-cat"><h3>Zero-data anti-spam</h3><p>Honeypot + 3s time gate — silent bot drops, no content reading.</p><a href="{{BASE}}security.html">Read →</a></div>
       <div class="sec-cat"><h3>D1 replay protection</h3><p>Transactional anti-replay: one challenge, one comment.</p><a href="{{BASE}}security.html">Read →</a></div>
       <div class="sec-cat"><h3>Plain-text rendering</h3><p>No raw HTML. `textContent` only.</p><a href="{{BASE}}security.html">Read →</a></div>
       <div class="sec-cat"><h3>No tracking</h3><p>No visitor cookies, local storage, fingerprinting or analytics.</p><a href="{{BASE}}privacy.html">Read →</a></div>
@@ -235,6 +236,7 @@
         <span class="score-item"><span class="tick">✓</span> Stateless admin session</span>
         <span class="score-item"><span class="tick">✓</span> Signed CSRF binding</span>
         <span class="score-item"><span class="tick">✓</span> Single-use PoW challenges</span>
+        <span class="score-item"><span class="tick">✓</span> Honeypot + time-gate anti-bot</span>
         <span class="score-item"><span class="tick">✓</span> D1 transactional anti-replay</span>
         <span class="score-item"><span class="tick">✓</span> No visitor tracking</span>
         <span class="score-item"><span class="tick">✓</span> No centralized comment database</span>
