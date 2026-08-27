@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "staticlayer-comments",
+  "main": "packages/runtime/src/index.ts",
+  "compatibility_date": "2026-08-26",
+
+  // Daily maintenance at 03:00 UTC: purges used_challenges older than 24h
+  // (packages/runtime/src/retention.ts).
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
+
+  // Non-secret, tunable runtime configuration. Reaction vars are omitted on
+  // purpose: the runtime ships safe defaults (see packages/runtime/src/env.ts).
+  "vars": {
+    "POW_DIFFICULTY": 16,
+    "CHALLENGE_TTL_SECONDS": 300,
+    "SESSION_TTL_SECONDS": 7200,
+    "MAX_REQUEST_BYTES": 65536,
+    // Comma-separated allowed origins for cross-origin API calls (CORS).
+    // Empty = same-origin only (fail-closed).
+    "ALLOWED_ORIGINS": "https://abla25.github.io"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "staticlayer-comments",
+      // Run `npx wrangler d1 create staticlayer-comments` and paste the ID.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Exactly three secrets (SECURITY_REVIEW.md §6), set via `wrangler secret put`.
+  "secrets": {
+    "required": ["ADMIN_SECRET", "SESSION_SECRET", "POW_SECRET"]
+  }
+}
