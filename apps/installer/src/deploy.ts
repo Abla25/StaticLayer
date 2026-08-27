@@ -145,6 +145,12 @@ export async function runInstallerDeploy(
 
   const result = await runEngine(api, desired, { dryRun: options.input.dryRun });
 
+  // Only return the admin password when it was ACTUALLY applied (i.e. a
+  // set-secret action ran). On an update/re-run the worker already has the
+  // secrets, the engine skips them, and the newly generated value must NOT be
+  // shown — the operator's existing password stays valid.
+  const secretActuallyApplied = result.actions.some((a) => a.kind === 'set-secret');
+
   return {
     actions: describeActions(result.actions),
     alreadyInSync: result.actions.length === 0,
@@ -153,6 +159,6 @@ export async function runInstallerDeploy(
     // It is never stored, never logged, and never sent anywhere except this
     // one response to the browser that ran the deploy. All other secrets stay
     // server-side and flow exclusively into the Bulk Secrets API.
-    adminSecret: options.input.dryRun ? undefined : secretValues.ADMIN_SECRET,
+    adminSecret: options.input.dryRun || !secretActuallyApplied ? undefined : secretValues.ADMIN_SECRET,
   };
 }

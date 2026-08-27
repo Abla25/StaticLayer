@@ -67,6 +67,36 @@ function requireEnv(name: string): string {
   return value;
 }
 
+/**
+ * Resolve the deployed worker's public endpoint:
+ * `https://{workerName}.{account workers.dev subdomain}.workers.dev`.
+ * Falls back to `fallback` (with a warning) when the account subdomain cannot
+ * be read (e.g. token without the right scope).
+ */
+async function resolveWorkerEndpoint(
+  accessToken: string,
+  accountId: string,
+  workerName: string,
+  fallback: string,
+): Promise<{ endpoint: string; warning: string | null }> {
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/workers/subdomain`,
+      { headers: { authorization: `Bearer ${accessToken}` } },
+    );
+    const body = (await res.json()) as { success?: boolean; result?: { subdomain?: string } };
+    if (res.ok && body.success === true && typeof body.result?.subdomain === 'string' && body.result.subdomain) {
+      return { endpoint: `https://${workerName}.${body.result.subdomain}.workers.dev`, warning: null };
+    }
+  } catch {
+    /* fall through */
+  }
+  return {
+    endpoint: fallback,
+    warning: 'could not detect your workers.dev address automatically — open your Worker in the Cloudflare dashboard to find its URL',
+  };
+}
+
 interface Session {
   accessToken: string;
   /** Where the access token came from: OAuth consent, pasted API token, or none yet. */
@@ -386,6 +416,15 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
 
     try {
       const result = await runInstallerDeploy({ accessToken: session.accessToken, input });
+      // Resolve the deployed worker's endpoint BEFORE the session is cleared
+      // (the API token is needed to read the account's workers.dev subdomain).
+      const deployedWorkerName = input.workerName?.trim() || 'staticlayer';
+      const { endpoint, warning } = await resolveWorkerEndpoint(
+        session.accessToken,
+        input.accountId,
+        deployedWorkerName,
+        env('STATICLAYER_INSTALLER_URL', 'http://localhost:8788'),
+      );
 
       if (!dryRun) {
         // Apply succeeded. Revoke the OAuth token (only when it came from the
@@ -413,7 +452,8 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
       // operator's own admin password, shown exactly once after a real deploy).
       json(res, 200, {
         ...result,
-        endpoint: env('STATICLAYER_INSTALLER_URL', 'http://localhost:8788'),
+        endpoint,
+        endpointWarning: warning,
       });
     } catch (err) {
       json(res, 500, { error: (err as Error).message });

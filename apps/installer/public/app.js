@@ -182,12 +182,29 @@ $('deploy').addEventListener('click', async () => {
     $('deploy').disabled = true;
     const result = await api('/api/deploy', { method: 'POST', body: JSON.stringify(body) });
     show(4);
+    // The deployed worker's real endpoint (https://{worker}.{subdomain}.workers.dev).
+    if (result.endpointWarning) {
+      setText('endpoint-warning', 'Note: ' + result.endpointWarning);
+    }
+    if (result.endpoint) {
+      const adminUrl = result.endpoint + '/admin.html';
+      $('admin-url').textContent = adminUrl;
+      $('admin-open').href = adminUrl;
+      $('admin-console-box').classList.remove('hidden');
+      reportEmbedHeight();
+    }
     // The operator's admin password is returned exactly once (only on a real
-    // deploy), so they can sign in to /admin.html. It is never stored or
-    // logged; all other secrets stay server-side and go straight to
-    // Cloudflare via the Bulk Secrets API.
+    // deploy where it was actually applied), so they can sign in to
+    // /admin.html. It is never stored or logged; all other secrets stay
+    // server-side and go straight to Cloudflare via the Bulk Secrets API.
     if (result.adminSecret) {
       $('admin-secret').textContent = result.adminSecret;
+      $('admin-secret-box').classList.remove('hidden');
+      reportEmbedHeight();
+    } else {
+      // Update/re-run: secrets were preserved — the password is unchanged.
+      $('admin-secret').textContent = 'unchanged — updates preserve your existing admin password';
+      $('copy-secret').disabled = true;
       $('admin-secret-box').classList.remove('hidden');
       reportEmbedHeight();
     }

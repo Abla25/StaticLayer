@@ -405,6 +405,13 @@
         <div class="panel-title">Deploy successful</div>
         <p class="panel-sub" style="max-width:48ch;margin:0 auto">Your Worker and database are live in your Cloudflare account.</p>
       </div>
+      <div id="endpoint-warning" class="hidden" style="margin-top:16px;background:rgba(180,83,9,.12);border:1px solid rgba(180,83,9,.3);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--warn)"></div>
+      <div id="admin-console-box" class="hidden">
+        <div class="panel-title" style="margin:22px 0 8px;font-size:15px">Your admin console</div>
+        <p class="muted" style="font-size:13.5px;margin:0 0 8px">Open this URL, then paste the admin password below:</p>
+        <pre id="admin-url"></pre>
+        <div class="row"><a id="admin-open" class="btn btn-primary" target="_blank" rel="noopener">Open admin ↗</a></div>
+      </div>
       <div id="admin-secret-box" class="hidden">
         <div class="panel-title" style="margin:22px 0 8px;font-size:15px">Your admin password</div>
         <p class="muted" style="font-size:13.5px;margin:0 0 8px">This is the only time it is shown. Save it now — you need it to open <code>/admin.html</code> and moderate your comments.</p>

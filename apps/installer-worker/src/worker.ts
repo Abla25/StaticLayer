@@ -101,6 +101,36 @@ async function getSession(request: Request, env: Env): Promise<{ id: string; ses
 /* HTTP helpers                                                        */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Resolve the deployed worker's public endpoint:
+ * `https://{workerName}.{account workers.dev subdomain}.workers.dev`.
+ * Falls back to `fallback` (with a warning) when the account subdomain cannot
+ * be read (e.g. token without the right scope).
+ */
+async function resolveWorkerEndpoint(
+  accessToken: string,
+  accountId: string,
+  workerName: string,
+  fallback: string,
+): Promise<{ endpoint: string; warning: string | null }> {
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/workers/subdomain`,
+      { headers: { authorization: `Bearer ${accessToken}` } },
+    );
+    const body = (await res.json()) as { success?: boolean; result?: { subdomain?: string } };
+    if (res.ok && body.success === true && typeof body.result?.subdomain === 'string' && body.result.subdomain) {
+      return { endpoint: `https://${workerName}.${body.result.subdomain}.workers.dev`, warning: null };
+    }
+  } catch {
+    /* fall through */
+  }
+  return {
+    endpoint: fallback,
+    warning: 'could not detect your workers.dev address automatically — open your Worker in the Cloudflare dashboard to find its URL',
+  };
+}
+
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -306,6 +336,13 @@ const worker: ExportedHandler<Env> = {
 
       try {
         const result = await runInstallerDeployWorker({ accessToken: got.session.accessToken, input });
+        const deployedWorkerName = input.workerName?.trim() || 'staticlayer';
+        const { endpoint, warning } = await resolveWorkerEndpoint(
+          got.session.accessToken,
+          input.accountId,
+          deployedWorkerName,
+          url.origin,
+        );
 
         if (!dryRun) {
           if (got.session.tokenKind === 'oauth') {
@@ -322,7 +359,7 @@ const worker: ExportedHandler<Env> = {
           await env.SESSIONS.delete(`s:${got.id}`);
         }
 
-        return json({ ...result, endpoint: url.origin });
+        return json({ ...result, endpoint, endpointWarning: warning });
       } catch (err) {
         return json({ error: (err as Error).message }, 500);
       }
