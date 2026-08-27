@@ -346,7 +346,8 @@ const worker: ExportedHandler<Env> = {
         let endpointWarning = warning;
         if (!dryRun && result.workersDevEnabled === false) {
           endpointWarning =
-            'your Worker is deployed but not published on *.workers.dev — enable the workers.dev route in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Domains & Routes), then refresh this page.';
+            'your Worker is deployed but not published on *.workers.dev — enable the workers.dev route in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Domains & Routes), then refresh this page.' +
+            (result.workersDevError ? ` Detail: ${result.workersDevError}` : '');
         }
 
         if (!dryRun) {

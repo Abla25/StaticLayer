@@ -208,7 +208,12 @@ export class CloudflareApiClient implements CloudflareApi {
       body = null;
     }
     if (!res.ok || (body !== null && (body as { success?: boolean }).success === false)) {
-      throw new ApiError(res.status, `enable workers.dev failed (${res.status})`, `/workers/scripts/${workerName}/subdomain`);
+      const detail = errorDetail(body, res.statusText);
+      throw new ApiError(
+        res.status,
+        `enable workers.dev failed (${res.status}): ${detail}`,
+        `/workers/scripts/${workerName}/subdomain`,
+      );
     }
   }
 }

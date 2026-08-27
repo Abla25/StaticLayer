@@ -74,6 +74,8 @@ export interface InstallerDeployResult {
   adminSecret?: string;
   /** True when the worker was published on *.workers.dev after a real apply. */
   workersDevEnabled?: boolean;
+  /** Present when enabling *.workers.dev failed after a real apply. */
+  workersDevError?: string;
 }
 
 export async function runInstallerDeployWorker(options: {
@@ -132,12 +134,15 @@ export async function runInstallerDeployWorker(options: {
 
   // Publish on *.workers.dev (dedicated subdomain endpoint) after a real apply.
   let workersDevEnabled: boolean | undefined;
+  let workersDevError: string | undefined;
   if (!options.input.dryRun) {
     try {
       await api.enableWorkersDev(config.workerName);
       workersDevEnabled = true;
-    } catch {
+    } catch (err) {
       workersDevEnabled = false;
+      workersDevError = (err as Error).message;
+      console.error('[installer] enableWorkersDev failed:', workersDevError);
     }
   }
 
@@ -151,5 +156,6 @@ export async function runInstallerDeployWorker(options: {
     // server-side and flow exclusively into the Bulk Secrets API.
     adminSecret: options.input.dryRun || !secretActuallyApplied ? undefined : secretValues.ADMIN_SECRET,
     workersDevEnabled,
+    workersDevError,
   };
 }
