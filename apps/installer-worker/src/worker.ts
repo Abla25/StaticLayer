@@ -22,11 +22,9 @@ import {
   type CloudflareAccount,
 } from '../../installer/src/oauth.ts';
 import {
-  createMagicToken,
   newSessionId,
   SESSION_COOKIE,
   sessionCookieHeader,
-  verifyMagicToken,
   verifySessionValue,
 } from './auth.ts';
 import { runInstallerDeployWorker } from './deploy-worker.ts';
@@ -172,35 +170,6 @@ const worker: ExportedHandler<Env> = {
         accessToken: '',
         tokenKind: '',
         email: 'guest',
-        expiresAt: Date.now() + SESSION_TTL_MS,
-      });
-      return redirect('/', { 'set-cookie': await sessionCookieHeader(sessionId, secret) });
-    }
-
-    /* magic link (optional — hosted operators wire their SMTP transport) */
-    if (url.pathname === '/api/auth/request' && request.method === 'POST') {
-      const secret = requireEnv(env, 'STATICLAYER_SESSION_SECRET');
-      const body = await readJson(request, 4096);
-      const email = body && typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320) {
-        return json({ error: 'invalid email' }, 400);
-      }
-      const magic = await createMagicToken(email, secret, {
-        baseUrl: env.STATICLAYER_REDIRECT_URI.replace('/oauth/callback', '') || url.origin,
-      });
-      console.log(`[magic-link] ${email} -> ${magic.link}`);
-      return json({ ok: true, dev: false });
-    }
-    if (url.pathname === '/api/auth/verify' && request.method === 'GET') {
-      const secret = requireEnv(env, 'STATICLAYER_SESSION_SECRET');
-      const token = url.searchParams.get('token') ?? '';
-      const email = await verifyMagicToken(token, secret);
-      if (!email) return html(400, '<h1>Link non valido o scaduto</h1><p>Richiedi un nuovo link.</p>');
-      const sessionId = newSessionId();
-      await putSessionRecord(env.SESSIONS, sessionId, {
-        accessToken: '',
-        tokenKind: '',
-        email,
         expiresAt: Date.now() + SESSION_TTL_MS,
       });
       return redirect('/', { 'set-cookie': await sessionCookieHeader(sessionId, secret) });

@@ -137,10 +137,9 @@ Wait for: **`[installer] StaticLayer Web Installer on http://localhost:8788`**
 
 Open **http://localhost:8788**
 
-- ✅ You'll see the "StaticLayer" brand and step 1 "Sign in".
-- Enter your email and click **Send magic link →**.
-- In dev mode the link is printed **in the terminal** (and shown on screen):
-  click it. ✅ You're signed in and the wizard advances.
+- ✅ You'll see the "StaticLayer" brand and step 1.
+- Click **Start →** — an anonymous session is created (no email).
+  ✅ You're signed in and the wizard advances to "Connect Cloudflare".
 
 ### B3. Cloudflare connection (requires the real OAuth client)
 
@@ -181,7 +180,7 @@ npx staticlayer init
 | 4 | Admin on :8787/admin.html → Approve → comment visible | ☐ |
 | 5 | Comment with `<script>` → no popup, literal text | ☐ |
 | 6 | `curl …/scheduled` → all comments purged except welcome | ☐ |
-| 7 | `npm run dev:installer` → wizard on :8788, magic-link sign-in | ☐ |
+| 7 | `npm run dev:installer` → wizard on :8788, anonymous Start → | ☐ |
 | 8 | `npm run typecheck` and `npm test` green | ☐ |
 
 ---

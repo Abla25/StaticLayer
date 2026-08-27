@@ -6,7 +6,7 @@ import { handleListComments } from './comments-read.ts';
 import { handleSubmitComment } from './comments.ts';
 import { decideCors, handlePreflight, parseAllowedOrigins, withCors } from './cors.ts';
 import type { Env } from './env.ts';
-import { json } from './http.ts';
+import { json, SECURITY_HEADERS } from './http.ts';
 import { purgeUsedChallenges } from './retention.ts';
 import { handleListReactions, handlePostReaction, handleReactionChallenge } from './reactions.ts';
 import { handleStatic } from './static.ts';
@@ -54,7 +54,19 @@ const worker: ExportedHandler<Env> = {
     }
 
     const respond = (r: Response | Promise<Response>): Promise<Response> =>
-      Promise.resolve(r).then((res) => withCors(res, cors));
+      Promise.resolve(r).then((res) => {
+        let out = withCors(res, cors);
+        // Defense in depth: hardening headers on every API response.
+        const headers = new Headers(out.headers);
+        for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+          if (!headers.has(k)) headers.set(k, v);
+        }
+        return new Response(out.body, {
+          status: out.status,
+          statusText: out.statusText,
+          headers,
+        });
+      });
 
     if (pathname === '/api/comments' && method === 'GET') {
       return respond(handleListComments(request, env));

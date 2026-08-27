@@ -45,30 +45,6 @@ $('continue-local').addEventListener('click', () => {
   window.location.href = '/api/start';
 });
 
-$('request-link').addEventListener('click', async () => {
-  const email = $('email').value.trim();
-  if (!email) return;
-  try {
-    const data = await api('/api/auth/request', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-    const box = $('link-result');
-    box.classList.remove('hidden');
-    box.textContent = '';
-    if (data.dev && data.link) {
-      const a = document.createElement('a');
-      a.href = data.link;
-      a.textContent = 'Open the magic link (dev mode)';
-      box.appendChild(a);
-    } else {
-      box.textContent = 'Magic link sent. Check your inbox.';
-    }
-  } catch (err) {
-    setText('link-result', 'Error: ' + err.message);
-  }
-});
-
 /* ---- Step 2: connect (OAuth or API token) ---- */
 let accounts = [];
 

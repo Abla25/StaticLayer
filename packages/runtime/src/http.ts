@@ -2,6 +2,14 @@ import { utf8EncodeStrict } from '@staticlayer/protocol';
 
 /** Small HTTP helpers. All JSON responses are cache-disabled. */
 
+/** Hardening headers applied to every response (defense in depth). */
+export const SECURITY_HEADERS = {
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'no-referrer',
+  'x-frame-options': 'DENY',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+} as const;
+
 /**
  * Strict UTF-8 byte length check of a field value.
  * Returns false for invalid UTF-8 (unpaired surrogates) or over-limit values.
@@ -26,6 +34,7 @@ export function json(
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'no-store',
+      ...SECURITY_HEADERS,
       ...extraHeaders,
     },
   });

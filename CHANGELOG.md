@@ -56,6 +56,18 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Magic-link sign-in removed (Round 20).** The email path
+  (`/api/auth/request` + `/api/auth/verify`, `createMagicToken`/
+  `verifyMagicToken`, wizard email UI) is gone: no SMTP transport was wired, so
+  "send magic link" silently did nothing. The anonymous **Start →** session
+  (identity = the Cloudflare OAuth consent or a pasted token) is now the only
+  entry point. Endpoints return 404; tests updated (5 removed).
+- **Hardening headers on every runtime response (Round 20).** All API JSON
+  responses and static assets now send `x-content-type-options: nosniff`,
+  `referrer-policy: no-referrer`, `x-frame-options: DENY`,
+  `permissions-policy: camera=(), microphone=(), geolocation=()` (admin.html
+  also keeps its CSP). Verified live on
+  `staticlayer-comments.staticlayer.workers.dev`.
 - **Rebrand: PureComment → StaticLayer.** Project name, package scope
   (`@staticlayer/*`), CLI, environment variables (`STATICLAYER_*`), worker/D1
   names, docs, tests, README and website — all renamed. Widget CSS prefix
@@ -103,7 +115,7 @@ Versioning: [Semantic Versioning](https://semver.org/).
 - **CLI (`@staticlayer/cli`)** — `staticlayer init|status|repair`; API token
   never persisted to disk.
 - **Web Installer (`@staticlayer/installer`)** — OAuth (Authorization Code,
-  least-privilege scopes), magic-link sign-in, DSE deploys; secrets generated
+  least-privilege scopes), anonymous start, DSE deploys; secrets generated
   server-side and **never shown** to the user.
 - **Demo (`@staticlayer/demo`)** — public sandbox with daily data purge.
 
@@ -111,7 +123,7 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 - 127 automated tests (16 files): anti-replay concurrency, CSRF, XSS, retention,
   no-IP-persistence structural checks, deploy engine, OAuth least privilege,
-  magic link.
+  session cookies.
 - `SECURITY_REVIEW.md`, `SECURITY_AUDIT_REPORT.md`, `THREAT_MODEL.md`,
   `SECURITY.md`, `docs/cloudflare-assumptions.md` (verified, dated).
 - Privacy wording: **No application-level IP persistence**; the public widget

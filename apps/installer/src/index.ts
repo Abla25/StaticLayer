@@ -5,8 +5,7 @@
  *   STATICLAYER_CLIENT_ID        OAuth client id
  *   STATICLAYER_CLIENT_SECRET    OAuth client secret (server-side only)
  *   STATICLAYER_REDIRECT_URI     OAuth redirect (e.g. http://localhost:8788/oauth/callback)
- *   STATICLAYER_SESSION_SECRET   HMAC secret for magic links + session cookies
- *   STATICLAYER_DEV_MODE=1       dev mode: magic links returned directly (no SMTP)
+ *   STATICLAYER_SESSION_SECRET   HMAC secret for session cookies
  *   STATICLAYER_INSTALLER_URL    public base URL (default http://localhost:8788)
  *   PORT                          default 8788
  *
@@ -35,11 +34,9 @@ import {
 } from './oauth.ts';
 import {
   clearSessionCookieHeader,
-  createMagicToken,
   newSessionId,
   SESSION_COOKIE,
   sessionCookieHeader,
-  verifyMagicToken,
   verifySessionValue,
 } from './auth.ts';
 import { runInstallerDeploy } from './deploy.ts';
@@ -177,49 +174,6 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
     return;
   }
 
-  /* ---------- magic link ---------- */
-  if (url.pathname === '/api/auth/request' && req.method === 'POST') {
-    const body = requireJsonObject(await readBody(req, 4096));
-    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320) {
-      json(res, 400, { error: 'invalid email' });
-      return;
-    }
-    const magic = createMagicToken(email, requireEnv('STATICLAYER_SESSION_SECRET'), {
-      baseUrl: env('STATICLAYER_INSTALLER_URL', 'http://localhost:8788'),
-    });
-    if (process.env.STATICLAYER_DEV_MODE === '1') {
-      // Dev mode: no SMTP — return the link so it can be clicked/tested.
-      json(res, 200, { ok: true, dev: true, link: magic.link });
-      return;
-    }
-    // Production: email the link (SMTP integration point — deliberately absent
-    // from this codebase; the operator wires their transport here).
-    console.log(`[magic-link] ${email} -> ${magic.link}`);
-    json(res, 200, { ok: true, dev: false });
-    return;
-  }
-
-  if (url.pathname === '/api/auth/verify' && req.method === 'GET') {
-    const token = url.searchParams.get('token') ?? '';
-    const email = verifyMagicToken(token, requireEnv('STATICLAYER_SESSION_SECRET'));
-    if (!email) {
-      html(res, 400, '<h1>Link non valido o scaduto</h1><p>Richiedi un nuovo link.</p>');
-      return;
-    }
-    const sessionId = newSessionId();
-    sessions.set(sessionId, {
-      accessToken: '', // filled after OAuth
-      tokenKind: '',
-      email,
-      expiresAt: Date.now() + SESSION_TTL_MS,
-    });
-    redirect(res, '/', {
-      'set-cookie': sessionCookieHeader(sessionId, requireEnv('STATICLAYER_SESSION_SECRET')),
-    });
-    return;
-  }
-
   /* ---------- meta + local session (dev) ---------- */
   if (url.pathname === '/api/meta' && req.method === 'GET') {
     json(res, 200, {
@@ -231,7 +185,7 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
 
   if (url.pathname === '/api/auth/local' && req.method === 'GET') {
     // Dev/self-hosted only: the operator IS the owner, so no email proof is
-    // needed. A local session is created directly (no magic link, no SMTP).
+    // needed. A local session is created directly.
     if (process.env.STATICLAYER_DEV_MODE !== '1') {
       json(res, 403, { error: 'local session is only available in dev mode' });
       return;
@@ -269,7 +223,7 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
   if (url.pathname === '/api/oauth/start' && req.method === 'GET') {
     const got = getSession(req);
     if (!got) {
-      json(res, 401, { error: 'unauthorized — complete magic-link login first' });
+      json(res, 401, { error: 'unauthorized — start the installer first' });
       return;
     }
     const session = got.session;

@@ -1,4 +1,5 @@
 import { ADMIN_HTML, ADMIN_JS, POW_WORKER_JS, WIDGET_JS } from './static-content.ts';
+import { SECURITY_HEADERS } from './http.ts';
 
 /**
  * Static assets served by the Worker (Phase 2):
@@ -27,7 +28,7 @@ function staticAsset(
     headers: {
       'content-type': contentType,
       'cache-control': cacheControl,
-      'x-content-type-options': 'nosniff',
+      ...SECURITY_HEADERS,
       ...extraHeaders,
     },
   });

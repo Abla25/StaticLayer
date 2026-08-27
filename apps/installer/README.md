@@ -10,10 +10,9 @@ Desired State Engine from `@staticlayer/deployment-core`
 npm run dev:installer   # → http://localhost:8788 (dev mode, placeholders)
 ```
 
-In **dev mode** there is no email step: the wizard shows a **"Continue →"**
-button that opens a local session directly (you're running it on your own
-machine — no email proof needed). The magic link remains as an optional
-secondary path.
+There is **no email step**: the wizard shows a **"Continue →"** button that
+opens a session directly — the Cloudflare consent screen (or a pasted token)
+is the identity gate.
 
 To connect your **real Cloudflare account**, copy the env template and fill it
 in (you type the values yourself — secrets never travel through chat):
@@ -42,7 +41,7 @@ Required env (see `src/index.ts`): `STATICLAYER_SESSION_SECRET`; optional
 
 ## Flow
 
-1. Local session (dev) **or** magic link (email) → HMAC-signed cookie
+1. Anonymous session (via **Start →**) → HMAC-signed cookie
    (`SLSession`, HttpOnly).
 2. Connect: **OAuth** Authorization Code (`client_secret_post`) with exactly
    the scopes `workers-platform.write`, `d1.write`, `account.read` — or a
@@ -56,7 +55,7 @@ Required env (see `src/index.ts`): `STATICLAYER_SESSION_SECRET`; optional
 ## Tests
 
 ```sh
-npm run test:installer   # oauth (least-privilege), deploy (dry-run/apply/idempotent), auth (magic link), flow (meta/local/token)
+npm run test:installer   # oauth (least-privilege), deploy (dry-run/apply/idempotent), auth (session cookie), flow (meta/local/token)
 ```
 
 ## Security

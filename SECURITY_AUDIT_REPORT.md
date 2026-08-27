@@ -65,7 +65,6 @@
 | --- | --- | --- |
 | Remote D1 concurrency not yet proven end-to-end | Medium (pre-launch) | Run `wrangler dev --remote` concurrency replay before commercial launch (SECURITY_REVIEW.md §14.4). |
 | `d1.write` scope ID not yet confirmed verbatim | Low | `GET /oauth/scopes` at client registration; single constant + test guard. |
-| Installer magic-link SMTP not wired in production | Low | `STATICLAYER_DEV_MODE=0` requires an SMTP transport (integration point documented). |
 | Operators cannot recover `ADMIN_SECRET` after an installer deploy (never shown) | Medium (usability) | Documented tradeoff of the audit: rotate via `wrangler secret put ADMIN_SECRET` or redeploy; the CLI path (`npx staticlayer init`) lets operators set their own secrets. |
 | Rate limiting is edge-local / eventually consistent | Accepted (backstop only) | PoW + anti-replay remain the security boundary (Cloudflare-documented). |
 

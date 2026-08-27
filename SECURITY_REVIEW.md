@@ -253,8 +253,8 @@ registration — see `docs/oauth-scopes.md` and
   revoked (`/oauth2/revoke`) and the session cleared. The user only sees
   "Deploy Successful". A dry-run returns the plan with zero side effects and
   no secrets.
-- Magic-link login: HMAC-signed, 15-minute TTL, constant-time verification;
-  rejects tampered/expired/garbage tokens (proven in `auth.test.ts`).
+- Installer session cookie: HMAC-signed, HttpOnly, SameSite=Lax; constant-time
+  verification (proven in `auth.test.ts`).
 - Deploy reuses the deployment-core engine verbatim: dry-run = plan only;
   apply = idempotent, verified (`verify` throws on drift). Proven in
   `deploy.test.ts` with the shared in-memory mock
@@ -276,8 +276,8 @@ own retention purge.
 - `apps/installer/test/deploy.test.ts` — dry-run (zero side effects, no
   secrets), apply pushes secrets via bulk API and **returns no secret values**
   (I16), idempotency, error propagation, ratelimit honored.
-- `apps/installer/test/auth.test.ts` — magic link (valid/tampered/expired/
-  wrong-secret/garbage) + session cookie (signed, HttpOnly, no Domain).
+- `apps/installer/test/auth.test.ts` — session cookie (signed, HttpOnly,
+  no Domain).
 - `apps/demo/test/demo-reset.test.ts` — daily purge against real Miniflare D1.
 - `packages/deployment-core/test/api.test.ts` — Bulk Secrets API request shape
   (`PATCH /secrets-bulk`, JSON Merge Patch body), multipart deploy, 404
