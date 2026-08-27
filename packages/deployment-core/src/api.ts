@@ -9,6 +9,9 @@ import { ApiError, type CloudflareApi, type DeployWorkerRequest, type D1Info } f
  *   GET    /accounts/{id}/workers/scripts/{name}        script exists (404 => missing)
  *   PATCH  /accounts/{id}/workers/scripts/{name}/secrets-bulk   bulk set secrets
  *   GET    /accounts/{id}/workers/scripts/{name}/secrets        list secrets
+ *   POST   /accounts/{id}/workers/scripts/{name}/subdomain     enable *.workers.dev
+ *                                                              (method POST + header
+ *                                                              Cloudflare-Workers-Script-Api-Date)
  *   POST   /accounts/{id}/d1/database                   create D1
  *   GET    /accounts/{id}/d1/database                   list D1
  *
@@ -190,30 +193,53 @@ export class CloudflareApiClient implements CloudflareApi {
   }
 
   /**
-   * Publish the worker on its *.workers.dev URL. The `workers_dev: true`
-   * metadata flag is NOT sufficient for routing — Cloudflare requires this
-   * dedicated subdomain endpoint (`PUT .../scripts/{name}/subdomain`, body
-   * `{ "enabled": true }`).
+   * Publish the worker on its *.workers.dev URL.
+   *
+   * The `workers_dev: true` metadata flag alone does NOT update routing for a
+   * worker that already exists — Cloudflare requires this dedicated endpoint
+   * (`POST /accounts/{id}/workers/scripts/{name}/subdomain`). The method must
+   * be POST (PUT returns 405 "Method not allowed for this authentication
+   * scheme") and the `Cloudflare-Workers-Script-Api-Date` header is mandatory —
+   * both verified against Wrangler's deploy-helpers source. The endpoint is
+   * occasionally flaky (transient 500s), so we retry like Wrangler does.
    */
   async enableWorkersDev(workerName: string): Promise<void> {
-    const res = await this.fetchFn(`${this.base}/workers/scripts/${encodeURIComponent(workerName)}/subdomain`, {
-      method: 'PUT',
-      headers: { authorization: `Bearer ${this.opts.apiToken}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ enabled: true }),
-    });
-    let body: unknown = null;
-    try {
-      body = await res.json();
-    } catch {
-      body = null;
-    }
-    if (!res.ok || (body !== null && (body as { success?: boolean }).success === false)) {
-      const detail = errorDetail(body, res.statusText);
-      throw new ApiError(
+    const path = `/workers/scripts/${encodeURIComponent(workerName)}/subdomain`;
+    let lastErr: ApiError | undefined;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      if (attempt > 0) {
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+      }
+      let res: Response;
+      try {
+        res = await this.fetchFn(`${this.base}${path}`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${this.opts.apiToken}`,
+            'content-type': 'application/json',
+            'Cloudflare-Workers-Script-Api-Date': '2025-08-01',
+          },
+          body: JSON.stringify({ enabled: true, previews_enabled: true }),
+        });
+      } catch (err) {
+        lastErr = new ApiError(0, `network error calling ${path}: ${(err as Error).message}`, path);
+        continue;
+      }
+      let body: unknown = null;
+      try {
+        body = await res.json();
+      } catch {
+        body = null;
+      }
+      const failed = !res.ok || (body !== null && (body as { success?: boolean }).success === false);
+      if (!failed) return;
+      lastErr = new ApiError(
         res.status,
-        `enable workers.dev failed (${res.status}): ${detail}`,
-        `/workers/scripts/${workerName}/subdomain`,
+        `enable workers.dev failed (${res.status}): ${errorDetail(body, res.statusText)}`,
+        path,
       );
+      if (res.status < 500) break; // no point retrying 4xx
     }
+    throw lastErr ?? new ApiError(0, 'enable workers.dev failed: unknown error', path);
   }
 }
