@@ -4,7 +4,7 @@
 
 StaticLayer is an open-source, Cloudflare-native comment system designed for static websites. Your Worker. Your database. No centralized comment platform.
 
-> **🌐 [Website](apps/site/)** · **[Try the interactive demo](apps/site/src/pages/demo.html)** · **[Docs](apps/site/src/pages/docs.html)** · **[Security](SECURITY.md)** · **[Install guide](DEPLOY_TO_REAL_CLOUDFLARE.md)** · **[GitHub](https://github.com/staticlayer/staticlayer) (TODO: set real repo URL)**
+> **🌐 [Website](https://Abla25.github.io/StaticLayer/)** · **[Try the interactive demo](https://Abla25.github.io/StaticLayer/demo.html)** · **[Docs](https://Abla25.github.io/StaticLayer/docs.html)** · **[Security](SECURITY.md)** · **[Install guide](DEPLOY_TO_REAL_CLOUDFLARE.md)** · **[GitHub](https://github.com/Abla25/StaticLayer)**
 
 ---
 

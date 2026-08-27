@@ -56,8 +56,8 @@ const PUBLIC_DIR = (() => {
 
 // Site links injected into the wizard at serve time — override at deploy with
 // the real site/repo URLs (e.g. STATICLAYER_SITE_BASE=https://example.com).
-const SITE_BASE = process.env.STATICLAYER_SITE_BASE || 'https://staticlayer.github.io/staticlayer/';
-const REPO_URL = process.env.STATICLAYER_REPO_URL || 'https://github.com/staticlayer/staticlayer';
+const SITE_BASE = process.env.STATICLAYER_SITE_BASE || 'https://Abla25.github.io/StaticLayer/';
+const REPO_URL = process.env.STATICLAYER_REPO_URL || 'https://github.com/Abla25/StaticLayer';
 
 /** Mobile-nav toggle (served as a static file, not inline). */
 const NAV_JS = `(function () {

@@ -9,7 +9,7 @@
 function resolveRepo() {
   if (process.env.STATICLAYER_REPO_URL) return process.env.STATICLAYER_REPO_URL;
   if (process.env.GITHUB_REPOSITORY) return `https://github.com/${process.env.GITHUB_REPOSITORY}`;
-  return 'https://github.com/staticlayer/staticlayer'; // TODO: set once the real repo exists
+  return 'https://github.com/Abla25/StaticLayer';
 }
 
 export default {

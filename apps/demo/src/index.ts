@@ -15,8 +15,8 @@ import { demoDailyReset } from './demo-reset.ts';
 
 // Public website links — overridable at deploy time (env) so the demo always
 // points at the real site. Defaults follow the GitHub Pages subpath convention.
-const SITE_BASE = process.env.STATICLAYER_SITE_BASE || 'https://staticlayer.github.io/staticlayer/';
-const REPO_URL = process.env.STATICLAYER_REPO_URL || 'https://github.com/staticlayer/staticlayer';
+const SITE_BASE = process.env.STATICLAYER_SITE_BASE || 'https://Abla25.github.io/StaticLayer/';
+const REPO_URL = process.env.STATICLAYER_REPO_URL || 'https://github.com/Abla25/StaticLayer';
 
 /** Mobile-nav toggle. Kept as a static file (not inline <script>) to preserve
  *  the strict CSP (script-src 'self') on the demo page. */
