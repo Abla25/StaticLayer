@@ -119,6 +119,9 @@ describe('installer deploy — apply (secrets never returned)', () => {
     expect(result.alreadyInSync).toBe(false);
     expect(api.databases.map((d) => d.name)).toEqual(['pc-db']);
     expect(api.workers.has('pc')).toBe(true);
+    // The worker is published on its *.workers.dev URL.
+    expect(result.workersDevEnabled).toBe(true);
+    expect(api.workersDevEnabled.has('pc')).toBe(true);
     // The 3 secrets were bound to the worker via ONE bulk call.
     expect(api.secrets.get('pc')).toEqual(new Set([...INSTALLER_SECRETS]));
     expect(api.secretCalls).toBe(1);

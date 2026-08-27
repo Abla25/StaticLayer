@@ -75,6 +75,8 @@ export interface InstallerDeployResult {
   actions: string[];
   alreadyInSync: boolean;
   adminSecret?: string;
+  /** True when the worker was published on *.workers.dev after a real apply. */
+  workersDevEnabled?: boolean;
 }
 
 export function generateSecrets(): Record<string, string> {
@@ -157,6 +159,17 @@ export async function runInstallerDeploy(
   // shown — the operator's existing password stays valid.
   const secretActuallyApplied = result.actions.some((a) => a.kind === 'set-secret');
 
+  // Publish on *.workers.dev (dedicated subdomain endpoint) after a real apply.
+  let workersDevEnabled: boolean | undefined;
+  if (!options.input.dryRun) {
+    try {
+      await api.enableWorkersDev(config.workerName);
+      workersDevEnabled = true;
+    } catch {
+      workersDevEnabled = false;
+    }
+  }
+
   return {
     actions: describeActions(result.actions),
     alreadyInSync: result.actions.length === 0,
@@ -166,5 +179,6 @@ export async function runInstallerDeploy(
     // one response to the browser that ran the deploy. All other secrets stay
     // server-side and flow exclusively into the Bulk Secrets API.
     adminSecret: options.input.dryRun || !secretActuallyApplied ? undefined : secretValues.ADMIN_SECRET,
+    workersDevEnabled,
   };
 }

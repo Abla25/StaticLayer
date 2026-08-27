@@ -94,6 +94,8 @@ export interface CloudflareApi {
   listSecrets(workerName: string): Promise<Array<{ name: string }>>;
   setSecretsBulk(workerName: string, values: Record<string, string>): Promise<void>;
   deployWorker(workerName: string, request: DeployWorkerRequest): Promise<void>;
+  /** Publish the worker on its *.workers.dev URL (dedicated subdomain endpoint). */
+  enableWorkersDev(workerName: string): Promise<void>;
 }
 
 /** A Cloudflare API call failed (HTTP/network/success:false). Never silent. */

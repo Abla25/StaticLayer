@@ -425,6 +425,11 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
         deployedWorkerName,
         env('STATICLAYER_INSTALLER_URL', 'http://localhost:8788'),
       );
+      let endpointWarning = warning;
+      if (!dryRun && result.workersDevEnabled === false) {
+        endpointWarning =
+          'your Worker is deployed but not published on *.workers.dev — enable the workers.dev route in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Domains & Routes), then refresh this page.';
+      }
 
       if (!dryRun) {
         // Apply succeeded. Revoke the OAuth token (only when it came from the
@@ -453,7 +458,7 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
       json(res, 200, {
         ...result,
         endpoint,
-        endpointWarning: warning,
+        endpointWarning,
       });
     } catch (err) {
       json(res, 500, { error: (err as Error).message });

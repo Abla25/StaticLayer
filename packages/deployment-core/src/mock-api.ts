@@ -73,4 +73,12 @@ export class MockCloudflareApi implements CloudflareApi {
     }
     this.workers.add(workerName);
   }
+
+  workersDevEnabled = new Set<string>();
+  enableWorkersDevCalls = 0;
+
+  async enableWorkersDev(workerName: string): Promise<void> {
+    this.enableWorkersDevCalls += 1;
+    this.workersDevEnabled.add(workerName);
+  }
 }

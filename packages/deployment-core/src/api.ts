@@ -188,4 +188,27 @@ export class CloudflareApiClient implements CloudflareApi {
       body,
     });
   }
+
+  /**
+   * Publish the worker on its *.workers.dev URL. The `workers_dev: true`
+   * metadata flag is NOT sufficient for routing — Cloudflare requires this
+   * dedicated subdomain endpoint (`PUT .../scripts/{name}/subdomain`, body
+   * `{ "enabled": true }`).
+   */
+  async enableWorkersDev(workerName: string): Promise<void> {
+    const res = await this.fetchFn(`${this.base}/workers/scripts/${encodeURIComponent(workerName)}/subdomain`, {
+      method: 'PUT',
+      headers: { authorization: `Bearer ${this.opts.apiToken}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ enabled: true }),
+    });
+    let body: unknown = null;
+    try {
+      body = await res.json();
+    } catch {
+      body = null;
+    }
+    if (!res.ok || (body !== null && (body as { success?: boolean }).success === false)) {
+      throw new ApiError(res.status, `enable workers.dev failed (${res.status})`, `/workers/scripts/${workerName}/subdomain`);
+    }
+  }
 }

@@ -343,6 +343,11 @@ const worker: ExportedHandler<Env> = {
           deployedWorkerName,
           url.origin,
         );
+        let endpointWarning = warning;
+        if (!dryRun && result.workersDevEnabled === false) {
+          endpointWarning =
+            'your Worker is deployed but not published on *.workers.dev — enable the workers.dev route in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Domains & Routes), then refresh this page.';
+        }
 
         if (!dryRun) {
           if (got.session.tokenKind === 'oauth') {
@@ -359,7 +364,7 @@ const worker: ExportedHandler<Env> = {
           await env.SESSIONS.delete(`s:${got.id}`);
         }
 
-        return json({ ...result, endpoint, endpointWarning: warning });
+        return json({ ...result, endpoint, endpointWarning });
       } catch (err) {
         return json({ error: (err as Error).message }, 500);
       }
