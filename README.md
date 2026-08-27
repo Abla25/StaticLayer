@@ -152,6 +152,10 @@ and `data-poll-results="after|always"`.
 > visitors who clear their browser storage — the same trade-off every anonymous poll (StrawPoll
 > included) accepts.
 
+**View results without voting:** a small **"View results"** button under the voting buttons
+lets anyone peek at the live ranked results (and go back to vote) — purely client-side, no data
+stored.
+
 ## 💬 Comment engagement (v1.6)
 
 Beyond plain comments, the widget and admin now offer:

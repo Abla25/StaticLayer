@@ -239,4 +239,31 @@ describe('widget polls v2 — single vs multi voting', () => {
     expect(host.querySelector('.sl-poll-count')?.textContent).toBe('0 votes');
     expect(host.querySelectorAll('.sl-poll-check').length).toBe(3);
   });
+
+  it('shows a "View results" link and reveals the results without voting', async () => {
+    const { dom } = makeDom({ counts: { A: 5, B: 3, C: 1 }, total: 9, voted: false });
+    await flushAsync();
+    const host = dom.window.document.getElementById('host')!;
+
+    // Before voting: voting buttons + the "View results" link, no ranking yet.
+    const link = host.querySelector('.sl-poll-results-link') as HTMLButtonElement;
+    expect(link).not.toBeNull();
+    expect(link.textContent).toBe('View results');
+    expect(host.querySelector('.sl-poll-rank')).toBeNull();
+
+    link.click();
+    await flushAsync();
+
+    // Ranked results are now visible without having voted.
+    expect(names(host, '.sl-poll-rank')).toEqual(['#1', '#2', '#3']);
+    expect(host.querySelector('.sl-poll-lead-info')?.textContent).toBe('Leads by 2 votes');
+    expect(host.querySelector('.sl-poll-status')?.textContent).toContain('Live results');
+
+    // Back to the voting buttons.
+    const back = host.querySelector('.sl-poll-results-link') as HTMLButtonElement;
+    expect(back.textContent).toBe('Vote');
+    back.click();
+    await flushAsync();
+    expect(host.querySelector('.sl-poll-rank')).toBeNull();
+  });
 });

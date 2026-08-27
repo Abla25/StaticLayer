@@ -122,6 +122,9 @@
       pollMultiHint: 'Select one or more options',
       pollChangeVotes: 'Change your votes',
       pollVotesChanged: 'Votes updated — you can vote again',
+      viewResults: 'View results',
+      backToVote: 'Vote',
+      resultsPreview: 'Live results',
       startTitle: 'Start the conversation',
       pinned: 'Pinned',
       flag: 'Report',
@@ -179,6 +182,9 @@
       pollMultiHint: 'Seleziona una o più opzioni',
       pollChangeVotes: 'Modifica i tuoi voti',
       pollVotesChanged: 'Voti aggiornati — puoi votare di nuovo',
+      viewResults: 'Vedi risultati',
+      backToVote: 'Vota',
+      resultsPreview: 'Risultati in tempo reale',
       startTitle: 'Inizia la conversazione',
       pinned: 'In evidenza',
       flag: 'Segnala',
@@ -323,6 +329,10 @@
     '.sl-poll-vote-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}' +
     '.sl-poll-vote-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;filter:none}' +
     '.sl-poll-multi-hint{margin:10px 2px 0;font-size:11.5px;color:var(--muted)}' +
+    '.sl-poll-results-link{appearance:none;cursor:pointer;font:inherit;font-size:12px;font-weight:600;color:var(--muted);' +
+    'background:transparent;border:1px solid var(--border);border-radius:999px;padding:5px 14px;margin-top:12px;' +
+    'transition:color .12s ease,border-color .12s ease}' +
+    '.sl-poll-results-link:hover{color:var(--accent);border-color:var(--accent)}' +
     '.sl-poll-actions{display:flex;flex-direction:column;align-items:flex-start;gap:2px}' +
     '.sl-pop{animation:sl-pop .35s cubic-bezier(.22,1,.36,1)}' +
     '@keyframes sl-pop{0%{transform:scale(.94)}60%{transform:scale(1.03)}100%{transform:scale(1)}}' +
@@ -1169,6 +1179,8 @@
 
       var selected = {};
       var multiVoteBtn = null;
+      var revealed = false;
+      var currentPoll = null;
 
       // Poll loading skeleton (bar placeholders until the poll arrives).
       function renderPollSkeleton() {
@@ -1203,12 +1215,14 @@
       }
 
       function renderPoll(poll) {
+        currentPoll = poll;
         qEl.textContent = poll.question || '';
         totalChip.textContent = pollCountLabel(Number(poll.total) || 0);
         var opts = Array.isArray(poll.options) ? poll.options : [];
         var total = Number(poll.total) || 0;
-        // Show results after voting (or when closed), or ALWAYS when configured.
-        var showResults = poll.status !== 'open' || !!poll.voted || pollResults === 'always';
+        // Show results after voting (or when closed), or ALWAYS when configured,
+        // or when the visitor explicitly tapped "View results".
+        var showResults = poll.status !== 'open' || !!poll.voted || pollResults === 'always' || revealed;
         listEl.replaceChildren();
         actionsEl.replaceChildren();
         multiVoteBtn = null;
@@ -1281,7 +1295,16 @@
             changeBtn.addEventListener('click', changeVotes);
             actionsEl.appendChild(changeBtn);
           }
-          setStatus(poll.status !== 'open' ? t('closed') : t('voted'), poll.status !== 'open' ? undefined : 'ok');
+          if (revealed && !poll.voted && poll.status === 'open') {
+            // Results revealed WITHOUT voting: allow going back to the buttons.
+            setStatus(t('resultsPreview'), undefined);
+            var backBtn = el('button', 'sl-poll-results-link', t('backToVote'));
+            backBtn.type = 'button';
+            backBtn.addEventListener('click', function () { revealed = false; renderPoll(currentPoll); });
+            actionsEl.appendChild(backBtn);
+          } else {
+            setStatus(poll.status !== 'open' ? t('closed') : t('voted'), poll.status !== 'open' ? undefined : 'ok');
+          }
         } else {
           if (poll.multi) {
             multiVoteBtn = el('button', 'sl-poll-vote-btn', t('pollVoteBtn').replace('{n}', '0'));
@@ -1291,6 +1314,11 @@
             actionsEl.appendChild(multiVoteBtn);
             actionsEl.appendChild(el('p', 'sl-poll-multi-hint', t('pollMultiHint')));
           }
+          // "View results" — reveal the live results even without voting.
+          var resultsLink = el('button', 'sl-poll-results-link', t('viewResults'));
+          resultsLink.type = 'button';
+          resultsLink.addEventListener('click', function () { revealed = true; renderPoll(currentPoll); });
+          actionsEl.appendChild(resultsLink);
           setStatus('');
         }
       }

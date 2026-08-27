@@ -1,6 +1,6 @@
 {
-  "latest": "1.6.0",
+  "latest": "1.6.1",
   "date": "2026-08-27",
-  "notes": "v1.6.0 — Comment likes (anonymous, per-browser guard) + \"best\" sorting; pinned comments; visitor \"Report\" (zero data); thread sort newest/oldest/best; relative timestamps; \"Read more\" for long comments; GDPR data export (CSV/JSON); loading skeletons, accessibility + reduced-motion; framework templates (Astro/React/Vue/Hugo/Jekyll).",
+  "notes": "v1.6.1 — Polls: new \"View results\" button lets anyone peek at the live ranked results without voting (and go back to vote).",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }

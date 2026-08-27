@@ -13,6 +13,10 @@ Versioning: [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Polls: "View results" (1.6.1)** — a small "View results" button under the
+  voting buttons reveals the live ranked results even without voting (with a
+  "Vote" button to go back). Works for single and multi polls; no data is
+  stored (purely client-side reveal).
 - **Comment engagement (1.6.0)** — anonymous **likes** on comments (new
   canonical "comment-action" payload: action byte discriminates flag vs vote;
   `POST /api/comments/vote` with PoW + atomic anti-replay + per-browser guard
