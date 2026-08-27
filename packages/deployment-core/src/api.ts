@@ -71,7 +71,12 @@ export class CloudflareApiClient implements CloudflareApi {
 
   constructor(private readonly opts: ApiOptions) {
     this.base = `${API_BASE}/accounts/${encodeURIComponent(opts.accountId)}`;
-    this.fetchFn = opts.fetchFn ?? fetch;
+    // workerd gotcha: `fetch` must be called with the correct `this` (the
+    // global scope). Storing the bare reference and calling `this.fetchFn(...)`
+    // throws "Illegal invocation: function called with incorrect `this`
+    // reference" inside Cloudflare Workers. Wrapping it in an arrow keeps the
+    // bare global call and fixes the receiver. (Node tolerates both.)
+    this.fetchFn = opts.fetchFn ?? ((input, init) => fetch(input, init));
   }
 
   private async request(path: string, init: RequestInit = {}): Promise<Record<string, unknown>> {
