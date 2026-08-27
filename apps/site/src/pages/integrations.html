@@ -90,6 +90,7 @@
      data-poll-id="&lt;poll id from the admin&gt;"&gt;&lt;/div&gt;
 &lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
         <p>Votes are anonymous (no IP, no cookie) and protected by the same <b>Proof-of-Work + atomic anti-replay</b> as comments. The optional <b>one vote per browser</b> guard issues an <b>anonymous</b> token that lives only in the visitor's browser and stores only a hash on your D1 — a returning visitor cannot vote twice, and no personal data is collected. Honest limit: clearing browser storage resets the guard, as with every anonymous poll.</p>
+        <p><b>Global poll:</b> leave the article path empty when creating the poll and it appears on <b>any</b> page where you embed its id. Optional display attributes: <code>data-poll-style="bars|percent|counts|minimal"</code> and <code>data-poll-results="after|always"</code>.</p>
         <p>Programmatic equivalent: <code>StaticLayer.mount(el, { …, pollId: '&lt;id&gt;' })</code>.</p>
 
         <h2>Nested replies</h2>

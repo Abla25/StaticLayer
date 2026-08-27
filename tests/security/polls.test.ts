@@ -119,6 +119,26 @@ describe('polls — public API + PoW + anti-replay', () => {
     expect(await res.json()).toEqual({ polls: [] });
   });
 
+  it('supports a GLOBAL poll (empty article path) served by id and votable from any article', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const poll = await createPoll(mf, auth.cookie, auth.csrf, { articlePath: '' });
+
+    // Not listed under a specific article…
+    const byArticle = await mf.dispatchFetch(`${BASE}/api/polls?article_path=%2Fblog%2Fx`);
+    expect(await byArticle.json()).toEqual({ polls: [] });
+    // …but served by id (global lookup).
+    const byId = await mf.dispatchFetch(`${BASE}/api/polls?id=${poll.id}`);
+    const data = (await byId.json()) as { polls: Array<{ id: string; article_path: string }> };
+    expect(data.polls).toHaveLength(1);
+    expect(data.polls[0].id).toBe(poll.id);
+    expect(data.polls[0].article_path).toBe('');
+
+    // And votable from ANY article path.
+    const voteRes = await vote(mf, poll.id, 'A', '/other/page');
+    expect(voteRes.status).toBe(200);
+  });
+
   it('creates a poll via the admin API and lists it publicly with counts', async () => {
     mf = await spawnWorker();
     auth = await login(mf);

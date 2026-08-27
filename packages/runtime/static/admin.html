@@ -487,6 +487,14 @@
             </select>
             <p class="hint">How the results are shown after voting (or when the poll is closed).</p>
           </div>
+          <div class="w-field" id="w-poll-results-field">
+            <label for="w-poll-results">When to show results</label>
+            <select id="w-poll-results">
+              <option value="after">After voting (or when closed)</option>
+              <option value="always">Always visible</option>
+            </select>
+            <p class="hint">"Always" lets visitors see live results before they vote.</p>
+          </div>
         </div>
 
         <div class="list-panel">
@@ -574,8 +582,9 @@
         <div class="list-panel">
           <h3>New poll</h3>
           <div class="field">
-            <label for="poll-article">Article path</label>
+            <label for="poll-article">Article path (optional)</label>
             <input type="text" id="poll-article" maxlength="255" placeholder="/blog/hello-world">
+            <p class="hint">Leave empty for a <b>global poll</b> — shown on any page where you embed it. Set it to show the poll only on that article's page.</p>
           </div>
           <div class="field">
             <label for="poll-question">Question</label>
@@ -599,6 +608,11 @@
             </ul>
           </div>
           <div class="row mt"><button id="poll-create" class="btn">Create poll</button></div>
+          <div style="margin-top:18px">
+            <h3 style="font-size:13px;margin:0 0 10px;letter-spacing:-.2px">Live preview</h3>
+            <p class="lsub">Updates as you type — this is what visitors see before voting.</p>
+            <div id="poll-preview" style="padding:2px"></div>
+          </div>
         </div>
         <div class="list-panel">
           <h3>Your polls</h3>

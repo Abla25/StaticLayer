@@ -307,6 +307,7 @@
     // -------- mode: standalone poll --------
     var pollId = String(((opts && opts.pollId) || root.getAttribute('data-poll-id') || '')).trim();
     var pollStyle = String(((opts && opts.pollStyle) || root.getAttribute('data-poll-style') || 'bars')).trim();
+    var pollResults = String(((opts && opts.pollResults) || root.getAttribute('data-poll-results') || 'after')).trim();
     if (pollId) {
       initPoll();
       return;
@@ -759,7 +760,8 @@
         qEl.textContent = poll.question || '';
         var opts = Array.isArray(poll.options) ? poll.options : [];
         var total = Number(poll.total) || 0;
-        var showResults = poll.status !== 'open' || !!poll.voted;
+        // Show results after voting (or when closed), or ALWAYS when configured.
+        var showResults = poll.status !== 'open' || !!poll.voted || pollResults === 'always';
         listEl.replaceChildren();
         opts.forEach(function (o) {
           var c = poll.counts && poll.counts[o] ? Number(poll.counts[o]) : 0;
@@ -798,16 +800,26 @@
         }
       }
 
+      function findIn(data) {
+        var found = null;
+        (Array.isArray(data.polls) ? data.polls : []).forEach(function (p) { if (p.id === pollId) found = p; });
+        return found;
+      }
       function loadPoll() {
-        var url = endpoint + '/api/polls?article_path=' + encodeURIComponent(articlePath);
-        if (voterToken) url += '&voterToken=' + encodeURIComponent(voterToken);
-        return fetch(url)
+        var suffix = voterToken ? '&voterToken=' + encodeURIComponent(voterToken) : '';
+        return fetch(endpoint + '/api/polls?article_path=' + encodeURIComponent(articlePath) + suffix)
           .then(function (res) { if (!res.ok) throw new Error(t('pollLoadError')); return res.json(); })
           .then(function (data) {
-            var found = null;
-            (Array.isArray(data.polls) ? data.polls : []).forEach(function (p) { if (p.id === pollId) found = p; });
-            if (!found) { qEl.textContent = t('pollMissing'); return; }
-            renderPoll(found);
+            var found = findIn(data);
+            if (found) { renderPoll(found); return; }
+            // Global poll fallback (article path is optional): look up by id.
+            return fetch(endpoint + '/api/polls?id=' + encodeURIComponent(pollId) + suffix)
+              .then(function (res2) { if (!res2.ok) throw new Error(t('pollLoadError')); return res2.json(); })
+              .then(function (data2) {
+                var g = findIn(data2);
+                if (g) { renderPoll(g); return; }
+                qEl.textContent = t('pollMissing');
+              });
           })
           .catch(function () { setStatus(t('pollLoadError'), 'err'); });
       }

@@ -129,6 +129,10 @@ anti-replay as comments. With the single-vote guard, the server issues an **anon
 that lives only in the visitor's browser (localStorage) and stores only a hash of it — so a
 returning visitor cannot vote twice, and no personal data ever leaves the device.
 
+**Global polls:** leave the article path empty when creating a poll and it appears on **any**
+page where you embed its id. Optional display: `data-poll-style="bars|percent|counts|minimal"`
+and `data-poll-results="after|always"`.
+
 > Honest limitation: without an identity, "one vote = one person" cannot be guaranteed for
 > visitors who clear their browser storage — the same trade-off every anonymous poll (StrawPoll
 > included) accepts.

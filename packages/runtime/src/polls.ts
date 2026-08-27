@@ -99,17 +99,26 @@ function serializePoll(row: PollRow, counts: PollCounts): Record<string, unknown
   };
 }
 
-/** GET /api/polls?article_path=... — public read (cacheable without token). */
+/** GET /api/polls?article_path=...  or  ?id=... — public read (cacheable without token). */
 export async function handleListPolls(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const articlePath = url.searchParams.get('article_path') ?? '';
-  if (!articlePath) return json({ error: 'article_path is required' }, 400);
+  const idParam = url.searchParams.get('id') ?? '';
 
-  const rows = (await env.DB.prepare(
-    'SELECT * FROM polls WHERE article_path = ? ORDER BY created_at DESC LIMIT 50',
-  )
-    .bind(articlePath)
-    .all<PollRow>()).results;
+  let rows: PollRow[] = [];
+  if (idParam) {
+    // Global polls (empty article_path) are embedded on any page and looked up
+    // by id; article-scoped polls are still found when the article matches.
+    const row = await loadPoll(env, idParam);
+    if (row) rows = [row];
+  } else {
+    const articlePath = url.searchParams.get('article_path') ?? '';
+    if (!articlePath) return json({ error: 'article_path or id is required' }, 400);
+    rows = (await env.DB.prepare(
+      'SELECT * FROM polls WHERE article_path = ? ORDER BY created_at DESC LIMIT 50',
+    )
+      .bind(articlePath)
+      .all<PollRow>()).results;
+  }
 
   // Optional anonymous voter token: reports "you already voted" on single-vote
   // polls without revealing anything (only an HMAC-verified id is used).
@@ -222,7 +231,11 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
   const poll = await loadPoll(env, pollId);
   if (!poll) return json({ error: 'poll not found' }, 404);
   if (poll.status !== 'open') return json({ error: 'poll is closed' }, 403);
-  if (poll.article_path !== articlePath) return json({ error: 'poll does not belong to this article' }, 400);
+  // Global polls (empty article_path) accept votes from any article; scoped
+  // polls must match the challenge's article path.
+  if (poll.article_path !== '' && poll.article_path !== articlePath) {
+    return json({ error: 'poll does not belong to this article' }, 400);
+  }
   const options = parseOptions(poll.options);
   if (!options.includes(option)) return json({ error: 'invalid option' }, 400);
 

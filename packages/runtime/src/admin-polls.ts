@@ -85,8 +85,10 @@ export async function handleAdminCreatePoll(request: Request, env: Env): Promise
   const articlePath = body.articlePath;
   const question = body.question;
   const rawOptions = body.options;
-  if (typeof articlePath !== 'string' || !articlePath.trim() || articlePath.length > 255) {
-    return json({ error: 'articlePath is required' }, 400);
+  // articlePath is OPTIONAL: an empty value creates a GLOBAL poll that the
+  // widget can embed on any page (looked up by id, not by article path).
+  if (articlePath !== undefined && (typeof articlePath !== 'string' || articlePath.length > 255)) {
+    return json({ error: 'articlePath must be a short string' }, 400);
   }
   if (typeof question !== 'string' || !question.trim() || question.length > MAX_QUESTION_LEN) {
     return json({ error: 'question is required' }, 400);
@@ -103,13 +105,14 @@ export async function handleAdminCreatePoll(request: Request, env: Env): Promise
 
   const id = crypto.randomUUID();
   const createdAt = Math.floor(Date.now() / 1000);
+  const trimmedPath = (typeof articlePath === 'string' ? articlePath.trim() : '');
   await env.DB.prepare(
     `INSERT INTO polls (id, article_path, question, options, multi, single_vote, status, created_at)
      VALUES (?, ?, ?, ?, ?, ?, 'open', ?)`,
   )
     .bind(
       id,
-      articlePath.trim(),
+      trimmedPath,
       question.trim(),
       JSON.stringify(options),
       body.multi === true ? 1 : 0,
@@ -122,7 +125,7 @@ export async function handleAdminCreatePoll(request: Request, env: Env): Promise
     {
       poll: {
         id,
-        article_path: articlePath.trim(),
+        article_path: trimmedPath,
         question: question.trim(),
         options,
         multi: body.multi === true,

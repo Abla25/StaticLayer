@@ -583,10 +583,10 @@
   // Generates the copy-paste embed snippet. All options are stored locally in
   // the browser (localStorage) — nothing is sent to the server.
   var WIDGET_KEY = 'sl-widget-config';
-  var widgetFields = ['w-reactions', 'w-path', 'w-lang', 'w-theme', 'w-accent-text', 'w-radius', 'w-maxwidth', 'w-texts', 'w-poll', 'w-poll-style'];
+  var widgetFields = ['w-reactions', 'w-path', 'w-lang', 'w-theme', 'w-accent-text', 'w-radius', 'w-maxwidth', 'w-texts', 'w-poll', 'w-poll-style', 'w-poll-results'];
 
   function widgetDefaults() {
-    return { mode: 'both', reactions: '👍,❤️,🎉', path: '', lang: 'auto', theme: 'auto', accent: '#f57d1f', radius: '14', maxwidth: '640', texts: '', pollId: '', pollStyle: 'bars' };
+    return { mode: 'both', reactions: '👍,❤️,🎉', path: '', lang: 'auto', theme: 'auto', accent: '#f57d1f', radius: '14', maxwidth: '640', texts: '', pollId: '', pollStyle: 'bars', pollResults: 'after' };
   }
   function widgetState() {
     var s = widgetDefaults();
@@ -603,6 +603,7 @@
     s.texts = document.getElementById('w-texts').value.trim();
     s.pollId = document.getElementById('w-poll').value;
     s.pollStyle = document.getElementById('w-poll-style').value || 'bars';
+    s.pollResults = document.getElementById('w-poll-results').value || 'after';
     return s;
   }
   function escAttr(v) {
@@ -626,6 +627,7 @@
       var pMw = parseInt(s.maxwidth, 10);
       if (!isNaN(pMw) && pMw !== 640) plines.push('     data-max-width="' + pMw + '"');
       if (s.pollStyle && s.pollStyle !== 'bars') plines.push('     data-poll-style="' + escAttr(s.pollStyle) + '"');
+      if (s.pollResults && s.pollResults !== 'after') plines.push('     data-poll-results="' + escAttr(s.pollResults) + '"');
       plines.push('></div>');
       plines.push('<script src="' + escAttr(origin) + '/widget.js" defer></script>');
       document.getElementById('w-snippet').value = plines.join('\n');
@@ -670,8 +672,12 @@
     document.getElementById('w-texts').value = s.texts;
     document.getElementById('w-poll').value = s.pollId || '';
     document.getElementById('w-poll-style').value = s.pollStyle || 'bars';
-    var pollStyleField = document.getElementById('w-poll-style-field');
-    if (pollStyleField) pollStyleField.classList.toggle('hidden', !s.pollId);
+    document.getElementById('w-poll-results').value = s.pollResults || 'after';
+    var pollFields = ['w-poll-style-field', 'w-poll-results-field'];
+    pollFields.forEach(function (fid) {
+      var f = document.getElementById(fid);
+      if (f) f.classList.toggle('hidden', !s.pollId);
+    });
     var reactionsField = document.getElementById('w-reactions-field');
     if (reactionsField) reactionsField.classList.toggle('hidden', s.mode === 'comments');
     renderWidgetSnippet();
@@ -707,8 +713,11 @@
     node.addEventListener('input', function () { saveWidgetState(); renderWidgetSnippet(); });
     node.addEventListener('change', function () {
       if (id === 'w-poll') {
-        var f = document.getElementById('w-poll-style-field');
-        if (f) f.classList.toggle('hidden', !node.value);
+        var hasPoll = !!node.value;
+        ['w-poll-style-field', 'w-poll-results-field'].forEach(function (fid) {
+          var f = document.getElementById(fid);
+          if (f) f.classList.toggle('hidden', !hasPoll);
+        });
       }
       saveWidgetState();
       renderWidgetSnippet();
@@ -757,6 +766,7 @@
     if (s.pollId) {
       opts.pollId = s.pollId;
       if (s.pollStyle && s.pollStyle !== 'bars') opts.pollStyle = s.pollStyle;
+      if (s.pollResults && s.pollResults !== 'after') opts.pollResults = s.pollResults;
       pollsCache.forEach(function (p) { if (p.id === s.pollId && p.article_path) opts.articlePath = p.article_path; });
     }
     if (s.mode !== 'comments' && s.reactions) {
@@ -891,9 +901,46 @@
         document.getElementById('poll-options').value = '';
         document.getElementById('poll-single-vote').checked = false;
         loadPolls();
+        renderPollPreview();
         showStatus(document.getElementById('polls-status'), 'Poll created ✓');
       })
       .catch(function (err) { showStatus(document.getElementById('polls-status'), 'Error: ' + err.message, true); });
   });
+
+  // Live preview while typing the poll question/options. Uses the widget's
+  // .sl-poll-* styles (widget.js is already loaded in the admin page).
+  function renderPollPreview() {
+    var box = document.getElementById('poll-preview');
+    if (!box) return;
+    box.replaceChildren();
+    var question = document.getElementById('poll-question').value.trim() || 'Your question…';
+    var options = document.getElementById('poll-options').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!options.length) options = ['Option A', 'Option B', 'Option C'];
+    var head = document.createElement('h3');
+    head.textContent = question;
+    head.style.cssText = 'margin:0 0 14px;font-size:15px;font-weight:650;letter-spacing:-.1px;line-height:1.4';
+    box.appendChild(head);
+    var ul = document.createElement('ul');
+    ul.style.cssText = 'list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px';
+    options.forEach(function (o) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'sl-poll-btn';
+      b.textContent = o;
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    var status = document.createElement('p');
+    status.className = 'sl-poll-status';
+    status.textContent = '…';
+    box.appendChild(status);
+  }
+  ['poll-question', 'poll-options'].forEach(function (id) {
+    var node = document.getElementById(id);
+    if (node) node.addEventListener('input', renderPollPreview);
+  });
+  renderPollPreview();
 })();
 
