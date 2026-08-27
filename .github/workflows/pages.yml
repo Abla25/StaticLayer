@@ -26,7 +26,7 @@ jobs:
       - run: npm ci
       - name: Build protocol (needed by the site simulator)
         run: npm run build --workspace @staticlayer/protocol
-      - name: Build website (subpath-aware: base derived from GITHUB_REPOSITORY)
+      - name: 'Build website (subpath-aware: base derived from GITHUB_REPOSITORY)'
         run: npm run build:site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
