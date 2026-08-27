@@ -56,6 +56,14 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Hosted installer: no more iframe embed (Round 21.5).** Browsers block
+  third-party cookies inside cross-origin iframes, so the wizard's session
+  cookie was never stored and the buttons did nothing when embedded on the
+  site. The install page now shows a clear **"Launch hosted installer ↗"** CTA
+  card that opens the wizard in its own tab (with the local CLI as fallback).
+  The `?embed=1` mode stays in the wizard (harmless) but the site no longer
+  uses it. The `main.js` iframe-resize listener and `.embed-frame` CSS were
+  removed.
 - **Admin polish round (Round 21.4): updates, word blacklist, guided Access, recovery.**
   - **In-panel update checker**: new admin **Updates** tab → `GET /api/admin/updates`
     fetches `updates.json` from the official site (var `UPDATES_URL`), compares
