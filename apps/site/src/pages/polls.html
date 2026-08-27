@@ -1,0 +1,96 @@
+<!-- title: StaticLayer — Polls -->
+<!-- description: StrawPoll-style polls, privacy-first: single or multi-select, one PoW per vote, ranked results with leader, total chip, view results, change your votes. -->
+<!-- active: polls -->
+
+<style>
+  .fp-preview { background:var(--card,#fff); border:1px solid var(--border,#e8e8e6); border-radius:18px; padding:20px 18px; margin:22px 0; box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px -10px rgba(16,24,40,.12); }
+  .fp-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; }
+  .fp-q { font-size:15px; font-weight:650; letter-spacing:-.1px; margin:0; }
+  .fp-chip { font-size:11px; font-weight:600; color:#666; background:#f1f1ef; padding:3px 10px; border-radius:999px; white-space:nowrap; }
+  .fp-opt { margin-bottom:12px; }
+  .fp-opt-label { display:flex; align-items:center; gap:8px; margin-bottom:5px; font-size:13px; }
+  .fp-rank { font-size:10px; font-weight:700; color:#888; background:#f1f1ef; padding:1px 6px; border-radius:999px; }
+  .fp-name { font-weight:600; flex:1; }
+  .fp-meta { font-size:11px; color:#888; }
+  .fp-bar { height:8px; border-radius:999px; background:#f1f1ef; overflow:hidden; }
+  .fp-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#ff8a2a,#ff5a1f,#ff3d54); transform-origin:left; transform:scaleX(0); animation:fp-grow 1s cubic-bezier(.22,1,.36,1) forwards; }
+  .fp-fill.d1 { animation-delay:.15s } .fp-fill.d2 { animation-delay:.5s } .fp-fill.d3 { animation-delay:.85s }
+  .fp-opt.leader .fp-fill { box-shadow:0 0 12px -2px #ff5a1faa; }
+  .fp-opt.leader .fp-name { color:#f57d1f; }
+  @keyframes fp-grow { to { transform:scaleX(1); } }
+  .fp-lead { font-size:12px; font-weight:700; color:#f57d1f; margin-top:6px; animation:fp-pop .4s ease; }
+  @keyframes fp-pop { 0%{transform:scale(.95)} 60%{transform:scale(1.02)} 100%{transform:scale(1)} }
+  .fp-actions { display:flex; gap:8px; margin-top:14px; }
+  .fp-btn { font-size:12px; font-weight:600; color:#666; border:1px solid #e0e0de; border-radius:999px; padding:5px 14px; background:#fff; }
+  .fp-btn.solid { color:#fff; background:linear-gradient(135deg,#f57d1f,#ff3d54); border:0; }
+  .fp-note { font-size:12px; color:#777; margin-top:12px; font-style:italic; }
+</style>
+
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="doc-layout">
+      <aside class="doc-side">
+        <nav aria-label="Documentation">
+          <a href="{{BASE}}docs.html">Quick start</a>
+          <a href="{{BASE}}install.html">Universal install</a>
+          <a href="{{BASE}}integrations.html">Integrations</a>
+          <a href="{{BASE}}comments.html">Comments</a>
+          <a href="{{BASE}}reactions.html">Reactions</a>
+          <a href="{{BASE}}polls.html" class="active">Polls</a>
+          <a href="{{BASE}}security.html">Security</a>
+          <a href="{{BASE}}privacy.html">Privacy</a>
+          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+        </nav>
+      </aside>
+
+      <article class="prose">
+        <h1>Polls</h1>
+        <p>StrawPoll-style polls, built on the same privacy engine: <b>Proof-of-Work votes</b>, atomic anti-replay, ranked results with a leader, and optional <b>single- or multi-select</b>.</p>
+
+        <div class="fp-preview" aria-hidden="true">
+          <div class="fp-head">
+            <span class="fp-q">Where should we host?</span>
+            <span class="fp-chip">28 votes</span>
+          </div>
+          <div class="fp-opt leader">
+            <div class="fp-opt-label"><span class="fp-rank">#1</span><span class="fp-name">Cloudflare</span><span class="fp-meta">15 · 54%</span></div>
+            <div class="fp-bar"><div class="fp-fill d1" style="width:54%"></div></div>
+          </div>
+          <div class="fp-opt">
+            <div class="fp-opt-label"><span class="fp-rank">#2</span><span class="fp-name">AWS</span><span class="fp-meta">8 · 29%</span></div>
+            <div class="fp-bar"><div class="fp-fill d2" style="width:29%"></div></div>
+          </div>
+          <div class="fp-opt">
+            <div class="fp-opt-label"><span class="fp-rank">#3</span><span class="fp-name">Vercel</span><span class="fp-meta">5 · 18%</span></div>
+            <div class="fp-bar"><div class="fp-fill d3" style="width:18%"></div></div>
+          </div>
+          <p class="fp-lead">Leads by 7 votes</p>
+          <div class="fp-actions"><span class="fp-btn">Vote</span><span class="fp-btn solid">Vote (2)</span><span class="fp-btn">View results</span></div>
+          <p class="fp-note">Live preview — ranked bars fill with a stagger, leader glows, total chip counts.</p>
+        </div>
+
+        <h2>Everything included</h2>
+        <ul>
+          <li><b>Single or multi-select</b> — pick one option (click = instant vote) or several (checkbox UI + “Vote (N)”, <b>one PoW</b> for the whole set, +1 per option).</li>
+          <li><b>Ranked results</b> — highest first with #1/#2 badges, ties stable, leader highlighted.</li>
+          <li><b>Total-votes chip</b> in the heading and a <b>“Leads by N votes”</b> gap line.</li>
+          <li><b>“View results”</b> — anyone can peek at the live results before voting (and go back to vote).</li>
+          <li><b>One vote per browser (optional)</b> — an anonymous in-browser token, only its hash stored; blocks casual double-voting.</li>
+          <li><b>“Change your votes”</b> — on guarded multi polls, a returning browser can revoke its own anonymous votes and vote again.</li>
+          <li><b>Global polls</b> — leave the article path empty and embed the same poll on any page.</li>
+          <li><b>Display styles</b> — <code>data-poll-style="bars|percent|counts|minimal"</code> and <code>data-poll-results="after|always"</code>.</li>
+          <li><b>Admin CRUD</b> — create, close/reopen, toggle single-vote &amp; multi after creation, delete, copy embed snippet.</li>
+        </ul>
+
+        <h2>Security &amp; privacy</h2>
+        <ul>
+          <li><b>Proof-of-Work + atomic anti-replay</b> — every vote (single or multi) solves one signed, single-use challenge.</li>
+          <li><b>Honeypot + time gate</b> apply to polls too — same zero-data anti-bot layer as comments.</li>
+          <li><b>Anonymous by design</b> — a vote stores only {poll, option, timestamp}. No IP, no cookie, no identity.</li>
+          <li><b>The guard is a hash, not an identity</b> — with “one vote per browser”, only an SHA-256 of an anonymous token is stored; the token itself never leaves the visitor's browser.</li>
+          <li><b>Honest limit</b> — clearing browser storage resets the guard; like every anonymous poll, “one person = one vote” cannot be guaranteed without identity.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>

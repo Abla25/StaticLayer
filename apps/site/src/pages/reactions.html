@@ -1,0 +1,95 @@
+<!-- title: StaticLayer — Reactions -->
+<!-- description: Anonymous, PoW-protected emoji reactions: escalating difficulty, rate limits, fully themeable, no identity, no cookies. -->
+<!-- active: reactions -->
+
+<style>
+  .fp-preview { background:var(--card,#fff); border:1px solid var(--border,#e8e8e6); border-radius:18px; padding:20px 18px; margin:22px 0; box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px -10px rgba(16,24,40,.12); }
+  .fp-title { font-size:15px; font-weight:650; letter-spacing:-.1px; margin-bottom:14px; }
+  .fp-reactions { display:flex; gap:10px; flex-wrap:wrap; }
+  .fp-reaction { display:inline-flex; align-items:center; gap:8px; font-size:15px; padding:8px 16px; border-radius:999px; border:1px solid #e8e8e6; background:#fff; transition:transform .15s ease,border-color .15s ease; }
+  .fp-reaction:hover { transform:translateY(-2px); border-color:#f57d1f; }
+  .fp-reaction b { font-size:12px; color:#666; }
+  .fp-bar { height:8px; border-radius:999px; background:#f1f1ef; margin-top:18px; overflow:hidden; }
+  .fp-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#ff8a2a,#ff5a1f,#ff3d54); transform-origin:left; transform:scaleX(0); animation:fp-grow 1.1s cubic-bezier(.22,1,.36,1) forwards; }
+  .fp-fill.f1 { animation-delay:.1s } .fp-fill.f2 { animation-delay:.45s } .fp-fill.f3 { animation-delay:.8s }
+  @keyframes fp-grow { to { transform:scaleX(1); } }
+  .fp-legend { display:flex; gap:16px; margin-top:8px; font-size:11.5px; color:#888; }
+  .fp-note { font-size:12px; color:#777; margin-top:12px; font-style:italic; }
+</style>
+
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="doc-layout">
+      <aside class="doc-side">
+        <nav aria-label="Documentation">
+          <a href="{{BASE}}docs.html">Quick start</a>
+          <a href="{{BASE}}install.html">Universal install</a>
+          <a href="{{BASE}}integrations.html">Integrations</a>
+          <a href="{{BASE}}comments.html">Comments</a>
+          <a href="{{BASE}}reactions.html" class="active">Reactions</a>
+          <a href="{{BASE}}polls.html">Polls</a>
+          <a href="{{BASE}}security.html">Security</a>
+          <a href="{{BASE}}privacy.html">Privacy</a>
+          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+        </nav>
+      </aside>
+
+      <article class="prose">
+        <h1>Reactions</h1>
+        <p>One-tap anonymous emoji feedback with <b>real Proof-of-Work per click</b>. No identity, no cookies, no moderation — just engagement that is expensive to spam.</p>
+
+        <div class="fp-preview" aria-hidden="true">
+          <div class="fp-title">How did you like this article?</div>
+          <div class="fp-reactions">
+            <span class="fp-reaction">👍 <b data-count="42">0</b></span>
+            <span class="fp-reaction">❤️ <b data-count="31">0</b></span>
+            <span class="fp-reaction">🎉 <b data-count="17">0</b></span>
+          </div>
+          <div class="fp-bar"><div class="fp-fill f1" style="width:47%"></div></div>
+          <div class="fp-bar"><div class="fp-fill f2" style="width:34%"></div></div>
+          <div class="fp-bar"><div class="fp-fill f3" style="width:19%"></div></div>
+          <div class="fp-legend"><span>👍 47%</span><span>❤️ 34%</span><span>🎉 19%</span></div>
+          <p class="fp-note">Live preview — counts count up, bars fill with a stagger.</p>
+        </div>
+
+        <h2>Everything included</h2>
+        <ul>
+          <li><b>Three modes</b> — comments + reactions together, comments only, or a <b>standalone reactions bar</b> (<code>data-reactions-only</code>) anywhere on the page.</li>
+          <li><b>Reactions position</b> — <code>data-reactions-position="top|bottom"</code> places the whole bar together, above or below the comments.</li>
+          <li><b>Choose your emoji</b> — per widget (<code>data-reactions="👍,❤️,🎉"</code>) and a server allowlist (<code>REACTION_OPTIONS</code>).</li>
+          <li><b>Escalating difficulty</b> — the more reactions an article gets, the harder each new click becomes (base → ceiling).</li>
+          <li><b>Rate limits + minimum interval</b> — per-article backstop on top of the PoW.</li>
+          <li><b>Fully themeable</b> — dark mode, accent colors, radius, fonts — same design tokens as the whole widget.</li>
+          <li><b>Aggregates only</b> — the API exposes counts, never per-visitor data.</li>
+        </ul>
+
+        <h2>Security &amp; privacy</h2>
+        <ul>
+          <li><b>Anti-stuffing by cost, not identity</b> — every reaction solves a single-use Proof-of-Work; the server never knows who reacted.</li>
+          <li><b>Atomic anti-replay</b> — one challenge, one reaction, exactly.</li>
+          <li><b>Anonymous events</b> — a reaction row is {article, emoji, timestamp}. No user id, no IP, no cookie, no fingerprint.</li>
+          <li><b>Honest limit</b> — a determined person can react repeatedly (each time paying the PoW); repeated votes by the same person are not detectable by design.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Presentation-only count-up for the preview (no tracking).
+  (function () {
+    var nums = document.querySelectorAll('[data-count]');
+    function run(el) {
+      var to = parseInt(el.getAttribute('data-count'), 10) || 0;
+      var t0 = performance.now(), dur = 900;
+      function step(t) {
+        var p = Math.min(1, (t - t0) / dur);
+        var eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+        el.textContent = Math.round(to * eased);
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    nums.forEach(run);
+  })();
+</script>

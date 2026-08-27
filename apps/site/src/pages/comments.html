@@ -1,0 +1,126 @@
+<!-- title: StaticLayer — Comments -->
+<!-- description: Moderated, nested, privacy-first comments: owner replies, pinning, anonymous likes, visitor reports, thread sorting and GDPR export — no trackers, no cookies. -->
+<!-- active: comments -->
+
+<style>
+  .fp-preview { background:var(--card,#fff); border:1px solid var(--border,#e8e8e6); border-radius:18px; padding:18px; margin:22px 0; box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px -10px rgba(16,24,40,.12); }
+  .fp-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+  .fp-title { font-size:15px; font-weight:650; letter-spacing:-.1px; }
+  .fp-count { font-size:11px; font-weight:600; color:#888; background:#f1f1ef; padding:3px 10px; border-radius:999px; }
+  .fp-sort { display:flex; gap:6px; }
+  .fp-sort span { font-size:10.5px; color:#888; border:1px solid #e8e8e6; padding:2px 8px; border-radius:999px; }
+  .fp-sort span.on { color:#f57d1f; border-color:#f57d1f; background:#f57d1f12; }
+  .fp-item { display:flex; gap:10px; padding:10px 0; border-top:1px solid #f1f1ef; }
+  .fp-ava { flex:none; width:30px; height:30px; border-radius:9px; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; }
+  .fp-main { flex:1; min-width:0; }
+  .fp-meta { display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:12px; font-weight:600; }
+  .fp-time { font-weight:400; color:#999; font-size:11px; }
+  .fp-badge { font-size:9.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; color:#f57d1f; border:1px solid #f57d1f55; background:#f57d1f14; padding:0 6px; border-radius:999px; }
+  .fp-badge.author { color:#16a34a; border-color:#16a34a55; background:#16a34a14; }
+  .fp-body { font-size:12.5px; color:#333; margin:3px 0 0; }
+  .fp-actions { display:flex; gap:8px; margin-top:6px; align-items:center; }
+  .fp-like { font-size:11px; font-weight:700; color:#666; border:1px solid #e0e0de; border-radius:999px; padding:2px 9px; }
+  .fp-like.pop { animation:fp-pop .4s ease; }
+  .fp-flag { font-size:11px; color:#999; border:0; background:none; }
+  @keyframes fp-pop { 0%{transform:scale(1)} 40%{transform:scale(1.18)} 100%{transform:scale(1)} }
+  .fp-note { font-size:12px; color:#777; margin-top:10px; font-style:italic; }
+</style>
+
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="doc-layout">
+      <aside class="doc-side">
+        <nav aria-label="Documentation">
+          <a href="{{BASE}}docs.html">Quick start</a>
+          <a href="{{BASE}}install.html">Universal install</a>
+          <a href="{{BASE}}integrations.html">Integrations</a>
+          <a href="{{BASE}}comments.html" class="active">Comments</a>
+          <a href="{{BASE}}reactions.html">Reactions</a>
+          <a href="{{BASE}}polls.html">Polls</a>
+          <a href="{{BASE}}security.html">Security</a>
+          <a href="{{BASE}}privacy.html">Privacy</a>
+          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+        </nav>
+      </aside>
+
+      <article class="prose">
+        <h1>Comments</h1>
+        <p>Moderated, nested, privacy-first conversations — plain text only, rendered with <code>textContent</code>, every comment protected by Proof-of-Work and human moderation. No accounts, no emails, no tracking.</p>
+
+        <div class="fp-preview" aria-hidden="true">
+          <div class="fp-row">
+            <span class="fp-title">Comments</span>
+            <div class="fp-sort"><span>Newest</span><span class="on">Best</span><span>Oldest</span></div>
+            <span class="fp-count">4 comments</span>
+          </div>
+          <div class="fp-item">
+            <span class="fp-ava" style="background:linear-gradient(135deg,#ff8a2a,#ff5a1f)">S</span>
+            <div class="fp-main">
+              <div class="fp-meta"><span>Site owner</span><span class="fp-badge author">Author</span><span class="fp-time">2 min ago</span></div>
+              <p class="fp-body">Welcome! Ask anything about the Camino here. 👋</p>
+              <div class="fp-actions"><span class="fp-like" data-pop>▲ 18</span><span class="fp-flag">Reply</span><span class="fp-flag">Report</span></div>
+            </div>
+          </div>
+          <div class="fp-item">
+            <span class="fp-ava" style="background:linear-gradient(135deg,#f57d1f,#ff3d54)">A</span>
+            <div class="fp-main">
+              <div class="fp-meta"><span>Alice</span><span class="fp-badge">📌 Pinned</span><span class="fp-time">1 h ago</span></div>
+              <p class="fp-body">Pinned: please read the rules before posting. 💬</p>
+              <div class="fp-actions"><span class="fp-like" data-pop>▲ 7</span><span class="fp-flag">Reply</span><span class="fp-flag">Report</span></div>
+            </div>
+          </div>
+          <div class="fp-item">
+            <span class="fp-ava" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">B</span>
+            <div class="fp-main">
+              <div class="fp-meta"><span>Bob</span><span class="fp-time">3 h ago</span></div>
+              <p class="fp-body">This is a longer comment that gets a “Read more” toggle when it exceeds a few hundred characters…</p>
+              <div class="fp-actions"><span class="fp-like" data-pop>▲ 3</span><span class="fp-flag">Reply</span><span class="fp-flag">Report</span></div>
+            </div>
+          </div>
+          <p class="fp-note">Live preview of the widget — likes pop, results sort, relative timestamps.</p>
+        </div>
+
+        <h2>Everything included</h2>
+        <ul>
+          <li><b>Moderation queue</b> — every comment is <code>pending</code> until you approve / unapprove / delete it (search, filters, bulk actions, pagination).</li>
+          <li><b>Nested replies</b> — up to 3 levels with an inline “Reply” form (same PoW + moderation pipeline).</li>
+          <li><b>Owner replies</b> — answer from the admin with an <b>Author</b> badge (nickname configurable).</li>
+          <li><b>Pin</b> — keep any comment at the top of its thread (admin).</li>
+          <li><b>Anonymous likes</b> — one tap, PoW-protected, per-browser guard storing only a token hash.</li>
+          <li><b>Visitor reports</b> — a signed “Report” button surfaces ⚠ counts in your moderation queue (zero data).</li>
+          <li><b>Thread sorting</b> — <code>data-comments-sort="newest|oldest|best"</code> with an in-widget selector; pinned always on top.</li>
+          <li><b>“Read more”</b> for long comments, <b>relative timestamps</b> (“3 h ago”), loading skeletons.</li>
+          <li><b>“Start the conversation” card</b> — the empty state and the form are one polished block.</li>
+          <li><b>Allow/block lists + blocked terms</b> — auto-approve trusted members, ban nicknames, auto-reject words.</li>
+          <li><b>GDPR data export</b> — download comments (CSV) or the full dataset (JSON) from Settings.</li>
+        </ul>
+
+        <h2>Security &amp; privacy</h2>
+        <ul>
+          <li><b>Plain text only</b> — comments are rendered exclusively with <code>textContent</code>: no HTML, no Markdown, no XSS.</li>
+          <li><b>Proof-of-Work + atomic anti-replay</b> — every submission solves a signed challenge, consumed exactly once.</li>
+          <li><b>Honeypot + time gate</b> — silent bot drops, zero data, on top of the PoW.</li>
+          <li><b>No tracking</b> — no cookies, no IP stored, no fingerprinting. The widget sets nothing in the visitor's browser except (optionally) the anonymous like token.</li>
+          <li><b>You are the data controller</b> — comments live in your D1 database; export them anytime.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Presentation-only animation for the preview card (no tracking, no data).
+  (function () {
+    var likes = document.querySelectorAll('.fp-like[data-pop]');
+    function pop() {
+      var i = Math.floor(Math.random() * likes.length);
+      var el = likes[i];
+      el.classList.remove('pop');
+      void el.offsetWidth;
+      el.classList.add('pop');
+      var n = parseInt(el.textContent.replace(/\D/g, ''), 10) || 0;
+      el.textContent = el.textContent.replace(/\d+/, String(n + 1));
+    }
+    if (likes.length) { setInterval(pop, 2600); }
+  })();
+</script>

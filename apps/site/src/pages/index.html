@@ -158,35 +158,35 @@
       <div class="product">
         <span class="product-tag">Comments</span>
         <h3>Conversations, moderated</h3>
-        <p>Plain-text replies in per-page threads. Every comment goes through a moderation queue you approve from the admin console.</p>
+        <p>Plain-text replies in per-page threads (nested, up to 3 levels). Every comment goes through a moderation queue; visitors can like, report and the owner can pin.</p>
         <ul>
-          <li>Text only · nickname ≤ 50 · body ≤ 3000</li>
-          <li>Moderation: approve / unapprove / delete</li>
+          <li>Nested replies + owner “Author” badge</li>
+          <li>Likes, pin, reports, sorting (newest/best)</li>
           <li>Per-page threads, one admin queue</li>
         </ul>
-        <a href="{{BASE}}docs.html">Documentation →</a>
+        <a href="{{BASE}}comments.html">Explore →</a>
       </div>
       <div class="product">
         <span class="product-tag">Reactions</span>
         <h3>One-tap, anonymous</h3>
-        <p>Emoji counts with a real Proof-of-Work per click. Difficulty rises as a page gets busier; no moderation, no identity.</p>
+        <p>Emoji counts with a real Proof-of-Work per click. Difficulty rises as a page gets busier; no moderation, no identity. Placeable above or below the comments.</p>
         <ul>
           <li>Cost-based integrity (not identity)</li>
           <li>Escalating difficulty + rate limits</li>
           <li>Fully themeable, choose the emoji set</li>
         </ul>
-        <a href="{{BASE}}integrations.html">Guide →</a>
+        <a href="{{BASE}}reactions.html">Explore →</a>
       </div>
       <div class="product">
         <span class="product-tag">Polls</span>
         <h3>StrawPoll-style, private</h3>
-        <p>Anonymous, PoW-protected votes created in the admin and embedded anywhere — even globally, on every page. Optional one-vote-per-browser guard.</p>
+        <p>Anonymous, PoW-protected votes created in the admin and embedded anywhere — even globally, on every page. Single or multi-select, ranked results with a leader.</p>
         <ul>
           <li>No IP, no cookies, no identity</li>
           <li>Optional one-vote-per-browser</li>
           <li>Global polls + display styles</li>
         </ul>
-        <a href="{{BASE}}integrations.html">Guide →</a>
+        <a href="{{BASE}}polls.html">Explore →</a>
       </div>
     </div>
   </div>
@@ -237,6 +237,8 @@
         <span class="score-item"><span class="tick">✓</span> Signed CSRF binding</span>
         <span class="score-item"><span class="tick">✓</span> Single-use PoW challenges</span>
         <span class="score-item"><span class="tick">✓</span> Honeypot + time-gate anti-bot</span>
+        <span class="score-item"><span class="tick">✓</span> Anonymous likes · per-browser hash</span>
+        <span class="score-item"><span class="tick">✓</span> GDPR data export (CSV/JSON)</span>
         <span class="score-item"><span class="tick">✓</span> D1 transactional anti-replay</span>
         <span class="score-item"><span class="tick">✓</span> No visitor tracking</span>
         <span class="score-item"><span class="tick">✓</span> No centralized comment database</span>
