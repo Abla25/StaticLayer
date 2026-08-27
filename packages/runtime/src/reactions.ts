@@ -18,6 +18,7 @@ import type { D1Result } from '@cloudflare/workers-types';
 import { DEFAULTS, envNumber, type Env } from './env.ts';
 import { json, readJsonBody, validField } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
+import { readSettings } from './settings.ts';
 
 /**
  * Reactions — anonymous, PoW-protected (mode "a": cost-based integrity).
@@ -62,6 +63,19 @@ export function reactionOptions(env: Env): string[] {
     .split(',')
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
+}
+
+/** Reactions as configured live via the admin settings panel (falls back to env). */
+async function reactionOptionsEffective(env: Env): Promise<string[]> {
+  const settings = await readSettings(env.DB);
+  const raw = settings.get('reaction_options');
+  if (raw !== undefined) {
+    return raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  }
+  return reactionOptions(env);
 }
 
 /**
@@ -124,7 +138,7 @@ export async function handleListReactions(request: Request, env: Env): Promise<R
  * for the whole TTL (defense in depth: the difficulty cannot be tampered with).
  */
 export async function handleReactionChallenge(request: Request, env: Env): Promise<Response> {
-  const options = reactionOptions(env);
+  const options = await reactionOptionsEffective(env);
   if (options.length === 0) {
     return json({ error: 'reactions are disabled on this deployment' }, 400);
   }
@@ -214,7 +228,7 @@ function isAllowedReaction(reaction: string, options: string[]): boolean {
  *   7. ATOMIC anti-replay (consume challenge + insert reaction in one batch).
  */
 export async function handlePostReaction(request: Request, env: Env): Promise<Response> {
-  const options = reactionOptions(env);
+  const options = await reactionOptionsEffective(env);
   if (options.length === 0) {
     return json({ error: 'reactions are disabled on this deployment' }, 400);
   }

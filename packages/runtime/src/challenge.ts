@@ -8,6 +8,7 @@ import {
 import { DEFAULTS, envNumber, type Env } from './env.ts';
 import { json } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
+import { readSettings, settingNumber } from './settings.ts';
 
 /**
  * GET /api/comments/challenge?hostContext=...&articlePath=...
@@ -32,7 +33,8 @@ export async function handleChallenge(request: Request, env: Env): Promise<Respo
     return json({ error: 'articlePath is required' }, 400);
   }
 
-  const difficulty = envNumber(env.POW_DIFFICULTY, DEFAULTS.POW_DIFFICULTY);
+  const settings = await readSettings(env.DB);
+  const difficulty = settingNumber(settings, 'pow_difficulty', envNumber(env.POW_DIFFICULTY, DEFAULTS.POW_DIFFICULTY));
   const ttl = envNumber(env.CHALLENGE_TTL_SECONDS, DEFAULTS.CHALLENGE_TTL_SECONDS);
 
   const challengeId = randomBytes(32);

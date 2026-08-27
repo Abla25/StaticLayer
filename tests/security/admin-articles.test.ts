@@ -97,12 +97,12 @@ describe('admin articles overview', () => {
     await createComment(mf, '/b', 'only on b');
     const { cookie, csrf } = await login(mf);
 
-    // approve one comment on /a
+    // approve one comment on /a (pick it explicitly — the list is newest-first)
     const pendingRes = await mf.dispatchFetch(`${BASE}/api/admin/comments?status=pending`, {
       headers: { cookie },
     });
-    const pending = (await pendingRes.json()) as { comments: { id: string }[] };
-    const target = pending.comments.find((c) => c.id) as { id: string };
+    const pending = (await pendingRes.json()) as { comments: { id: string; article_path: string }[] };
+    const target = pending.comments.find((c) => c.article_path === '/a') as { id: string };
     const patch = await mf.dispatchFetch(`${BASE}/api/admin/comments/${target.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json', cookie, 'x-csrf-token': csrf },

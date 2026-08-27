@@ -6,126 +6,316 @@
 <title>StaticLayer — Admin</title>
 <style>
   :root {
-    --accent:#f57d1f; --accent-2:#e85d0a; --ink:#1a1a1a; --muted:#6f6f6f; --line:rgba(0,0,0,.08);
-    --glass:rgba(255,255,255,.66); --danger:#dc2626; --ok:#16a34a;
-    --shadow:0 1px 2px rgba(16,24,40,.04),0 20px 50px -24px rgba(16,24,40,.25);
+    --bg:#f4f2ec; --bg-2:#ece8df; --surface:#fffdf8; --surface-2:#f8f5ee;
+    --ink:#17130e; --ink-soft:#3a332a; --muted:#6f675a;
+    --line:rgba(23,19,14,.1); --line-strong:rgba(23,19,14,.16);
+    --acc:#ff5a1f; --acc-2:#ff8a2a; --acc-3:#ff3d54;
+    --acc-grad:linear-gradient(135deg,#ff8a2a 0%,#ff5a1f 55%,#ff3d54 120%);
+    --acc-soft:rgba(255,90,31,.1);
+    --ok:#1a8f5a; --ok-soft:rgba(26,143,90,.12);
+    --warn:#b45309; --warn-soft:rgba(180,83,9,.12);
+    --danger:#d33a2b; --danger-soft:rgba(211,58,43,.1);
+    --glass:rgba(255,253,248,.72); --glass-strong:rgba(255,253,248,.9); --blur:20px;
+    --radius:16px; --radius-lg:24px; --radius-sm:10px;
+    --shadow-sm:0 1px 2px rgba(23,19,14,.05),0 4px 14px -6px rgba(23,19,14,.08);
+    --shadow-md:0 2px 4px rgba(23,19,14,.05),0 18px 50px -22px rgba(23,19,14,.22);
+    --shadow-acc:0 8px 26px -8px rgba(255,90,31,.45);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
   }
-  @media(prefers-color-scheme:dark){ :root {
-    --ink:#f4f4f4; --muted:#9d9d9d; --line:rgba(255,255,255,.08);
-    --glass:rgba(24,24,24,.6); --shadow:0 1px 2px rgba(0,0,0,.4),0 24px 60px -24px rgba(0,0,0,.7);
-  }}
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0e0d0b; --bg-2:#12100c; --surface:#16140f; --surface-2:#1a1711;
+      --ink:#f4f1ea; --ink-soft:#d8d2c6; --muted:#9a9284;
+      --line:rgba(244,241,234,.1); --line-strong:rgba(244,241,234,.18);
+      --acc-soft:rgba(255,90,31,.16);
+      --glass:rgba(22,20,15,.72); --glass-strong:rgba(22,20,15,.92);
+      --shadow-sm:0 1px 2px rgba(0,0,0,.3),0 4px 14px -6px rgba(0,0,0,.5);
+      --shadow-md:0 2px 6px rgba(0,0,0,.4),0 24px 60px -24px rgba(0,0,0,.65);
+    }
+  }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
-    color:var(--ink); line-height:1.55; min-height:100vh; -webkit-font-smoothing:antialiased;
+  body { margin:0; font-family:var(--font); font-size:15px; line-height:1.55; color:var(--ink);
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; min-height:100vh;
     background:
-      radial-gradient(900px 500px at 88% -8%, rgba(245,125,31,.14), transparent 60%),
-      radial-gradient(800px 500px at -8% 12%, rgba(124,92,255,.10), transparent 55%),
-      #f7f7f5; }
-  @media(prefers-color-scheme:dark){ body { background:
-      radial-gradient(900px 500px at 88% -8%, rgba(245,125,31,.12), transparent 60%),
-      radial-gradient(800px 500px at -8% 12%, rgba(124,92,255,.08), transparent 55%),
-      #161616; }}
-  .wrap { max-width:680px; margin:0 auto; padding:48px 20px 80px; }
-  .brand { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:26px; }
-  .logo { width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:20px;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 10px 26px -10px rgba(245,125,31,.65); }
-  .brand h1 { margin:0; font-size:18px; letter-spacing:-.3px; }
-  .brand span { font-size:12.5px; color:var(--muted); }
-  .glass { backdrop-filter:blur(20px) saturate(1.5); -webkit-backdrop-filter:blur(20px) saturate(1.5);
-    background:var(--glass); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); }
-  .panel { padding:28px; }
-  .panel h2 { margin:0 0 4px; font-size:17px; letter-spacing:-.2px; }
-  .panel .sub { margin:0 0 20px; font-size:13px; color:var(--muted); }
-  label { display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:8px; }
-  input[type=password] { width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:12px;
-    background:rgba(255,255,255,.55); color:var(--ink); font:inherit; font-size:14px; outline:none;
-    transition:border-color .15s ease,box-shadow .15s ease; }
-  @media(prefers-color-scheme:dark){ input[type=password]{ background:rgba(255,255,255,.06); } }
-  input[type=password]:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(245,125,31,.14); }
-  button { appearance:none; border:0; cursor:pointer; font:inherit; font-weight:600; font-size:13.5px;
-    padding:10px 18px; border-radius:999px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 6px 16px -6px rgba(245,125,31,.55); transition:transform .12s ease,filter .12s ease,opacity .12s ease; }
-  button:hover { transform:translateY(-1px); filter:brightness(1.05); }
-  button:disabled { opacity:.55; cursor:progress; transform:none; filter:none; }
-  button.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); box-shadow:none; }
-  button.ghost:hover { border-color:var(--line); color:var(--ink); }
-  button.danger { background:transparent; color:var(--danger); border:1px solid color-mix(in srgb,var(--danger) 35%,transparent); box-shadow:none; }
-  button.danger:hover { background:rgba(220,38,38,.06); }
-  .row { display:flex; gap:10px; margin-top:16px; }
+      radial-gradient(900px 480px at 92% -6%, rgba(255,90,31,.13), transparent 60%),
+      radial-gradient(760px 460px at -6% 10%, rgba(255,61,84,.08), transparent 55%),
+      var(--bg); }
+  @media (prefers-color-scheme: dark) { body { background:
+      radial-gradient(900px 480px at 92% -6%, rgba(255,90,31,.1), transparent 60%),
+      radial-gradient(760px 460px at -6% 10%, rgba(255,61,84,.06), transparent 55%),
+      var(--bg); } }
+  .wrap { max-width:900px; margin:0 auto; padding:36px 20px 80px; }
+  .brand { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+  .brand .logo { width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+    background:var(--acc-grad); box-shadow:var(--shadow-acc); flex:none; }
+  .brand h1 { margin:0; font-size:18px; letter-spacing:-.4px; font-weight:750; }
+  .brand .sub { margin:1px 0 0; font-size:12.5px; color:var(--muted); }
+  .glass { backdrop-filter:blur(var(--blur)) saturate(1.4); -webkit-backdrop-filter:blur(var(--blur)) saturate(1.4);
+    background:var(--glass); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); }
+  .card { padding:24px; }
+  .card h2 { margin:0 0 4px; font-size:17px; letter-spacing:-.3px; }
+  .card .sub { margin:0 0 18px; font-size:13px; color:var(--muted); }
+
+  /* ---- login ---- */
+  .login-card { max-width:420px; margin:6vh auto 0; }
+  .login-brand { justify-content:center; margin-bottom:20px; }
+  label { display:block; font-size:12.5px; font-weight:650; color:var(--muted); margin:0 0 8px; }
+  input[type=password], input[type=text], input[type=number], select {
+    width:100%; padding:12px 14px; border:1px solid var(--line-strong); border-radius:12px;
+    background:var(--surface); color:var(--ink); font:inherit; font-size:14px; outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease; }
+  input:focus, select:focus { border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); }
+  .btn { appearance:none; border:0; cursor:pointer; font:inherit; font-weight:650; font-size:13.5px;
+    padding:10px 18px; border-radius:999px; color:#fff; background:var(--acc-grad); box-shadow:var(--shadow-acc);
+    transition:transform .12s ease, filter .12s ease, opacity .12s ease; display:inline-flex; align-items:center; gap:7px; }
+  .btn:hover { transform:translateY(-1px); filter:brightness(1.05); }
+  .btn:disabled { opacity:.55; cursor:progress; transform:none; filter:none; }
+  .btn.ghost { background:transparent; color:var(--muted); border:1px solid var(--line-strong); box-shadow:none; }
+  .btn.ghost:hover { color:var(--ink); border-color:var(--acc); }
+  .btn.soft { background:var(--acc-soft); color:var(--acc); box-shadow:none; }
+  .btn.soft:hover { filter:brightness(1.05); }
+  .btn.danger { background:transparent; color:var(--danger); border:1px solid color-mix(in srgb,var(--danger) 35%,transparent); box-shadow:none; }
+  .btn.danger:hover { background:var(--danger-soft); }
+  .btn.ok { background:transparent; color:var(--ok); border:1px solid color-mix(in srgb,var(--ok) 35%,transparent); box-shadow:none; }
+  .btn.ok:hover { background:var(--ok-soft); }
+  .btn.sm { padding:6px 12px; font-size:12.5px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .row.mt { margin-top:16px; }
+  .divider { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:12px; margin:18px 0; }
+  .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--line); }
   .status { min-height:1.2em; margin:14px 2px 0; font-size:13px; color:var(--muted); }
   .status.err { color:var(--danger); }
-  ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
-  .comment { display:flex; gap:12px; padding:16px; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.5); }
-  @media(prefers-color-scheme:dark){ .comment { background:rgba(255,255,255,.04); } }
-  .avatar { flex:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
-    color:#fff; font-weight:650; font-size:13px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); }
+  .status.ok { color:var(--ok); }
+
+  /* ---- app shell ---- */
+  .topbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .tabs { display:flex; gap:4px; background:var(--glass); border:1px solid var(--line); border-radius:999px; padding:4px; box-shadow:var(--shadow-sm); flex-wrap:wrap; }
+  .tab { border:0; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:650;
+    padding:8px 16px; border-radius:999px; cursor:pointer; transition:color .15s, background .15s; white-space:nowrap; }
+  .tab:hover { color:var(--ink); }
+  .tab.active { background:var(--acc-grad); color:#fff; box-shadow:var(--shadow-acc); }
+  .spacer { flex:1; }
+
+  /* ---- toolbar + filters ---- */
+  .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .search { flex:1; min-width:180px; }
+  .search input { padding:10px 14px; font-size:13.5px; }
+  select.small { width:auto; min-width:140px; padding:10px 12px; font-size:13px; }
+  .count-line { font-size:12.5px; color:var(--muted); margin-left:auto; white-space:nowrap; }
+
+  /* ---- bulk bar ---- */
+  .bulkbar { display:none; align-items:center; gap:10px; padding:10px 16px; margin-bottom:12px; border-radius:14px;
+    background:var(--acc-soft); border:1px solid color-mix(in srgb,var(--acc) 30%,transparent); }
+  .bulkbar.show { display:flex; }
+  .bulkbar .sel { font-size:13px; font-weight:650; color:var(--ink); }
+
+  /* ---- comments ---- */
+  ul.list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+  .comment { display:flex; gap:12px; padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--glass); box-shadow:var(--shadow-sm); }
+  .cb { flex:none; margin-top:2px; width:17px; height:17px; accent-color:var(--acc); cursor:pointer; }
+  .avatar { flex:none; width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:14px; background:var(--acc-grad); box-shadow:var(--shadow-acc); }
   .main { min-width:0; flex:1; }
   .head { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:2px; }
-  .nick { font-weight:600; font-size:13px; }
+  .nick { font-weight:700; font-size:13.5px; }
+  .ban-link { border:0; background:transparent; color:var(--danger); font-size:11px; font-weight:650; cursor:pointer; padding:0 0 0 6px; opacity:.75; }
+  .ban-link:hover { opacity:1; text-decoration:underline; }
   .time { font-size:11.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
-  .body { margin:0 0 10px; font-size:14px; white-space:pre-wrap; overflow-wrap:break-word; }
-  .actions { display:flex; gap:8px; }
-  .actions button { padding:7px 14px; font-size:12.5px; }
-  .empty { padding:26px; text-align:center; color:var(--muted); font-size:14px; border:1px dashed var(--line); border-radius:16px; }
-  .page-chip { display:inline-block; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:11px;
-    color:var(--muted); background:rgba(0,0,0,.04); border:1px solid var(--line); border-radius:999px; padding:2px 9px; }
-  @media(prefers-color-scheme:dark){ .page-chip { background:rgba(255,255,255,.06); } }
-  .pages-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
-  .page-row { display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.5); }
-  @media(prefers-color-scheme:dark){ .page-row { background:rgba(255,255,255,.04); } }
-  .page-row .path { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chip { display:inline-block; font-family:var(--mono); font-size:11px; color:var(--muted); background:var(--surface-2);
+    border:1px solid var(--line); border-radius:999px; padding:2px 9px; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; }
+  .chip.allow { color:var(--ok); background:var(--ok-soft); border-color:transparent; font-family:var(--font); font-size:12.5px; padding:5px 10px; }
+  .chip.block { color:var(--danger); background:var(--danger-soft); border-color:transparent; font-family:var(--font); font-size:12.5px; padding:5px 10px; }
+  .chip .x { border:0; background:transparent; color:inherit; cursor:pointer; font-size:12px; font-weight:700; padding:0 0 0 6px; }
+  .body { margin:8px 0 10px; font-size:14px; white-space:pre-wrap; overflow-wrap:break-word; color:var(--ink-soft); }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .empty { padding:30px 20px; text-align:center; color:var(--muted); font-size:14px; border:1px dashed var(--line-strong); border-radius:18px; background:var(--glass); }
+
+  /* ---- pagination ---- */
+  .pager { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:16px; }
+  .pager .info { font-size:12.5px; color:var(--muted); }
+
+  /* ---- lists ---- */
+  .lists-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:720px){ .lists-grid { grid-template-columns:1fr; } }
+  .list-panel { border:1px solid var(--line); border-radius:18px; padding:16px; background:var(--glass); box-shadow:var(--shadow-sm); }
+  .list-panel h3 { margin:0 0 2px; font-size:14px; letter-spacing:-.2px; }
+  .list-panel .lsub { margin:0 0 12px; font-size:12px; color:var(--muted); }
+  .list-chips { display:flex; flex-wrap:wrap; gap:8px; min-height:34px; margin-top:12px; }
+  .add-row { display:flex; gap:8px; }
+  .add-row input { flex:1; }
+
+  /* ---- settings ---- */
+  .settings-form { display:flex; flex-direction:column; gap:16px; max-width:560px; }
+  .field .hint { font-size:12px; color:var(--muted); margin-top:5px; }
+  .field select, .field input { margin-top:6px; }
+  .save-row { margin-top:6px; }
+
+  /* ---- pages ---- */
+  .page-row { display:flex; align-items:center; gap:10px; padding:13px 16px; border:1px solid var(--line); border-radius:14px;
+    background:var(--glass); box-shadow:var(--shadow-sm); cursor:pointer; transition:border-color .15s, transform .15s; }
+  .page-row:hover { border-color:var(--acc); transform:translateY(-1px); }
+  .page-row .path { font-family:var(--mono); font-size:12.5px; font-weight:650; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .page-row .counts { margin-left:auto; display:flex; gap:6px; flex:none; }
-  .count-pill { font-size:11px; font-weight:650; padding:2px 8px; border-radius:999px; }
-  .count-pill.total { color:var(--muted); background:rgba(0,0,0,.05); }
-  .count-pill.pending { color:var(--muted); background:rgba(245,125,31,.14); }
-  .count-pill.approved { color:var(--ok); background:rgba(22,163,74,.12); }
-  @media(prefers-color-scheme:dark){ .count-pill.total { background:rgba(255,255,255,.07); } }
-  .section-gap { height:20px; }
-  footer { margin-top:24px; text-align:center; font-size:12px; color:var(--muted); }
+  .count-pill { font-size:11px; font-weight:650; padding:3px 9px; border-radius:999px; }
+  .count-pill.total { color:var(--muted); background:var(--surface-2); }
+  .count-pill.pending { color:var(--warn); background:var(--warn-soft); }
+  .count-pill.approved { color:var(--ok); background:var(--ok-soft); }
+
+  footer { margin-top:28px; text-align:center; font-size:12px; color:var(--muted); }
+  .hidden { display:none !important; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand">
-    <div class="logo">
-      <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><g fill="#fff"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg>
-    </div>
-    <div>
-      <h1>StaticLayer</h1>
-      <span>Moderation console</span>
-    </div>
-  </div>
 
-  <main>
-    <section id="login-view" class="glass panel">
-      <h2>Sign in</h2>
-      <p class="sub">Use the admin password bound to this worker.</p>
-      <form id="login-form">
-        <label for="password">Password</label>
-        <input type="password" id="password" autocomplete="current-password" required>
-        <div class="row"><button type="submit">Sign in</button></div>
-      </form>
-      <p id="login-status" class="status"></p>
+  <!-- ============ LOGIN ============ -->
+  <section id="login-view" class="glass card login-card">
+    <div class="brand login-brand">
+      <div class="logo">
+        <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><g fill="#fff"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg>
+      </div>
+      <div><h1>StaticLayer</h1><p class="sub">Moderation console</p></div>
+    </div>
+    <form id="login-form">
+      <label for="password">Admin password</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+      <div class="row mt"><button type="submit" class="btn">Sign in</button></div>
+    </form>
+    <div class="divider" id="access-divider">or</div>
+    <div class="row" id="access-row">
+      <button id="access-btn" class="btn ghost" style="width:100%">Sign in with Cloudflare</button>
+    </div>
+    <p id="login-status" class="status"></p>
+  </section>
+
+  <!-- ============ APP ============ -->
+  <section id="admin-view" class="hidden">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">
+          <svg viewBox="0 0 64 64" width="24" height="24" aria-hidden="true"><g fill="#fff"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg>
+        </div>
+        <div><h1>StaticLayer</h1><p class="sub" id="whoami">Moderation console</p></div>
+      </div>
+      <div class="spacer"></div>
+      <button id="signout" class="btn ghost sm">Sign out</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="queue">Queue</button>
+      <button class="tab" data-tab="published">Published</button>
+      <button class="tab" data-tab="pages">Pages</button>
+      <button class="tab" data-tab="lists">Lists</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+
+    <!-- QUEUE -->
+    <section id="tab-queue" class="glass card" style="margin-top:16px">
+      <h2>Moderation queue</h2>
+      <p class="sub">Comments awaiting approval — search, filter and moderate.</p>
+      <div class="toolbar">
+        <div class="search"><input type="text" id="q-input" placeholder="Search nickname or text…"></div>
+        <select id="article-filter" class="small"><option value="">All pages</option></select>
+        <span class="count-line" id="queue-count"></span>
+      </div>
+      <div class="bulkbar" id="bulkbar">
+        <span class="sel" id="sel-count">0 selected</span>
+        <button id="bulk-approve" class="btn ok sm">Approve</button>
+        <button id="bulk-delete" class="btn danger sm">Delete</button>
+      </div>
+      <ul id="queue-list" class="list"></ul>
+      <div class="pager" id="queue-pager"></div>
+      <p id="queue-status" class="status"></p>
     </section>
 
-    <section id="admin-view" class="glass panel" hidden>
-      <h2>Pages with comments</h2>
-      <p class="sub">Every page that received comments on this Worker.</p>
-      <ul id="pages-list" class="pages-list"></ul>
-      <div class="section-gap"></div>
-      <h2>Moderation queue</h2>
-      <p class="sub">Comments awaiting approval.</p>
-      <ul id="pending-list"></ul>
-      <p id="list-status" class="status"></p>
-      <div class="section-gap"></div>
+    <!-- PUBLISHED -->
+    <section id="tab-published" class="glass card hidden" style="margin-top:16px">
       <h2>Published comments</h2>
-      <p class="sub">Already public — you can unapprove or delete them.</p>
-      <ul id="published-list"></ul>
+      <p class="sub">Already public — unapprove or delete.</p>
+      <div class="toolbar">
+        <div class="search"><input type="text" id="pub-q-input" placeholder="Search nickname or text…"></div>
+        <select id="pub-article-filter" class="small"><option value="">All pages</option></select>
+        <span class="count-line" id="pub-count"></span>
+      </div>
+      <div class="bulkbar" id="pub-bulkbar">
+        <span class="sel" id="pub-sel-count">0 selected</span>
+        <button id="bulk-unapprove" class="btn ghost sm">Unapprove</button>
+        <button id="pub-bulk-delete" class="btn danger sm">Delete</button>
+      </div>
+      <ul id="published-list" class="list"></ul>
+      <div class="pager" id="pub-pager"></div>
       <p id="pub-status" class="status"></p>
     </section>
-  </main>
 
-  <footer>StaticLayer · BYOC · open source (MIT)</footer>
+    <!-- PAGES -->
+    <section id="tab-pages" class="glass card hidden" style="margin-top:16px">
+      <h2>Pages with comments</h2>
+      <p class="sub">Every page that received activity on this Worker — click to filter the queue.</p>
+      <ul id="pages-list" class="list"></ul>
+      <p id="pages-status" class="status"></p>
+    </section>
+
+    <!-- LISTS -->
+    <section id="tab-lists" class="glass card hidden" style="margin-top:16px">
+      <h2>Allow &amp; block lists</h2>
+      <p class="sub">Blocked nicknames cannot comment. Allowlisted nicknames skip the queue (and in <b>allowlist mode</b> only they can comment). Matched case-insensitively.</p>
+      <div class="lists-grid">
+        <div class="list-panel">
+          <h3 style="color:var(--ok)">Allowlist</h3>
+          <p class="lsub">Auto-approved — skip moderation</p>
+          <div class="add-row">
+            <input type="text" id="allow-input" placeholder="nickname" maxlength="100">
+            <button id="allow-add" class="btn ok sm">Add</button>
+          </div>
+          <div class="list-chips" id="allow-chips"></div>
+        </div>
+        <div class="list-panel">
+          <h3 style="color:var(--danger)">Blocklist</h3>
+          <p class="lsub">Banned — cannot comment (ban a nickname)</p>
+          <div class="add-row">
+            <input type="text" id="block-input" placeholder="nickname" maxlength="100">
+            <button id="block-add" class="btn danger sm">Add</button>
+          </div>
+          <div class="list-chips" id="block-chips"></div>
+        </div>
+      </div>
+      <p id="lists-status" class="status"></p>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="glass card hidden" style="margin-top:16px">
+      <h2>Settings</h2>
+      <p class="sub">Live settings — applied immediately, no redeploy needed. Env-var defaults are used until you override them here.</p>
+      <div class="settings-form">
+        <div class="field">
+          <label for="set-difficulty">Proof-of-work difficulty</label>
+          <input type="number" id="set-difficulty" min="0" max="256" step="1">
+          <p class="hint">Higher = harder for bots (and slightly slower for visitors). Range 0–256 · default 16.</p>
+        </div>
+        <div class="field">
+          <label for="set-reactions">Reaction options</label>
+          <input type="text" id="set-reactions" maxlength="500" placeholder="👍,❤️,🎉">
+          <p class="hint">Comma-separated. Empty disables reactions.</p>
+        </div>
+        <div class="field">
+          <label for="set-mode">Moderation mode</label>
+          <select id="set-mode">
+            <option value="open">Open — comments go to the queue (allowlist auto-approved)</option>
+            <option value="allowlist">Allowlist only — only allowlisted nicknames can comment</option>
+          </select>
+          <p class="hint">Private/community sites can lock comments to approved members.</p>
+        </div>
+        <div class="row save-row">
+          <button id="settings-save" class="btn">Save settings</button>
+          <button id="settings-reset" class="btn ghost">Reset to defaults</button>
+        </div>
+      </div>
+      <p id="settings-status" class="status"></p>
+    </section>
+  </section>
+
+  <footer>StaticLayer · BYOC · Source-available (Elastic License 2.0)</footer>
 </div>
 <script src="/admin.js"></script>
 </body>

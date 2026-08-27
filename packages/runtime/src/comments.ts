@@ -17,6 +17,8 @@ import type { D1Result } from '@cloudflare/workers-types';
 import { DEFAULTS, envNumber, type Env } from './env.ts';
 import { json, readJsonBody, validField } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
+import { readSettings, settingModerationMode, settingNumber } from './settings.ts';
+import { decide, readLists } from './moderation-lists.ts';
 
 /**
  * POST /api/comments
@@ -150,8 +152,15 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
     return json({ error: 'challenge expired' }, 410);
   }
 
+  // ---- 4.5 live settings (the admin panel can change difficulty without a redeploy) ----
+  const settings = await readSettings(env.DB);
+
   // ---- 5. difficulty must match the configured value ----
-  const expectedDifficulty = envNumber(env.POW_DIFFICULTY, DEFAULTS.POW_DIFFICULTY);
+  const expectedDifficulty = settingNumber(
+    settings,
+    'pow_difficulty',
+    envNumber(env.POW_DIFFICULTY, DEFAULTS.POW_DIFFICULTY),
+  );
   if (difficulty !== expectedDifficulty) {
     return json({ error: 'unexpected difficulty' }, 400);
   }
@@ -176,10 +185,23 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
     return json({ error: 'invalid proof of work' }, 400);
   }
 
+  // ---- 6.5 moderation lists (block / allowlist auto-approve / allowlist-only mode) ----
+  const mode = settingModerationMode(settings, 'open');
+  const lists = await readLists(env.DB);
+  const decision = decide(nickname, lists);
+  if (decision.verdict === 'blocked') {
+    return json({ error: 'this nickname is not allowed' }, 403);
+  }
+  let status = 'pending'; // moderation pipeline: pending -> approved (Phase 2)
+  if (decision.verdict === 'allowlisted') {
+    status = 'approved'; // allowlisted commenters skip the queue
+  } else if (mode === 'allowlist') {
+    return json({ error: 'only allowlisted commenters can comment' }, 403);
+  }
+
   // ---- 7. ATOMIC anti-replay ----
   const id = crypto.randomUUID();
   const createdAt = nowSec;
-  const status = 'pending'; // moderation pipeline: pending -> approved (Phase 2)
 
   const consume = env.DB.prepare(
     'INSERT OR IGNORE INTO used_challenges (challenge_id, used_at) VALUES (?, ?)',

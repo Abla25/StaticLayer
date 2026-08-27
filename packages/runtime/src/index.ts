@@ -1,6 +1,20 @@
 import type { ExportedHandler, ScheduledController, ExecutionContext } from '@cloudflare/workers-types';
-import { handleAdminLogin } from './admin.ts';
-import { handleAdminDeleteComment, handleAdminListArticles, handleAdminListComments, handleAdminPatchComment } from './admin-comments.ts';
+import { handleAdminAccessLogin, handleAdminAccessStatus } from './admin-access.ts';
+import {
+  handleAdminAddList,
+  handleAdminDeleteList,
+  handleAdminGetLists,
+  handleAdminGetSettings,
+  handleAdminPutSettings,
+} from './admin-config.ts';
+import { handleAdminLogin, handleAdminLogout } from './admin.ts';
+import {
+  handleAdminBulkComments,
+  handleAdminDeleteComment,
+  handleAdminListArticles,
+  handleAdminListComments,
+  handleAdminPatchComment,
+} from './admin-comments.ts';
 import { handleChallenge } from './challenge.ts';
 import { handleListComments } from './comments-read.ts';
 import { handleSubmitComment } from './comments.ts';
@@ -26,10 +40,18 @@ import { healthPayload } from './version.ts';
  *
  * Admin API (session + CSRF protected):
  *   POST   /api/admin/login                  timing-safe login, session cookie
- *   GET    /api/admin/comments               moderation queue (default pending)
+ *   GET    /api/admin/access                 is Cloudflare Access configured?
+ *   POST   /api/admin/access                 "Sign in with Cloudflare" (JWT)
+ *   GET    /api/admin/comments               queue (search/filter/pagination)
+ *   POST   /api/admin/comments/bulk          bulk approve/unapprove/delete
  *   GET    /api/admin/articles               pages with comments + counts
  *   PATCH  /api/admin/comments/:id           approve/reject (+ X-CSRF-Token)
  *   DELETE /api/admin/comments/:id           delete (+ X-CSRF-Token)
+ *   GET    /api/admin/lists                  allow + block lists
+ *   POST   /api/admin/lists                  add list entry (+ CSRF)
+ *   DELETE /api/admin/lists/:id              remove list entry (+ CSRF)
+ *   GET    /api/admin/settings               effective settings
+ *   PUT    /api/admin/settings               update settings (+ CSRF)
  *
  * Static assets:
  *   /widget.js, /pow-worker.js, /admin.html, /admin.js
@@ -89,11 +111,39 @@ const worker: ExportedHandler<Env> = {
     if (pathname === '/api/admin/login' && method === 'POST') {
       return respond(handleAdminLogin(request, env));
     }
+    if (pathname === '/api/admin/logout' && method === 'POST') {
+      return respond(handleAdminLogout());
+    }
+    if (pathname === '/api/admin/access' && method === 'GET') {
+      return respond(handleAdminAccessStatus(request, env));
+    }
+    if (pathname === '/api/admin/access' && method === 'POST') {
+      return respond(handleAdminAccessLogin(request, env));
+    }
     if (pathname === '/api/admin/comments' && method === 'GET') {
       return respond(handleAdminListComments(request, env));
     }
+    if (pathname === '/api/admin/comments/bulk' && method === 'POST') {
+      return respond(handleAdminBulkComments(request, env));
+    }
     if (pathname === '/api/admin/articles' && method === 'GET') {
       return respond(handleAdminListArticles(request, env));
+    }
+    if (pathname === '/api/admin/lists' && method === 'GET') {
+      return respond(handleAdminGetLists(request, env));
+    }
+    if (pathname === '/api/admin/lists' && method === 'POST') {
+      return respond(handleAdminAddList(request, env));
+    }
+    const listMatch = pathname.match(/^\/api\/admin\/lists\/(\d+)$/);
+    if (listMatch && method === 'DELETE') {
+      return respond(handleAdminDeleteList(request, env, listMatch[1] as string));
+    }
+    if (pathname === '/api/admin/settings' && method === 'GET') {
+      return respond(handleAdminGetSettings(request, env));
+    }
+    if (pathname === '/api/admin/settings' && method === 'PUT') {
+      return respond(handleAdminPutSettings(request, env));
     }
     const adminMatch = pathname.match(/^\/api\/admin\/comments\/([^/]+)$/);
     if (adminMatch && method === 'PATCH') {

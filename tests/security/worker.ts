@@ -33,8 +33,6 @@ export interface WorkerOptions {
   reactionIntervalSeconds?: number;
   reactionOptions?: string;
 }
-
-// The bundle is identical for every spawned worker: build it once, lazily.
 // Passed INLINE via `script:` (not `scriptPath:`): in the installed Miniflare
 // v4, loading a bundled file through `scriptPath` fails with an opaque workerd
 // "internal error", while inline `script:` works (verified 2026-08-26,
@@ -60,12 +58,16 @@ function getBundleText(): Promise<string> {
   return bundlePromise;
 }
 
-export async function spawnWorker(options: WorkerOptions = {}): Promise<Miniflare> {
+export async function spawnWorker(
+  options: WorkerOptions = {},
+  extraBindings: Record<string, unknown> = {},
+): Promise<Miniflare> {
   const script = await getBundleText();
 
   const bindings: Record<string, unknown> = {
     ...SECRETS,
     POW_DIFFICULTY: options.difficulty ?? 16,
+    ...extraBindings,
   };
   if (options.challengeTtlSeconds !== undefined) {
     bindings.CHALLENGE_TTL_SECONDS = options.challengeTtlSeconds;

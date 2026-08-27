@@ -254,6 +254,18 @@ registration — see `docs/oauth-scopes.md` and
   can sign in to `/admin.html`. `SESSION_SECRET`/`POW_SECRET` values are never
   returned. Then the OAuth token is revoked (`/oauth2/revoke`) and the session
   cleared. A dry-run returns the plan with zero side effects and no secrets.
+- **I17 — Admin "Sign in with Cloudflare" verifies the Access JWT and discards
+  it** (Round 21.3): when `CF_ACCESS_TEAM` is set, `POST /api/admin/access`
+  reads the `Cf-Access-Jwt-Assertion` header, verifies it (RS256 against the
+  team JWKS fetched from `https://{team}/cdn-cgi/access/certs` and cached 1h;
+  `iss`/`exp`/`nbf` and optional `CF_ACCESS_AUD` audience checks; constant
+  fail-closed) and then issues the SAME stateless admin session cookie as
+  password login. The JWT is never stored, never logged, never returned; the
+  operator's email appears only in the one-time response for display. The
+  password path remains as fallback. Evidence: `tests/security/access-login.test.ts`
+  (real RS256 keypair: valid/expired/wrong-issuer/wrong-audience/unknown-kid/
+  tampered-sig/malformed; endpoint configured-flag + no-token → 401 + never a
+  session cookie on failure).
 - Installer session cookie: HMAC-signed, HttpOnly, SameSite=Lax; constant-time
   verification (proven in `auth.test.ts`).
 - Deploy reuses the deployment-core engine verbatim: dry-run = plan only;

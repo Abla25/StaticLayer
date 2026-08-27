@@ -3,18 +3,28 @@ import { json, readJsonBody } from './http.ts';
 import { requireAdmin, requireCsrf } from './auth.ts';
 
 /**
- * Admin moderation API (Phase 2).
+ * Admin moderation API (Phase 2 + Round 21.3).
  *
- *   GET    /api/admin/comments?status=pending|approved|all   session required
+ *   GET    /api/admin/comments?status=&q=&article=&page=&perPage=  session
  *   GET    /api/admin/articles                                session required
  *   PATCH  /api/admin/comments/:id   { status: approved|pending }  + CSRF
  *   DELETE /api/admin/comments/:id                              + CSRF
+ *   POST   /api/admin/comments/bulk  { ids, action }             + CSRF
  *
- * CSRF: PATCH/DELETE require `X-CSRF-Token` matching the session-bound token
- * (constant-time), otherwise 403. All writes use prepared statements.
+ * CSRF: mutating endpoints require `X-CSRF-Token` matching the session-bound
+ * token (constant-time), otherwise 403. All writes use prepared statements.
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface CommentRow {
+  id: string;
+  article_path: string;
+  nickname: string;
+  body: string;
+  status: string;
+  created_at: number;
+}
 
 const LIST_SELECT =
   'SELECT id, article_path, nickname, body, status, created_at FROM comments';
@@ -73,22 +83,89 @@ export async function handleAdminListComments(request: Request, env: Env): Promi
   const auth = await requireAdmin(request, env);
   if (!auth.ok) return auth.response;
 
-  const statusParam = new URL(request.url).searchParams.get('status') ?? 'pending';
+  const params = new URL(request.url).searchParams;
+  const statusParam = params.get('status') ?? 'pending';
   if (statusParam !== 'pending' && statusParam !== 'approved' && statusParam !== 'all') {
     return json({ error: 'status must be pending, approved or all' }, 400);
   }
+  // Search across nickname + body (case-insensitive LIKE), article filter,
+  // and server-side pagination (newest first).
+  const q = (params.get('q') ?? '').trim().slice(0, 100);
+  const article = (params.get('article') ?? '').trim().slice(0, 300);
+  const page = Math.max(1, Number(params.get('page') ?? '1') || 1);
+  const perPage = Math.min(100, Math.max(1, Number(params.get('perPage') ?? '20') || 20));
 
-  let results: { id: string; article_path: string; nickname: string; body: string; status: string; created_at: number }[];
-  if (statusParam === 'all') {
-    ({ results } = await env.DB.prepare(`${LIST_SELECT} ORDER BY created_at ASC LIMIT 200`).all());
-  } else {
-    ({ results } = await env.DB.prepare(
-      `${LIST_SELECT} WHERE status = ? ORDER BY created_at ASC LIMIT 200`,
-    )
-      .bind(statusParam)
-      .all());
+  const where: string[] = [];
+  const bind: (string | number)[] = [];
+  if (statusParam !== 'all') {
+    where.push('status = ?');
+    bind.push(statusParam);
   }
-  return json({ comments: results });
+  if (q) {
+    where.push('(nickname LIKE ? OR body LIKE ?)');
+    bind.push(`%${q}%`, `%${q}%`);
+  }
+  if (article) {
+    where.push('article_path = ?');
+    bind.push(article);
+  }
+  const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+
+  const totalRow = await env.DB
+    .prepare(`SELECT COUNT(*) AS c FROM comments ${whereSql}`)
+    .bind(...bind)
+    .first<{ c: number }>();
+  const total = Number(totalRow?.c ?? 0);
+  const pages = Math.max(1, Math.ceil(total / perPage));
+  const currentPage = Math.min(page, pages);
+  const offset = (currentPage - 1) * perPage;
+
+  const { results } = await env.DB.prepare(
+    `${LIST_SELECT} ${whereSql} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+  )
+    .bind(...bind, perPage, offset)
+    .all<CommentRow>();
+
+  return json({ comments: results, page: currentPage, perPage, total, pages });
+}
+
+/** POST /api/admin/comments/bulk  { ids: string[], action }  + CSRF */
+export async function handleAdminBulkComments(request: Request, env: Env): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return auth.response;
+  if (!(await requireCsrf(request, auth.payload))) return json({ error: 'invalid csrf token' }, 403);
+
+  const read = await readJsonBody(request, 32 * 1024);
+  if (!read.ok || typeof read.value !== 'object' || read.value === null) {
+    return json({ error: 'invalid body' }, 400);
+  }
+  const ids = (read.value as Record<string, unknown>).ids;
+  const action = (read.value as Record<string, unknown>).action;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > 100) {
+    return json({ error: 'ids must contain 1..100 comments' }, 400);
+  }
+  if (!ids.every((x) => typeof x === 'string' && UUID_RE.test(x))) {
+    return json({ error: 'invalid comment id' }, 400);
+  }
+  if (action !== 'approve' && action !== 'unapprove' && action !== 'delete') {
+    return json({ error: 'action must be approve, unapprove or delete' }, 400);
+  }
+
+  const placeholders = ids.map(() => '?').join(', ');
+  const cleanIds = ids as string[];
+  if (action === 'delete') {
+    const result = await env.DB
+      .prepare(`DELETE FROM comments WHERE id IN (${placeholders})`)
+      .bind(...cleanIds)
+      .run();
+    return json({ ok: true, changes: result.meta.changes });
+  }
+  const status = action === 'approve' ? 'approved' : 'pending';
+  const result = await env.DB
+    .prepare(`UPDATE comments SET status = ? WHERE id IN (${placeholders})`)
+    .bind(status, ...cleanIds)
+    .run();
+  return json({ ok: true, changes: result.meta.changes });
 }
 
 export async function handleAdminPatchComment(

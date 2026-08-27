@@ -40,6 +40,19 @@ export interface Env {
   REACTION_ESCALATION_VOTES?: number;
   /** Minimum seconds between accepted reactions on the same article. */
   REACTION_MIN_INTERVAL_SECONDS?: number;
+
+  // --- Cloudflare Access (optional admin SSO, "Sign in with Cloudflare") ----
+  /**
+   * Cloudflare Access team subdomain, e.g. "myteam" (or the full
+   * "myteam.cloudflareaccess.com"). When set, the admin console offers
+   * "Sign in with Cloudflare" and accepts a verified
+   * `Cf-Access-Jwt-Assertion` header instead of the password.
+   */
+  CF_ACCESS_TEAM?: string;
+  /** Optional Access Application AUID to enforce in the JWT `aud` claim. */
+  CF_ACCESS_AUD?: string;
+  /** Optional JWKS endpoint override (default https://{team}/cdn-cgi/access/certs). */
+  CF_ACCESS_JWKS_URL?: string;
 }
 
 export const DEFAULTS = {

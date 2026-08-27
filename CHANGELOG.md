@@ -56,6 +56,34 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Admin console v2 + Cloudflare Access login (Round 21.3).** Big upgrade:
+  - **"Sign in with Cloudflare"**: new `POST /api/admin/access` verifies a
+    Cloudflare Access `Cf-Access-Jwt-Assertion` (RS256, JWKS from the team,
+    issuer/expiry/audience checks, cached 1h) and issues the same stateless
+    admin session — no password to remember. Enabled by setting `CF_ACCESS_TEAM`
+    (optionally `CF_ACCESS_AUD`). `GET /api/admin/access` reports readiness;
+    the login screen shows/hides the button accordingly. Added `POST
+    /api/admin/logout`. Password login stays as fallback.
+  - **Pagination, search & filters**: `GET /api/admin/comments` now supports
+    `q` (nickname/body), `article`, `page`, `perPage` (newest-first, total/pages).
+  - **Bulk actions**: `POST /api/admin/comments/bulk` approve/unapprove/delete
+    up to 100 ids (CSRF).
+  - **Allow/block lists + nickname ban**: `settings` + `moderation_lists`
+    tables (migration 004). Blocked nicknames are rejected at submit (403);
+    allowlisted nicknames are auto-approved; `moderation_mode=allowlist` lets
+    only allowlisted members comment. Admin CRUD via `GET/POST/DELETE
+    /api/admin/lists`.
+  - **Live settings panel**: `GET/PUT /api/admin/settings` for
+    `pow_difficulty`, `reaction_options`, `moderation_mode` — applied
+    immediately (challenge/submit/reactions read the table with env fallback),
+    no redeploy.
+  - **New admin UI** (tabs Queue / Published / Pages / Lists / Settings, search,
+    pagination, bulk bar, ban shortcut on nicknames, styled with the StaticLayer
+    design system, dark mode). Migration `004_moderation.sql`; SCHEMA_VERSION=4;
+    health reports 4.
+  - Tests: `tests/security/admin-moderation.test.ts` + `access-login.test.ts`
+    (21 new); suite now **188/188**, typecheck 0. Live-verified on
+    `staticlayer-comments.staticlayer.workers.dev`.
 - **ADMIN_SECRET shown once to the operator (Round 21.2).** Before, the wizard
   generated secrets and never returned them, so a person installing via the
   hosted installer could not sign in to their own `/admin.html`. Now a real

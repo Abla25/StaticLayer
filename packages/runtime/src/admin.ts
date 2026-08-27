@@ -60,3 +60,9 @@ export async function handleAdminLogin(request: Request, env: Env): Promise<Resp
 
   return json({ csrf }, 200, { 'set-cookie': cookie });
 }
+
+/** POST /api/admin/logout — clears the admin session cookie. */
+export function handleAdminLogout(): Response {
+  const cookie = '__Host-StaticLayerSession=; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=0';
+  return json({ ok: true }, 200, { 'set-cookie': cookie });
+}
