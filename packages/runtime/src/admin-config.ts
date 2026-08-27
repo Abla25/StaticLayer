@@ -146,6 +146,7 @@ interface EffectiveSettings {
   telegram_alerts: string;
   telegram_bot_token: string;
   telegram_chat_id: string;
+  owner_nickname: string;
 }
 
 async function effectiveSettings(db: D1Database, env: Env): Promise<EffectiveSettings> {
@@ -157,6 +158,7 @@ async function effectiveSettings(db: D1Database, env: Env): Promise<EffectiveSet
     telegram_alerts: settingString(map, 'telegram_alerts', 'off'),
     telegram_bot_token: settingString(map, 'telegram_bot_token', ''),
     telegram_chat_id: settingString(map, 'telegram_chat_id', ''),
+    owner_nickname: settingString(map, 'owner_nickname', 'Site owner'),
   };
 }
 
@@ -224,6 +226,13 @@ export async function handleAdminPutSettings(request: Request, env: Env): Promis
       return json({ error: 'telegram_chat_id must be a short string' }, 400);
     }
     await putSetting(env.DB, 'telegram_chat_id', s.telegram_chat_id.trim());
+  }
+
+  if (s.owner_nickname !== undefined) {
+    if (typeof s.owner_nickname !== 'string' || s.owner_nickname.length > 50) {
+      return json({ error: 'owner_nickname must be a short string' }, 400);
+    }
+    await putSetting(env.DB, 'owner_nickname', s.owner_nickname.trim() || 'Site owner');
   }
 
   return json({ settings: await effectiveSettings(env.DB, env) });

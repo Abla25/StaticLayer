@@ -28,7 +28,7 @@ export async function handleListComments(request: Request, env: Env): Promise<Re
   }
 
   const { results } = await env.DB.prepare(
-    `SELECT c.id, c.nickname, c.body, c.created_at, c.parent_id
+    `SELECT c.id, c.nickname, c.body, c.created_at, c.parent_id, c.is_owner
      FROM comments c
      WHERE c.article_path = ? AND c.status = ?
        AND (c.parent_id IS NULL

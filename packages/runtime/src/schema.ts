@@ -1,7 +1,7 @@
 import type { Env } from './env.ts';
 
 /**
- * Idempotent D1 schema bootstrap (migrations 001..007).
+ * Idempotent D1 schema bootstrap (migrations 001..008).
  *
  * The installers create the D1 database and bind it as `DB`, but they cannot
  * run `wrangler d1 migrations apply` inside the customer's account — so the
@@ -9,9 +9,9 @@ import type { Env } from './env.ts';
  * API call. Every statement is `IF NOT EXISTS`, so concurrent isolates and
  * re-deploys are safe; after the first run the batch is skipped entirely.
  *
- * Migration 007 uses `ALTER TABLE ... ADD COLUMN`, which has no `IF NOT
- * EXISTS` form in SQLite — it runs separately and ignores the duplicate-column
- * error on databases that already have it.
+ * Migrations 007/008 use `ALTER TABLE ... ADD COLUMN`, which has no `IF NOT
+ * EXISTS` form in SQLite — they run separately and ignore duplicate-column
+ * errors on databases that already have the columns.
  */
 
 const SCHEMA_STATEMENTS: string[] = [
@@ -103,6 +103,12 @@ export async function ensureSchema(env: Env): Promise<void> {
   // separately and ignore the duplicate-column error on re-deploys.
   try {
     await env.DB.prepare('ALTER TABLE comments ADD COLUMN parent_id TEXT').run();
+  } catch {
+    /* column already exists — safe on re-deploy */
+  }
+  // Migration 008: owner-reply flag (same idempotent approach).
+  try {
+    await env.DB.prepare('ALTER TABLE comments ADD COLUMN is_owner INTEGER NOT NULL DEFAULT 0').run();
   } catch {
     /* column already exists — safe on re-deploy */
   }

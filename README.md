@@ -55,6 +55,7 @@ StaticLayer is a source-available, Cloudflare-native comment system designed for
 - 🔔 **Telegram alerts (optional)** — get a private notification when a comment awaits moderation; GDPR-minimal (no comment data in the message), configured from the admin panel.
 - 🗳️ **Polls** — StrawPoll-style, privacy-first (no IP, no cookies), PoW-protected votes; optional anonymous **one-vote-per-browser** guard, created & managed from the admin.
 - 🧵 **Nested replies** — up to 3 levels, with "Reply" inline, moderator-aware (pending parents hide the thread; deleted parents keep replies with a placeholder).
+- 🧑‍💻 **Owner replies** — answer comments right from the admin console; your replies are approved instantly and shown with an **Author** badge (owner nickname is configurable in Settings).
 - 🧩 **Drop-in widget** — a few lines of HTML on any static site (Astro, Hugo, Jekyll, plain HTML…).
 
 ---
@@ -145,6 +146,10 @@ comment: the same PoW + moderation pipeline applies. Moderation rules:
 - A reply is visible only when **it and its parent** are approved.
 - If a parent is deleted, its replies stay visible with a *"parent comment removed"* placeholder.
 - The admin queue shows a **"↳ reply to …"** badge so you can moderate threads in context.
+
+**Owner replies:** from the admin queue or published list, press **Reply** and answer as the
+site owner — the reply is approved immediately and shown with an **Author** badge. Set the
+owner nickname in **Settings → Owner nickname** (default "Site owner").
 
 > 🧙 No terminal? The **Web Installer** (`npm run dev:installer`) guides you
 > through the same deploy with OAuth — scopes are least-privilege by design

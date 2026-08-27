@@ -53,7 +53,7 @@ describe('D1 schema bootstrap (installer gap)', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('application/json');
     const body = (await res.json()) as { schemaVersion: number };
-    expect(body.schemaVersion).toBe(7);
+    expect(body.schemaVersion).toBe(8);
   });
 
   it('bootstrap is idempotent across repeated calls', async () => {

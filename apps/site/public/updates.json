@@ -1,6 +1,6 @@
 {
-  "latest": "1.2.0",
+  "latest": "1.3.0",
   "date": "2026-08-27",
-  "notes": "v1.2.0 — Polls (StrawPoll-style, PoW-protected, optional anonymous one-vote-per-browser) + nested replies (3 levels, moderator-aware) + admin Polls tab + widget builder poll template.",
+  "notes": "v1.3.0 — Owner replies: answer comments from the admin with an Author badge; owner nickname setting; global polls (article path optional) + poll results style variants; polished nested-reply rendering.",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }

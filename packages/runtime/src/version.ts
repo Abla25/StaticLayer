@@ -5,10 +5,10 @@
  */
 
 /** Keep in sync with the npm release version (CHANGELOG.md). */
-export const RUNTIME_VERSION = '1.2.0';
+export const RUNTIME_VERSION = '1.3.0';
 
-/** Number of applied migrations (001..007). */
-export const SCHEMA_VERSION = 7;
+/** Number of applied migrations (001..008). */
+export const SCHEMA_VERSION = 8;
 
 /** Single source of truth for health payloads. */
 export function healthPayload(): { name: string; status: string; version: string; schemaVersion: number } {

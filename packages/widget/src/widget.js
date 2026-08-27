@@ -119,7 +119,8 @@
       cancelReply: 'Cancel',
       replyPlaceholder: 'Write a reply…',
       showMoreReplies: 'Show more replies ({n})',
-      parentRemoved: 'Parent comment removed'
+      parentRemoved: 'Parent comment removed',
+      author: 'Author'
     },
     it: {
       title: 'Commenti',
@@ -148,7 +149,8 @@
       cancelReply: 'Annulla',
       replyPlaceholder: 'Scrivi una risposta…',
       showMoreReplies: 'Mostra altre risposte ({n})',
-      parentRemoved: 'Commento padre rimosso'
+      parentRemoved: 'Commento padre rimosso',
+      author: 'Autore'
     }
   };
 
@@ -169,8 +171,9 @@
     '.sl-count{font-size:11px;font-weight:600;color:var(--muted);background:color-mix(in srgb,var(--border) 60%,transparent);' +
     'padding:3px 10px;border-radius:999px}' +
     '.sl-list{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-direction:column;gap:14px}' +
-    '.sl-comment{display:flex;gap:12px;padding:16px 18px;background:var(--card);border:1px solid var(--border);' +
+    '.sl-comment{display:flex;flex-direction:column;gap:14px;padding:16px 18px;background:var(--card);border:1px solid var(--border);' +
     'border-radius:var(--radius);box-shadow:var(--shadow);transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease}' +
+    '.sl-comment .sl-top{display:flex;gap:12px;min-width:0}' +
     '.sl-comment:hover{box-shadow:0 2px 4px rgba(16,24,40,.05),0 12px 32px -10px rgba(16,24,40,.12);' +
     'transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent) 25%,var(--border))}' +
     '.sl-avatar{flex:none;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;' +
@@ -230,10 +233,15 @@
     'transition:width .5s ease}' +
     '.sl-poll-status{display:flex;align-items:center;gap:8px;min-height:20px;margin:10px 2px 0;font-size:13px;color:var(--muted)}' +
     '.sl-poll-status[data-kind="ok"]{color:#16a34a}.sl-poll-status[data-kind="err"]{color:#dc2626}' +
-    '.sl-replies{list-style:none;margin:14px 0 0;padding:0 0 0 16px;display:flex;flex-direction:column;gap:14px;' +
-    'border-left:2px solid color-mix(in srgb,var(--border) 70%,transparent)}' +
+    '.sl-replies{list-style:none;margin:0;padding:4px 0 0 14px;display:flex;flex-direction:column;gap:10px;' +
+    'border-left:2px solid color-mix(in srgb,var(--border) 65%,transparent)}' +
+    '.sl-reply{box-shadow:none;padding:12px 14px;background:color-mix(in srgb,var(--card) 55%,transparent)}' +
+    '.sl-reply:hover{box-shadow:none;transform:none}' +
     '.sl-reply .sl-avatar{width:28px;height:28px;font-size:12px;border-radius:8px}' +
     '.sl-reply .sl-nick{font-size:12.5px}' +
+    '.sl-owner-badge{display:inline-block;margin-left:7px;font-size:10px;font-weight:700;letter-spacing:.3px;' +
+    'text-transform:uppercase;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);' +
+    'border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);padding:1px 7px;border-radius:999px;vertical-align:1px}' +
     '.sl-reply-btn{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;' +
     'font-weight:600;cursor:pointer;padding:0;margin-top:6px;transition:color .15s}' +
     '.sl-reply-btn:hover{color:var(--accent)}' +
@@ -425,7 +433,9 @@
       avatar.style.background = AVATAR_GRADIENTS[hashString(nick) % AVATAR_GRADIENTS.length];
       var main = el('div', 'sl-main');
       var head = el('div', 'sl-head');
-      head.append(el('span', 'sl-nick', nick), el('span', 'sl-time', new Date(c.created_at * 1000).toLocaleString()));
+      var nickWrap = el('span', 'sl-nick', nick);
+      if (c.is_owner) nickWrap.appendChild(el('span', 'sl-owner-badge', t('author')));
+      head.append(nickWrap, el('span', 'sl-time', new Date(c.created_at * 1000).toLocaleString()));
       var bodyEl = c.parentMissing ? el('p', 'sl-body sl-parent-removed', t('parentRemoved')) : el('p', 'sl-body', c.body);
       main.append(head, bodyEl);
       if (depth < MAX_DEPTH) {
@@ -434,7 +444,9 @@
         replyBtn.addEventListener('click', function () { toggleReplyForm(c, main, replyBtn); });
         main.appendChild(replyBtn);
       }
-      li.append(avatar, main);
+      var top = el('div', 'sl-top');
+      top.append(avatar, main);
+      li.append(top);
       if (c.children && c.children.length) {
         var ul = el('ul', 'sl-replies');
         var visible = c.children.slice(0, REPLIES_PER_PAGE);

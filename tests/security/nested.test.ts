@@ -197,4 +197,39 @@ describe('nested replies — API', () => {
     expect(row!.parent_id).toBe(root.id);
     expect(row!.parent_nickname).toBe('Alice');
   });
+
+  it('the owner can reply from the admin: reply is approved, marked is_owner and public', async () => {
+    mf = await spawnWorker();
+    auth = await login(mf);
+    const root = await postComment(mf, 'Alice', 'root');
+    await approve(mf, auth.cookie, auth.csrf, root.id!);
+
+    // No CSRF → 403.
+    const noCsrf = await mf.dispatchFetch(`${BASE}/api/admin/comments/${root.id}/reply`, {
+      method: 'POST',
+      headers: { cookie: auth.cookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ body: 'hi!' }),
+    });
+    expect(noCsrf.status).toBe(403);
+
+    const res = await mf.dispatchFetch(`${BASE}/api/admin/comments/${root.id}/reply`, {
+      method: 'POST',
+      headers: { cookie: auth.cookie, 'X-CSRF-Token': auth.csrf, 'content-type': 'application/json' },
+      body: JSON.stringify({ body: 'Grazie per il commento!' }),
+    });
+    expect(res.status).toBe(201);
+    const created = (await res.json()) as {
+      comment: { id: string; is_owner: number; status: string; nickname: string; parent_id: string };
+    };
+    expect(created.comment.is_owner).toBe(1);
+    expect(created.comment.status).toBe('approved');
+    expect(created.comment.nickname).toBe('Site owner');
+    expect(created.comment.parent_id).toBe(root.id);
+
+    // Public thread: the owner reply appears immediately (already approved).
+    const comments = await listPublic(mf);
+    const ownerReply = comments.find((c) => c.id === created.comment.id);
+    expect(ownerReply).toBeTruthy();
+    expect((ownerReply as unknown as { is_owner: number }).is_owner).toBe(1);
+  });
 });

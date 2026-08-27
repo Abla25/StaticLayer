@@ -129,6 +129,9 @@
   .chip .x { border:0; background:transparent; color:inherit; cursor:pointer; font-size:12px; font-weight:700; padding:0 0 0 6px; }
   .body { margin:8px 0 10px; font-size:14px; white-space:pre-wrap; overflow-wrap:break-word; color:var(--ink-soft); }
   .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .reply-box { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+  .reply-ta { width:100%; min-height:64px; resize:vertical; font:inherit; font-size:13.5px; padding:10px 12px; border:1px solid var(--line-strong); border-radius:12px; background:var(--surface); color:var(--ink); outline:none; }
+  .reply-ta:focus { border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); }
   .empty { padding:30px 20px; text-align:center; color:var(--muted); font-size:14px; border:1px dashed var(--line-strong); border-radius:18px; background:var(--glass); }
 
   /* ---- pagination ---- */
@@ -371,6 +374,11 @@
             <option value="allowlist">Allowlist only — only allowlisted nicknames can comment</option>
           </select>
           <p class="hint">Private/community sites can lock comments to approved members.</p>
+        </div>
+        <div class="field">
+          <label for="set-owner-nick">Owner nickname (for your replies)</label>
+          <input type="text" id="set-owner-nick" maxlength="50" placeholder="Site owner">
+          <p class="hint">Shown as the author of your admin replies, with an "Author" badge on the widget.</p>
         </div>
         <div class="row save-row">
           <button id="settings-save" class="btn">Save settings</button>

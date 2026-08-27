@@ -28,6 +28,7 @@ export const SETTING_KEYS = [
   'telegram_alerts',
   'telegram_bot_token',
   'telegram_chat_id',
+  'owner_nickname',
 ] as const;
 export type SettingKey = (typeof SETTING_KEYS)[number];
 

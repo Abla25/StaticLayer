@@ -1,6 +1,7 @@
 import type { Env } from './env.ts';
 import { json, readJsonBody } from './http.ts';
 import { requireAdmin, requireCsrf } from './auth.ts';
+import { readSettings, settingString } from './settings.ts';
 
 /**
  * Admin moderation API (Phase 2 + Round 21.3).
@@ -26,10 +27,11 @@ interface CommentRow {
   created_at: number;
   parent_id?: string | null;
   parent_nickname?: string | null;
+  is_owner?: number;
 }
 
 const LIST_SELECT =
-  'SELECT c.id, c.article_path, c.nickname, c.body, c.status, c.created_at, c.parent_id, p.nickname AS parent_nickname ' +
+  'SELECT c.id, c.article_path, c.nickname, c.body, c.status, c.created_at, c.parent_id, c.is_owner, p.nickname AS parent_nickname ' +
   'FROM comments c LEFT JOIN comments p ON p.id = c.parent_id';
 
 /**
@@ -203,6 +205,58 @@ export async function handleAdminPatchComment(
 
   const row = await env.DB.prepare(`${LIST_SELECT} WHERE c.id = ?`).bind(id).first();
   return json({ comment: row });
+}
+
+/**
+ * POST /api/admin/comments/:id/reply  { body }  + CSRF
+ *
+ * The owner replies from the admin console. The reply is created as
+ * `is_owner = 1`, already approved (no moderation needed for the owner), and
+ * shown in the public thread with an "Author" badge.
+ */
+export async function handleAdminReplyComment(
+  request: Request,
+  env: Env,
+  id: string,
+): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return auth.response;
+  if (!(await requireCsrf(request, auth.payload))) {
+    return json({ error: 'invalid csrf token' }, 403);
+  }
+  if (!UUID_RE.test(id)) {
+    return json({ error: 'invalid comment id' }, 400);
+  }
+
+  const read = await readJsonBody(request, 4096);
+  if (!read.ok || typeof read.value !== 'object' || read.value === null) {
+    return json({ error: read.ok ? 'invalid body' : 'invalid JSON body' }, read.ok ? 400 : read.status);
+  }
+  const body = (read.value as Record<string, unknown>).body;
+  if (typeof body !== 'string' || !body.trim() || body.length > 3000) {
+    return json({ error: 'body is required' }, 400);
+  }
+
+  const parent = await env.DB
+    .prepare('SELECT id, article_path FROM comments WHERE id = ?')
+    .bind(id)
+    .first<{ id: string; article_path: string }>();
+  if (!parent) return json({ error: 'comment not found' }, 404);
+
+  const map = await readSettings(env.DB);
+  const ownerNickname = settingString(map, 'owner_nickname', 'Site owner');
+
+  const replyId = crypto.randomUUID();
+  const now = Math.floor(Date.now() / 1000);
+  await env.DB.prepare(
+    `INSERT INTO comments (id, article_path, nickname, body, status, created_at, challenge_id, parent_id, is_owner)
+     VALUES (?, ?, ?, ?, 'approved', ?, '', ?, 1)`,
+  )
+    .bind(replyId, parent.article_path, ownerNickname, body.trim(), now, parent.id)
+    .run();
+
+  const row = await env.DB.prepare(`${LIST_SELECT} WHERE c.id = ?`).bind(replyId).first();
+  return json({ comment: row }, 201);
 }
 
 export async function handleAdminDeleteComment(

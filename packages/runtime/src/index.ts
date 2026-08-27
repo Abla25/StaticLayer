@@ -17,6 +17,7 @@ import {
   handleAdminListArticles,
   handleAdminListComments,
   handleAdminPatchComment,
+  handleAdminReplyComment,
 } from './admin-comments.ts';
 import { handleChallenge } from './challenge.ts';
 import { handleListComments } from './comments-read.ts';
@@ -219,6 +220,11 @@ const worker: ExportedHandler<Env> = {
     }
     if (adminMatch && method === 'DELETE') {
       return respond(handleAdminDeleteComment(request, env, adminMatch[1] as string));
+    }
+    // Owner reply from the admin console.
+    const replyMatch = pathname.match(/^\/api\/admin\/comments\/([^/]+)\/reply$/);
+    if (replyMatch && method === 'POST') {
+      return respond(handleAdminReplyComment(request, env, replyMatch[1] as string));
     }
 
     if (pathname === '/api/health') {

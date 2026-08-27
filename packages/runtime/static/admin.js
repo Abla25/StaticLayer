@@ -237,6 +237,40 @@
     }
     var body = el('p', 'body', c.body); // textContent only — XSS-safe
     var actions = el('div', 'actions');
+    // Reply as the site owner (marked with an "Author" badge on the widget).
+    var replyBtn = el('button', 'btn ghost sm', 'Reply');
+    replyBtn.addEventListener('click', function () {
+      var existing = main.querySelector('.reply-box');
+      if (existing) { existing.remove(); return; }
+      var box = el('div', 'reply-box');
+      var ta = el('textarea', 'reply-ta', '');
+      ta.rows = 2;
+      ta.maxLength = 3000;
+      ta.placeholder = 'Write your reply as the site owner…';
+      var row = el('div', 'row');
+      var send = el('button', 'btn ok sm', 'Send');
+      var cancel = el('button', 'btn ghost sm', 'Cancel');
+      cancel.addEventListener('click', function () { box.remove(); });
+      send.addEventListener('click', function () {
+        var text = ta.value.trim();
+        if (!text) return;
+        send.disabled = true;
+        api('/api/admin/comments/' + encodeURIComponent(c.id) + '/reply', { method: 'POST', body: JSON.stringify({ body: text }) })
+          .then(function () {
+            if (kind === 'queue') loadQueue();
+            else loadPublished();
+          })
+          .catch(function (err) {
+            showStatus(document.getElementById(kind === 'queue' ? 'queue-status' : 'pub-status'), 'Error: ' + err.message, true);
+            send.disabled = false;
+          });
+      });
+      row.append(cancel, send);
+      box.append(ta, row);
+      main.appendChild(box);
+      ta.focus();
+    });
+    actions.appendChild(replyBtn);
     if (kind === 'queue') {
       var appr = el('button', 'btn ok sm', 'Approve');
       var del = el('button', 'btn danger sm', 'Delete');
@@ -540,6 +574,7 @@
         document.getElementById('set-telegram-alerts').value = s.telegram_alerts === 'on' ? 'on' : 'off';
         document.getElementById('set-telegram-token').value = s.telegram_bot_token || '';
         document.getElementById('set-telegram-chat').value = s.telegram_chat_id || '';
+        document.getElementById('set-owner-nick').value = s.owner_nickname || 'Site owner';
       })
       .catch(function (err) { showStatus(document.getElementById('settings-status'), 'Error: ' + err.message, true); });
     // Show the step-by-step Cloudflare Access guide only when Access is not
@@ -562,7 +597,8 @@
         moderation_mode: document.getElementById('set-mode').value,
         telegram_alerts: document.getElementById('set-telegram-alerts').value,
         telegram_bot_token: document.getElementById('set-telegram-token').value.trim(),
-        telegram_chat_id: document.getElementById('set-telegram-chat').value.trim()
+        telegram_chat_id: document.getElementById('set-telegram-chat').value.trim(),
+        owner_nickname: document.getElementById('set-owner-nick').value.trim()
       }
     };
     showStatus(document.getElementById('settings-status'), '');
@@ -573,7 +609,7 @@
   document.getElementById('settings-reset').addEventListener('click', function () {
     api('/api/admin/settings', {
       method: 'PUT',
-      body: JSON.stringify({ settings: { pow_difficulty: 16, reaction_options: '👍,❤️,🎉', moderation_mode: 'open', telegram_alerts: 'off', telegram_bot_token: '', telegram_chat_id: '' } })
+      body: JSON.stringify({ settings: { pow_difficulty: 16, reaction_options: '👍,❤️,🎉', moderation_mode: 'open', telegram_alerts: 'off', telegram_bot_token: '', telegram_chat_id: '', owner_nickname: 'Site owner' } })
     })
       .then(function () { loadSettings(); showStatus(document.getElementById('settings-status'), 'Reset to defaults ✓'); })
       .catch(function (err) { showStatus(document.getElementById('settings-status'), 'Error: ' + err.message, true); });
