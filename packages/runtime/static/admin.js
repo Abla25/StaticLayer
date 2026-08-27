@@ -115,6 +115,7 @@
     pages: document.getElementById('tab-pages'),
     lists: document.getElementById('tab-lists'),
     settings: document.getElementById('tab-settings'),
+    widget: document.getElementById('tab-widget'),
     updates: document.getElementById('tab-updates')
   };
   tabButtons.forEach(function (btn) {
@@ -125,6 +126,7 @@
       if (tab === 'pages') loadPages();
       else if (tab === 'lists') loadLists();
       else if (tab === 'settings') loadSettings();
+      else if (tab === 'widget') loadWidget();
       else if (tab === 'updates') loadUpdates();
       else if (tab === 'queue') loadQueue();
       else if (tab === 'published') loadPublished();
@@ -526,6 +528,115 @@
     })
       .then(function () { loadSettings(); showStatus(document.getElementById('settings-status'), 'Reset to defaults ✓'); })
       .catch(function (err) { showStatus(document.getElementById('settings-status'), 'Error: ' + err.message, true); });
+  });
+
+  // ---- widget builder --------------------------------------------------
+  // Generates the copy-paste embed snippet. All options are stored locally in
+  // the browser (localStorage) — nothing is sent to the server.
+  var WIDGET_KEY = 'sl-widget-config';
+  var widgetFields = ['w-reactions', 'w-path', 'w-lang', 'w-theme', 'w-accent-text', 'w-radius', 'w-maxwidth', 'w-texts'];
+
+  function widgetDefaults() {
+    return { mode: 'both', reactions: '👍,❤️,🎉', path: '', lang: 'auto', theme: 'auto', accent: '#f57d1f', radius: '14', maxwidth: '640', texts: '' };
+  }
+  function widgetState() {
+    var s = widgetDefaults();
+    var checked = document.querySelector('input[name="w-mode"]:checked');
+    s.mode = checked ? checked.value : 'both';
+    s.reactions = document.getElementById('w-reactions').value.trim();
+    s.path = document.getElementById('w-path').value.trim();
+    s.lang = document.getElementById('w-lang').value;
+    s.theme = document.getElementById('w-theme').value;
+    var accent = document.getElementById('w-accent-text').value.trim();
+    s.accent = accent || document.getElementById('w-accent').value;
+    s.radius = document.getElementById('w-radius').value;
+    s.maxwidth = document.getElementById('w-maxwidth').value;
+    s.texts = document.getElementById('w-texts').value.trim();
+    return s;
+  }
+  function escAttr(v) {
+    return String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function renderWidgetSnippet() {
+    var s = widgetState();
+    var origin = location.origin;
+    var lines = ['<!-- StaticLayer — ' + (s.mode === 'reactions' ? 'reactions' : s.mode === 'comments' ? 'comments' : 'comments & reactions') + ' -->'];
+    lines.push('<div data-staticlayer');
+    lines.push('     data-endpoint="' + escAttr(origin) + '"');
+    if (s.path) lines.push('     data-article-path="' + escAttr(s.path) + '"');
+    if (s.mode !== 'comments' && s.reactions) lines.push('     data-reactions="' + escAttr(s.reactions) + '"');
+    if (s.mode === 'reactions') lines.push('     data-reactions-only');
+    if (s.lang && s.lang !== 'auto') lines.push('     data-lang="' + escAttr(s.lang) + '"');
+    if (s.theme && s.theme !== 'auto') lines.push('     data-theme="' + escAttr(s.theme) + '"');
+    if (s.accent && s.accent !== '#f57d1f') lines.push('     data-accent="' + escAttr(s.accent) + '"');
+    var radius = parseInt(s.radius, 10);
+    if (!isNaN(radius) && radius !== 14) lines.push('     data-radius="' + radius + '"');
+    var mw = parseInt(s.maxwidth, 10);
+    if (!isNaN(mw) && mw !== 640) lines.push('     data-max-width="' + mw + '"');
+    if (s.texts) {
+      try { JSON.parse(s.texts); lines.push('     data-text=\'' + s.texts.replace(/'/g, '&#39;') + '\''); } catch (e) { /* invalid JSON — omit */ }
+    }
+    lines.push('></div>');
+    lines.push('<script src="' + escAttr(origin) + '/widget.js" defer></script>');
+    document.getElementById('w-snippet').value = lines.join('\n');
+  }
+  function saveWidgetState() {
+    try { localStorage.setItem(WIDGET_KEY, JSON.stringify(widgetState())); } catch (e) { /* private mode — ignore */ }
+  }
+  function applyWidgetState(s) {
+    var labels = document.querySelectorAll('#w-mode label');
+    labels.forEach(function (l) { l.classList.toggle('sel', (l.querySelector('input') || {}).value === s.mode); });
+    var radios = document.querySelectorAll('input[name="w-mode"]');
+    radios.forEach(function (r) { r.checked = r.value === s.mode; });
+    document.getElementById('w-reactions').value = s.reactions;
+    document.getElementById('w-path').value = s.path;
+    document.getElementById('w-lang').value = s.lang;
+    document.getElementById('w-theme').value = s.theme;
+    document.getElementById('w-accent').value = s.accent || '#f57d1f';
+    document.getElementById('w-accent-text').value = s.accent || '';
+    document.getElementById('w-radius').value = s.radius;
+    document.getElementById('w-maxwidth').value = s.maxwidth;
+    document.getElementById('w-texts').value = s.texts;
+    var reactionsField = document.getElementById('w-reactions-field');
+    if (reactionsField) reactionsField.classList.toggle('hidden', s.mode === 'comments');
+    renderWidgetSnippet();
+  }
+  function loadWidget() {
+    document.getElementById('widget-origin').textContent = location.origin;
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(WIDGET_KEY) || 'null'); } catch (e) { saved = null; }
+    applyWidgetState(Object.assign(widgetDefaults(), saved || {}));
+  }
+  document.getElementById('w-copy').addEventListener('click', function () {
+    var box = document.getElementById('w-snippet');
+    function done(ok) { showStatus(document.getElementById('w-status'), ok ? 'Snippet copied to clipboard ✓' : 'Copy failed — select the text and copy manually.', !ok); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(box.value).then(function () { done(true); }, function () { done(false); });
+    } else {
+      box.focus(); box.select();
+      try { done(document.execCommand('copy')); } catch (e) { done(false); }
+    }
+  });
+  widgetFields.forEach(function (id) {
+    var node = document.getElementById(id);
+    if (!node) return;
+    node.addEventListener('input', function () { saveWidgetState(); renderWidgetSnippet(); });
+    node.addEventListener('change', function () { saveWidgetState(); renderWidgetSnippet(); });
+  });
+  document.querySelectorAll('input[name="w-mode"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      var mode = widgetState().mode;
+      document.querySelectorAll('#w-mode label').forEach(function (l) { l.classList.toggle('sel', (l.querySelector('input') || {}).value === mode); });
+      var reactionsField = document.getElementById('w-reactions-field');
+      if (reactionsField) reactionsField.classList.toggle('hidden', mode === 'comments');
+      saveWidgetState();
+      renderWidgetSnippet();
+    });
+  });
+  document.getElementById('w-accent').addEventListener('input', function () {
+    document.getElementById('w-accent-text').value = this.value;
+    saveWidgetState();
+    renderWidgetSnippet();
   });
 })();
 

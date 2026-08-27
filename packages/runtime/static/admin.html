@@ -162,6 +162,26 @@
   .count-pill.pending { color:var(--warn); background:var(--warn-soft); }
   .count-pill.approved { color:var(--ok); background:var(--ok-soft); }
 
+  /* ---- widget builder ---- */
+  .widget-grid { display:grid; grid-template-columns:1.1fr 1fr; gap:16px; }
+  @media (max-width:820px){ .widget-grid { grid-template-columns:1fr; } }
+  .w-step { display:flex; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--surface); box-shadow:var(--shadow-sm); }
+  .w-step .num { flex:none; width:26px; height:26px; border-radius:9px; background:var(--acc-grad); color:#fff; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-acc); }
+  .w-step .txt { font-size:13px; color:var(--ink-soft); line-height:1.5; }
+  .w-step .txt b { color:var(--ink); }
+  .w-field { margin-top:14px; }
+  .w-field label { margin-bottom:2px; }
+  .w-radio { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .w-radio label { display:flex; align-items:center; gap:7px; padding:9px 14px; border:1px solid var(--line-strong); border-radius:12px; background:var(--surface); cursor:pointer; font-size:13px; margin:0; color:var(--ink); transition:border-color .15s, background .15s; }
+  .w-radio label:hover { border-color:var(--acc); }
+  .w-radio label.sel { border-color:var(--acc); background:var(--acc-soft); }
+  .w-radio input { accent-color:var(--acc); margin:0; }
+  .snippet-box { position:relative; margin-top:10px; }
+  .snippet-box textarea { font-family:var(--mono); font-size:12px; line-height:1.5; white-space:pre; width:100%; min-height:200px; resize:vertical; }
+  .copy-btn { position:absolute; top:10px; right:10px; }
+  .guide-list { margin:0; padding-left:20px; font-size:13px; color:var(--ink-soft); line-height:1.75; }
+  .guide-list code { font-family:var(--mono); font-size:11.5px; background:var(--surface-2); border:1px solid var(--line); border-radius:6px; padding:1px 6px; }
+
   footer { margin-top:28px; text-align:center; font-size:12px; color:var(--muted); }
   .hidden { display:none !important; }
 </style>
@@ -208,6 +228,7 @@
       <button class="tab" data-tab="pages">Pages</button>
       <button class="tab" data-tab="lists">Lists</button>
       <button class="tab" data-tab="settings">Settings</button>
+      <button class="tab" data-tab="widget">Widget</button>
       <button class="tab" data-tab="updates">Updates</button>
     </div>
 
@@ -331,6 +352,108 @@
       <p id="settings-status" class="status"></p>
     </section>
   </section>
+
+    <!-- WIDGET -->
+    <section id="tab-widget" class="glass card hidden" style="margin-top:16px">
+      <h2>Widget builder</h2>
+      <p class="sub">Design your comment / reaction widget and copy the embed snippet into any page of your site.</p>
+
+      <div class="lists-grid">
+        <div class="list-panel">
+          <h3>How it works</h3>
+          <p class="lsub">One snippet, any page. Paste it wherever you want the widget to appear (end of the article, before the footer…).</p>
+          <div class="w-step"><span class="num">1</span><div class="txt">Pick the <b>mode</b> and options below — the snippet updates live.</div></div>
+          <div class="w-step" style="margin-top:10px"><span class="num">2</span><div class="txt">Press <b>Copy snippet</b>.</div></div>
+          <div class="w-step" style="margin-top:10px"><span class="num">3</span><div class="txt">In your site editor, insert an <b>HTML / embed block</b> and paste it. Save &amp; publish — done.</div></div>
+        </div>
+        <div class="list-panel">
+          <h3>Integrating on a specific page</h3>
+          <ol class="guide-list">
+            <li>Open the target page in your site builder and add an <b>HTML block</b>.</li>
+            <li>Paste the snippet from the box below.</li>
+            <li>Set <code>data-article-path</code> to that page's path (e.g. <code>/blog/hello-world</code>) — or leave it empty and the widget uses the page's own URL automatically.</li>
+            <li>Publish. The widget auto-loads — no other setup.</li>
+          </ol>
+          <p class="lsub" style="margin-top:12px">💡 The widget talks to <code id="widget-origin">…</code>. If your site is on a different domain, that domain must be in the Worker's <b>allowed origins</b> (set during installation) or the browser will block the requests.</p>
+        </div>
+      </div>
+
+      <div class="widget-grid" style="margin-top:16px">
+        <div class="list-panel">
+          <h3>Content</h3>
+          <div class="w-field">
+            <label>What to show</label>
+            <div class="w-radio" id="w-mode">
+              <label><input type="radio" name="w-mode" value="both"> Comments + reactions</label>
+              <label><input type="radio" name="w-mode" value="comments"> Comments only</label>
+              <label><input type="radio" name="w-mode" value="reactions"> Reactions only</label>
+            </div>
+          </div>
+          <div class="w-field" id="w-reactions-field">
+            <label for="w-reactions">Reaction emoji</label>
+            <input type="text" id="w-reactions" maxlength="120" placeholder="👍,❤️,🎉">
+          </div>
+          <div class="w-field">
+            <label for="w-path">Article path (optional)</label>
+            <input type="text" id="w-path" placeholder="leave empty = use the page's own URL">
+            <p class="hint">Tip: set this to the exact page path (e.g. /blog/hello-world) so each page has its own comment thread.</p>
+          </div>
+        </div>
+
+        <div class="list-panel">
+          <h3>Look &amp; feel</h3>
+          <div class="w-field">
+            <label for="w-lang">Language</label>
+            <select id="w-lang">
+              <option value="auto">Auto (visitor's browser)</option>
+              <option value="it">Italiano</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="w-field">
+            <label for="w-theme">Theme</label>
+            <select id="w-theme">
+              <option value="auto">Follow the visitor's system</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+          <div class="w-field">
+            <label for="w-accent">Accent color</label>
+            <div class="add-row">
+              <input type="color" id="w-accent" value="#f57d1f" style="flex:0 0 60px;padding:4px;height:44px">
+              <input type="text" id="w-accent-text" maxlength="12" placeholder="#f57d1f">
+            </div>
+          </div>
+          <div class="w-field">
+            <div class="add-row">
+              <div style="flex:1">
+                <label for="w-radius">Corner radius (px)</label>
+                <input type="number" id="w-radius" min="0" max="40" value="14">
+              </div>
+              <div style="flex:1">
+                <label for="w-maxwidth">Max width (px)</label>
+                <input type="number" id="w-maxwidth" min="280" max="1200" value="640">
+              </div>
+            </div>
+          </div>
+          <div class="w-field">
+            <label for="w-texts">Custom texts (optional JSON)</label>
+            <input type="text" id="w-texts" maxlength="800" placeholder='{"post":"Pubblica","empty":"Nessun commento"}'>
+            <p class="hint">Keys: title, post, hint, empty, anonymous, pending, posted, emptyComment, nickPlaceholder, bodyPlaceholder, solving, slowDown, countOne, countMany ({n} = number).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-panel" style="margin-top:16px">
+        <h3>Snippet — copy &amp; paste into your page</h3>
+        <div class="snippet-box">
+          <textarea id="w-snippet" readonly spellcheck="false"></textarea>
+          <button id="w-copy" class="btn sm copy-btn">Copy</button>
+        </div>
+        <p id="w-status" class="status"></p>
+      </div>
+    </section>
 
     <!-- UPDATES -->
     <section id="tab-updates" class="glass card hidden" style="margin-top:16px">

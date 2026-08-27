@@ -17,9 +17,19 @@
  *   → STANDALONE reactions bar (no comment UI) — place it anywhere, separate
  *     from a comments widget.
  *
+ * Optional look & feel (all can also be passed via window.StaticLayer.mount
+ * opts: lang, theme, accent, accent2, radius, maxWidth, texts):
+ *   data-lang="auto|en|it"        UI language (default auto-detect)
+ *   data-theme="auto|light|dark"  force a theme (default: follow OS)
+ *   data-accent="#ff8a2a"         accent color (and data-accent-2 for the end)
+ *   data-radius="18"              corner radius in px
+ *   data-max-width="640"          widget max width in px
+ *   data-text='{"post":"Pubblica","empty":"…"}'   per-key text overrides
+ *
  * Programmatic API (optional):
  *   window.StaticLayer.mount(el, { endpoint, articlePath, hostContext,
- *                                  reactions, reactionsOnly })
+ *                                  reactions, reactionsOnly, lang, theme,
+ *                                  accent, accent2, radius, maxWidth, texts })
  *   window.StaticLayer.unmount(el)
  *
  * Reactions (when enabled): each click solves a real Proof-of-Work at the
@@ -71,6 +81,52 @@
     return node;
   }
 
+  /* ------------------------ localization ------------------------------ */
+  // UI copy is localizable via `data-lang="en|it|auto"` (default: auto-detect
+  // from navigator.language, fallback EN) and overridable per-key via
+  // `data-text='{"post":"Pubblica","empty":"…"}'` or opts.texts.
+  // countOne/countMany accept a `{n}` placeholder.
+  var I18N = {
+    en: {
+      title: 'Comments',
+      nickPlaceholder: 'Name (optional)',
+      bodyPlaceholder: 'Write a comment…',
+      post: 'Post comment',
+      hint: 'Plain text · emoji welcome · anti-spam proof-of-work',
+      empty: 'No comments yet — be the first. 💬',
+      anonymous: 'Anonymous',
+      emptyComment: 'Comment cannot be empty.',
+      solving: 'Solving proof-of-work…',
+      pending: 'Comment submitted — awaiting moderation.',
+      posted: 'Comment posted.',
+      reactAria: 'React with ',
+      reactionRecorded: '✓ Reaction recorded',
+      slowDown: 'Slow down — too many reactions.',
+      challengeUsed: 'Challenge already used — try again.',
+      countOne: '1 comment',
+      countMany: '{n} comments'
+    },
+    it: {
+      title: 'Commenti',
+      nickPlaceholder: 'Nome (facoltativo)',
+      bodyPlaceholder: 'Scrivi un commento…',
+      post: 'Pubblica commento',
+      hint: 'Testo semplice · emoji benvenute · anti-spam proof-of-work',
+      empty: 'Nessun commento ancora — sii il primo. 💬',
+      anonymous: 'Anonimo',
+      emptyComment: 'Il commento non può essere vuoto.',
+      solving: 'Risoluzione proof-of-work…',
+      pending: 'Commento inviato — in attesa di moderazione.',
+      posted: 'Commento pubblicato.',
+      reactAria: 'Reagisci con ',
+      reactionRecorded: '✓ Reazione registrata',
+      slowDown: 'Rallenta — troppe reazioni.',
+      challengeUsed: 'Challenge già usata — riprova.',
+      countOne: '1 commento',
+      countMany: '{n} commenti'
+    }
+  };
+
   /* ------------------------------ styles ------------------------------ */
   var STYLES = '' +
     '.sl-root{--accent:#f57d1f;--accent-2:#e85d0a;--bg:#ffffff;--card:#ffffff;--border:#e8e8e6;' +
@@ -78,7 +134,9 @@
     '--shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px -6px rgba(16,24,40,.08);' +
     'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;' +
     'color:var(--text);max-width:640px;margin:0 auto;line-height:1.55;-webkit-font-smoothing:antialiased}' +
-    '@media(prefers-color-scheme:dark){.sl-root{--bg:#161616;--card:#1f1f1f;--border:#2b2b2b;' +
+    '.sl-root.sl-theme-dark{--bg:#161616;--card:#1f1f1f;--border:#2b2b2b;' +
+    '--text:#f4f4f4;--muted:#9d9d9d;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -12px rgba(0,0,0,.5)}' +
+    '@media(prefers-color-scheme:dark){.sl-root:not(.sl-theme-light){--bg:#161616;--card:#1f1f1f;--border:#2b2b2b;' +
     '--text:#f4f4f4;--muted:#9d9d9d;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -12px rgba(0,0,0,.5)}}' +
     '.sl-root *{box-sizing:border-box}' +
     '.sl-heading{display:flex;align-items:center;justify-content:space-between;margin:0 0 18px}' +
@@ -155,6 +213,43 @@
     root.__slMounted = true;
     root.classList.add('sl-root');
 
+    // -------- localization: lang auto-detect + per-key overrides ---------
+    var lang = ((opts && opts.lang) || root.getAttribute('data-lang') || 'auto');
+    if (lang !== 'en' && lang !== 'it') {
+      lang = (typeof navigator !== 'undefined' && navigator.language &&
+        navigator.language.toLowerCase().indexOf('it') === 0) ? 'it' : 'en';
+    }
+    var dict = I18N[lang] || I18N.en;
+    var customTexts = null;
+    if (opts && opts.texts) {
+      customTexts = opts.texts;
+    } else {
+      var rawTexts = root.getAttribute('data-text');
+      if (rawTexts) { try { customTexts = JSON.parse(rawTexts); } catch (e) { customTexts = null; } }
+    }
+    function t(key) {
+      if (customTexts && Object.prototype.hasOwnProperty.call(customTexts, key) &&
+          typeof customTexts[key] === 'string' && customTexts[key].length) return customTexts[key];
+      if (dict && Object.prototype.hasOwnProperty.call(dict, key)) return dict[key];
+      return key;
+    }
+    function countLabel(n) {
+      return String(t(n === 1 ? 'countOne' : 'countMany')).replace('{n}', String(n));
+    }
+
+    // -------- theming: forced theme + CSS-variable overrides ------------
+    var theme = ((opts && opts.theme) || root.getAttribute('data-theme') || 'auto');
+    if (theme === 'dark') root.classList.add('sl-theme-dark');
+    else if (theme === 'light') root.classList.add('sl-theme-light');
+    var accent = ((opts && opts.accent) || root.getAttribute('data-accent') || '').trim();
+    if (accent) root.style.setProperty('--accent', accent);
+    var accent2 = ((opts && opts.accent2) || root.getAttribute('data-accent-2') || '').trim();
+    if (accent2) root.style.setProperty('--accent-2', accent2);
+    var radius = ((opts && opts.radius) || root.getAttribute('data-radius') || '').trim();
+    if (radius) root.style.setProperty('--radius', String(radius).replace(/[^0-9.]/g, '') + 'px');
+    var maxWidth = ((opts && opts.maxWidth) || root.getAttribute('data-max-width') || '').trim();
+    if (maxWidth) root.style.setProperty('max-width', String(maxWidth).replace(/[^0-9.]/g, '') + 'px');
+
     // -------- mode: comments only / reactions only / both --------
     // `data-reactions-only` (or opts.reactionsOnly) renders a STANDALONE
     // reactions bar with no comment UI — place it wherever you like, separate
@@ -181,7 +276,7 @@
       reactions.forEach(function (r) {
         var btn = el('button', 'sl-reaction');
         btn.type = 'button';
-        btn.setAttribute('aria-label', 'React with ' + r);
+        btn.setAttribute('aria-label', t('reactAria') + r);
         var c = el('span', 'sl-reaction-count', '0');
         btn.append(el('span', 'sl-reaction-emoji', r), c);
         reactBtns[r] = { btn: btn, count: c };
@@ -198,7 +293,7 @@
       root.append(reactBar, reactStatus);
     } else {
       heading = el('div', 'sl-heading');
-      heading.appendChild(el('h3', null, 'Comments'));
+      heading.appendChild(el('h3', null, t('title')));
       count = el('span', 'sl-count', '…');
       heading.appendChild(count);
       list = el('ul', 'sl-list');
@@ -206,16 +301,16 @@
       nickInput = el('input');
       nickInput.type = 'text';
       nickInput.maxLength = 50;
-      nickInput.placeholder = 'Name (optional)';
+      nickInput.placeholder = t('nickPlaceholder');
       nickInput.className = 'sl-nick-input';
       bodyInput = el('textarea');
       bodyInput.maxLength = 3000;
       bodyInput.rows = 3;
-      bodyInput.placeholder = 'Write a comment…';
+      bodyInput.placeholder = t('bodyPlaceholder');
       bodyInput.className = 'sl-body-input';
-      submitBtn = el('button', 'sl-submit', 'Post comment');
+      submitBtn = el('button', 'sl-submit', t('post'));
       submitBtn.type = 'submit';
-      var hint = el('span', 'sl-hint', 'Plain text · emoji welcome · anti-spam proof-of-work');
+      var hint = el('span', 'sl-hint', t('hint'));
       status = el('p', 'sl-status');
       form = el('form', 'sl-form');
       var row = el('div', 'sl-form-row');
@@ -250,14 +345,14 @@
         .then(function (res) { if (!res.ok) throw new Error('failed to load comments'); return res.json(); })
         .then(function (data) {
           var comments = Array.isArray(data.comments) ? data.comments : [];
-          count.textContent = comments.length === 1 ? '1 comment' : comments.length + ' comments';
+          count.textContent = countLabel(comments.length);
           list.replaceChildren();
           if (comments.length === 0) {
-            list.appendChild(el('li', 'sl-empty', 'No comments yet — be the first. 💬'));
+            list.appendChild(el('li', 'sl-empty', t('empty')));
             return;
           }
           comments.forEach(function (c) {
-            var nick = (c.nickname && c.nickname.trim()) || 'Anonymous';
+            var nick = (c.nickname && c.nickname.trim()) || t('anonymous');
             var li = el('li', 'sl-comment');
             var avatar = el('div', 'sl-avatar', nick.charAt(0).toUpperCase());
             avatar.style.background = AVATAR_GRADIENTS[hashString(nick) % AVATAR_GRADIENTS.length];
@@ -290,9 +385,9 @@
       event.preventDefault();
       var nickname = nickInput.value.trim();
       var body = bodyInput.value.trim();
-      if (!body) { setStatus('Comment cannot be empty.', 'err'); return; }
+      if (!body) { setStatus(t('emptyComment'), 'err'); return; }
       submitBtn.disabled = true;
-      setStatus('Solving proof-of-work…', 'busy');
+      setStatus(t('solving'), 'busy');
 
       fetch(
         endpoint + '/api/comments/challenge?hostContext=' + encodeURIComponent(hostContext) +
@@ -329,8 +424,8 @@
             bodyInput.value = '';
             setStatus(
               outcome.data.comment && outcome.data.comment.status === 'pending'
-                ? 'Comment submitted — awaiting moderation.'
-                : 'Comment posted.',
+                ? t('pending')
+                : t('posted'),
               'ok'
             );
             return loadComments();
@@ -381,7 +476,7 @@
     function submitReaction(r) {
       if (reactBusy || !reactBtns[r]) return;
       setReactBusy(true);
-      setReactStatus('Solving proof-of-work…');
+      setReactStatus(t('solving'));
       fetch(
         endpoint + '/api/reactions/challenge?hostContext=' + encodeURIComponent(hostContext) +
         '&articlePath=' + encodeURIComponent(articlePath)
@@ -413,12 +508,12 @@
         })
         .then(function (outcome) {
           if (outcome.ok) {
-            setReactStatus('✓ Reaction recorded', 'ok');
+            setReactStatus(t('reactionRecorded'), 'ok');
             if (Array.isArray(outcome.data.reactions)) renderReactionCounts(outcome.data.reactions);
           } else if (outcome.status === 429) {
-            setReactStatus('Slow down — too many reactions.', 'err');
+            setReactStatus(t('slowDown'), 'err');
           } else if (outcome.status === 409) {
-            setReactStatus('Challenge already used — try again.', 'err');
+            setReactStatus(t('challengeUsed'), 'err');
           } else {
             setReactStatus(
               'Error: ' + (outcome.data && outcome.data.error ? outcome.data.error : 'unknown'),
