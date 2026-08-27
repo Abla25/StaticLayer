@@ -38,10 +38,11 @@ async function api(path, options = {}) {
   return data;
 }
 
-/* ---- Step 1: local (dev) or magic link ---- */
+/* ---- Step 1: start (no email needed — self-hosted or hosted) ---- */
 $('continue-local').addEventListener('click', () => {
-  // Dev/self-hosted: the operator IS the owner — no email proof needed.
-  window.location.href = '/api/auth/local';
+  // Local or hosted: /api/start creates a session without an email. The
+  // Cloudflare consent screen (or a pasted token) is the real identity gate.
+  window.location.href = '/api/start';
 });
 
 $('request-link').addEventListener('click', async () => {
@@ -208,11 +209,6 @@ $('copy').addEventListener('click', async () => {
 (async () => {
   try {
     const meta = await api('/api/meta');
-    if (meta.dev) {
-      // Local run: skip the email entirely.
-      $('local-row').classList.remove('hidden');
-      $('email-divider').classList.remove('hidden');
-    }
     if (!meta.oauthConfigured) {
       // No real OAuth client configured — only the API-token path can work.
       $('oauth-method').classList.add('hidden');

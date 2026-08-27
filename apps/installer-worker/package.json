@@ -1,0 +1,23 @@
+{
+  "name": "@staticlayer/installer-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "StaticLayer hosted Web Installer — a Cloudflare Worker serving the guided install wizard (zero-terminal). Reuses the node installer logic and the Desired State Engine with a pre-bundled runtime.",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "node build.mjs && tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@staticlayer/deployment-core": "0.1.0",
+    "@staticlayer/protocol": "0.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260826.1",
+    "esbuild": "^0.28.2",
+    "miniflare": "^5.20260825.0-alpha",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

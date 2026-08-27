@@ -29,3 +29,7 @@ npm-debug.log*
 
 # Test artifacts
 coverage/
+
+# installer-worker generated files (embedded assets + pre-bundled runtime)
+apps/installer-worker/src/static-assets.ts
+apps/installer-worker/src/runtime-bundle.ts

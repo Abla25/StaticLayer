@@ -1,0 +1,13 @@
+{
+  "name": "staticlayer-installer",
+  "main": "dist/worker.js",
+  "compatibility_date": "2026-08-26",
+  "kv_namespaces": [
+    { "binding": "SESSIONS", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }
+  ],
+  "vars": {
+    "STATICLAYER_SITE_BASE": "https://abla25.github.io/StaticLayer/",
+    "STATICLAYER_REPO_URL": "https://github.com/Abla25/StaticLayer",
+    "STATICLAYER_REDIRECT_URI": "http://localhost:8789/oauth/callback"
+  }
+}

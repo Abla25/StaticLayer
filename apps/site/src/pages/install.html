@@ -36,11 +36,11 @@
           <li><b>Deploy:</b> the app generates the three secrets locally, creates the D1 database, deploys the Worker and binds the secrets via the Bulk Secrets API, then verifies the deployed state.</li>
           <li><b>Cleanup:</b> the OAuth token is <b>revoked immediately</b>; a pasted token is cleared from memory. Nothing is stored on disk — no token, no secrets.</li>
         </ol>
-        <p>A fully hosted, zero-terminal installer (a Cloudflare Worker we operate) is on the roadmap — it needs a registered public Cloudflare OAuth app and is not part of this release.</p>
+        <p>A hosted, zero-terminal installer is available as a <b>Cloudflare Worker</b> (<code>apps/installer-worker</code>): deploy it once and anyone can install from the browser with no terminal. It needs a registered <b>public</b> Cloudflare OAuth app — see <code>apps/installer-worker/README.md</code>.</p>
 
         <div class="callout">
           <b>Why does the installer open a local app — and can't it run from GitHub Pages?</b>
-          Two reasons. First, Cloudflare's OAuth <code>client_secret_post</code> exchange needs a confidential server holding the OAuth app secret; a static GitHub Pages page cannot hold that secret safely. Second, <code>api.cloudflare.com</code> does not allow browser cross-origin calls (no CORS), so even the API-token path cannot run purely client-side. The local app is the confidential server — it runs on <i>your</i> machine, secrets never leave it, and the Cloudflare token is revoked after deploy. A hosted installer on a Cloudflare Worker would remove the local step; it is a roadmap item, not part of this release.
+          Two reasons. First, Cloudflare's OAuth <code>client_secret_post</code> exchange needs a confidential server holding the OAuth app secret; a static GitHub Pages page cannot hold that secret safely. Second, <code>api.cloudflare.com</code> does not allow browser cross-origin calls (no CORS), so even the API-token path cannot run purely client-side. The local app is the confidential server — it runs on <i>your</i> machine, secrets never leave it, and the Cloudflare token is revoked after deploy. A hosted installer on a Cloudflare Worker removes the local step — it ships in <code>apps/installer-worker/</code> and deploys in a few commands (see its README).
         </div>
 
         <h2>Alternative — manual install in the Cloudflare dashboard</h2>

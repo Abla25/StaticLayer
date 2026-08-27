@@ -10,6 +10,7 @@ export default defineConfig({
       'packages/cli/test/**/*.test.ts',
       'tests/**/*.test.ts',
       'apps/installer/test/**/*.test.ts',
+      'apps/installer-worker/test/**/*.test.ts',
       'apps/demo/test/**/*.test.ts',
     ],
     // Mining at difficulty 16 + workerd startup need generous timeouts.

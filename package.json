@@ -12,7 +12,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "npm run build --workspace @staticlayer/protocol && npm run build --workspace @staticlayer/widget && node scripts/sync-static.mjs && npm run build --workspace @staticlayer/cli && npm run build --workspace @staticlayer/installer",
+    "build": "npm run build --workspace @staticlayer/protocol && npm run build --workspace @staticlayer/widget && node scripts/sync-static.mjs && npm run build --workspace @staticlayer/cli && npm run build --workspace @staticlayer/installer && npm run build --workspace @staticlayer/installer-worker",
     "test": "npm run build && vitest run",
     "test:protocol": "npm run test --workspace @staticlayer/protocol",
     "test:security": "npm run build && vitest run tests/security",
@@ -24,6 +24,8 @@
     "dev:demo": "npm run build && [ -f apps/demo/.dev.vars ] || cp apps/demo/.dev.vars.example apps/demo/.dev.vars && npx wrangler d1 migrations apply staticlayer-demo-local --local -c apps/demo/wrangler.local.jsonc && npx wrangler dev -c apps/demo/wrangler.local.jsonc --port 8787",
     "dev:installer": "npm run build --workspace @staticlayer/installer && STATICLAYER_DEV_MODE=1 STATICLAYER_SESSION_SECRET=local-installer-session-secret STATICLAYER_CLIENT_ID=local-oauth-client-id STATICLAYER_CLIENT_SECRET=local-oauth-client-secret STATICLAYER_REDIRECT_URI=http://localhost:8788/oauth/callback npm run start --workspace @staticlayer/installer",
     "dev:installer:real": "npm run build --workspace @staticlayer/installer && node --env-file=apps/installer/.env.local apps/installer/dist/server.js",
+    "build:installer-worker": "npm run build --workspace @staticlayer/installer-worker",
+    "dev:installer:worker": "npm run build:installer-worker && npx wrangler dev -c apps/installer-worker/wrangler.jsonc --local --port 8789",
     "build:site": "npm run build --workspace @staticlayer/protocol && node apps/site/build.mjs",
     "dev:site": "node apps/site/build.mjs --watch",
     "check:size": "node scripts/check-bundle-size.mjs"

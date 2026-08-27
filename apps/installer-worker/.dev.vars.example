@@ -1,0 +1,6 @@
+# Hosted installer worker — local dev secrets (never commit).
+# Copy to `.dev.vars` and fill in real values for local `wrangler dev`.
+STATICLAYER_SESSION_SECRET=local-session-secret-0123456789
+STATICLAYER_CLIENT_ID=local-oauth-client-id
+STATICLAYER_CLIENT_SECRET=local-oauth-client-secret
+STATICLAYER_REDIRECT_URI=http://localhost:8789/oauth/callback

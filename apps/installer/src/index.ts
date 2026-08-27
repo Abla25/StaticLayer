@@ -59,18 +59,6 @@ const PUBLIC_DIR = (() => {
 const SITE_BASE = process.env.STATICLAYER_SITE_BASE || 'https://Abla25.github.io/StaticLayer/';
 const REPO_URL = process.env.STATICLAYER_REPO_URL || 'https://github.com/Abla25/StaticLayer';
 
-/** Mobile-nav toggle (served as a static file, not inline). */
-const NAV_JS = `(function () {
-  var burger = document.getElementById('nav-burger');
-  var mobile = document.getElementById('mobile-nav');
-  if (!burger || !mobile) return;
-  burger.addEventListener('click', function () {
-    var open = mobile.classList.toggle('open');
-    burger.setAttribute('aria-expanded', String(open));
-    burger.setAttribute('aria-label', open ? 'Close menu' : 'Menu');
-  });
-})();`;
-
 function env(name: string, fallback: string): string {
   return process.env[name] ?? fallback;
 }
@@ -175,7 +163,7 @@ function getStaticFile(pathname: string): { contentType: string; body: string } 
     return { contentType: 'application/javascript; charset=utf-8', body: readFileSync(join(PUBLIC_DIR, 'app.js'), 'utf8') };
   }
   if (pathname === '/nav.js') {
-    return { contentType: 'application/javascript; charset=utf-8', body: NAV_JS };
+    return { contentType: 'application/javascript; charset=utf-8', body: readFileSync(join(PUBLIC_DIR, 'nav.js'), 'utf8') };
   }
   return null;
 }
@@ -248,6 +236,22 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
       json(res, 403, { error: 'local session is only available in dev mode' });
       return;
     }
+    const sessionId = newSessionId();
+    sessions.set(sessionId, {
+      accessToken: '',
+      tokenKind: '',
+      email: 'local@dev',
+      expiresAt: Date.now() + SESSION_TTL_MS,
+    });
+    redirect(res, '/', {
+      'set-cookie': sessionCookieHeader(sessionId, requireEnv('STATICLAYER_SESSION_SECRET')),
+    });
+    return;
+  }
+
+  if (url.pathname === '/api/start' && req.method === 'GET') {
+    // Self-hosted: the operator IS the owner — create a local session directly
+    // (same as the hosted installer worker's /api/start).
     const sessionId = newSessionId();
     sessions.set(sessionId, {
       accessToken: '',
