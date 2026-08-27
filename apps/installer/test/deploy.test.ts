@@ -59,6 +59,34 @@ describe('installer deploy — dry run', () => {
     expect(result.alreadyInSync).toBe(true);
     expect(result.actions).toEqual([]);
   });
+
+  it('pre-configures Cloudflare Access vars when a team is provided', async () => {
+    const api = makeApi();
+    const result = await runInstallerDeploy({
+      accessToken: 'tok-1',
+      input: {
+        ...baseInput,
+        workerName: 'pc',
+        databaseName: 'pc-db',
+        dryRun: false,
+        cfAccessTeam: 'https://myteam.cloudflareaccess.com/',
+        cfAccessAud: 'aud-123',
+      },
+      apiFactory: () => api,
+      workerCode: WORKER_CODE,
+      generateSecrets: fixedSecrets,
+    });
+    expect(result.alreadyInSync).toBe(false);
+    expect(api.deployCalls).toBe(1);
+    // Vars are uploaded as plain_text bindings in the deploy metadata.
+    const bindings = api.lastDeployRequest?.metadata?.bindings ?? [];
+    const varMap: Record<string, string> = {};
+    for (const b of bindings) {
+      if (b.type === 'plain_text' && typeof b.name === 'string') varMap[b.name] = String((b as { text?: unknown }).text ?? '');
+    }
+    expect(varMap.CF_ACCESS_TEAM).toBe('myteam.cloudflareaccess.com'); // normalized
+    expect(varMap.CF_ACCESS_AUD).toBe('aud-123');
+  });
 });
 
 describe('installer deploy — apply (secrets never returned)', () => {

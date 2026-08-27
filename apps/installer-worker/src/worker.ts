@@ -276,6 +276,10 @@ const worker: ExportedHandler<Env> = {
           body && typeof body.ratelimitNamespaceId === 'string' && body.ratelimitNamespaceId.trim()
             ? body.ratelimitNamespaceId.trim()
             : undefined,
+        cfAccessTeam:
+          body && typeof body.cfAccessTeam === 'string' && body.cfAccessTeam.trim() ? body.cfAccessTeam.trim() : undefined,
+        cfAccessAud:
+          body && typeof body.cfAccessAud === 'string' && body.cfAccessAud.trim() ? body.cfAccessAud.trim() : undefined,
         dryRun,
       };
 

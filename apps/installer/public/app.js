@@ -127,6 +127,8 @@ async function computePlan() {
     workerName: $('worker-name').value.trim() || undefined,
     databaseName: $('db-name').value.trim() || undefined,
     ratelimitNamespaceId: $('rl-ns').value.trim() || undefined,
+    cfAccessTeam: $('cf-access-team').value.trim() || undefined,
+    cfAccessAud: $('cf-access-aud').value.trim() || undefined,
     dryRun: true,
   };
   const plan = await api('/api/deploy', { method: 'POST', body: JSON.stringify(body) });
@@ -170,6 +172,8 @@ $('deploy').addEventListener('click', async () => {
     workerName: $('worker-name').value.trim() || undefined,
     databaseName: $('db-name').value.trim() || undefined,
     ratelimitNamespaceId: $('rl-ns').value.trim() || undefined,
+    cfAccessTeam: $('cf-access-team').value.trim() || undefined,
+    cfAccessAud: $('cf-access-aud').value.trim() || undefined,
     dryRun: false,
   };
   try {

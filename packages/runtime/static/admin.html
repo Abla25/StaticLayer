@@ -208,6 +208,7 @@
       <button class="tab" data-tab="pages">Pages</button>
       <button class="tab" data-tab="lists">Lists</button>
       <button class="tab" data-tab="settings">Settings</button>
+      <button class="tab" data-tab="updates">Updates</button>
     </div>
 
     <!-- QUEUE -->
@@ -279,6 +280,15 @@
           </div>
           <div class="list-chips" id="block-chips"></div>
         </div>
+        <div class="list-panel" style="grid-column:1 / -1">
+          <h3 style="color:var(--danger)">Blocked terms (word blacklist)</h3>
+          <p class="lsub">Comments containing any of these words are auto-rejected and never stored</p>
+          <div class="add-row">
+            <input type="text" id="term-input" placeholder="word or phrase" maxlength="100">
+            <button id="term-add" class="btn danger sm">Add</button>
+          </div>
+          <div class="list-chips" id="term-chips"></div>
+        </div>
       </div>
       <p id="lists-status" class="status"></p>
     </section>
@@ -311,7 +321,25 @@
           <button id="settings-reset" class="btn ghost">Reset to defaults</button>
         </div>
       </div>
+      <div class="settings-form" style="margin-top:22px">
+        <div class="list-panel">
+          <h3>Admin access &amp; sign-in</h3>
+          <p class="lsub">Password-less login with Cloudflare Access is built in: protect <code>/admin.html</code> with an Access application and set the Worker var <code>CF_ACCESS_TEAM</code> (optionally <code>CF_ACCESS_AUD</code>) — the login screen then shows <b>"Sign in with Cloudflare"</b> and you never type a password. The hosted installer offers this in step 3.</p>
+          <p class="lsub"><b>Lost the admin password?</b> With Cloudflare Access enabled, just sign in with Cloudflare. Otherwise rotate it: <code>npx wrangler secret put ADMIN_SECRET</code> (you choose the new value) — or reinstall fresh. Re-running the installer preserves your existing secrets (including the current password) by design.</p>
+        </div>
+      </div>
       <p id="settings-status" class="status"></p>
+    </section>
+  </section>
+
+    <!-- UPDATES -->
+    <section id="tab-updates" class="glass card hidden" style="margin-top:16px">
+      <h2>Updates</h2>
+      <p class="sub">Check whether a newer StaticLayer release is available for this Worker.</p>
+      <div id="updates-card" class="list-panel">
+        <p class="lsub" id="updates-status">Checking…</p>
+      </div>
+      <p id="updates-detail" class="status"></p>
     </section>
   </section>
 

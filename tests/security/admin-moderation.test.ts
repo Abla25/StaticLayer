@@ -295,3 +295,56 @@ describe('admin moderation v2 — pagination, search, bulk', () => {
     expect(invalid.status).toBe(400);
   });
 });
+
+describe('admin moderation v2 — blocked terms + updates', () => {
+  let mf: Miniflare | undefined;
+  afterEach(async () => { await mf?.dispose(); mf = undefined; });
+
+  it('adds/lists/removes blocked terms and auto-rejects comments containing them', async () => {
+    mf = await spawnWorker({ difficulty: 8 });
+    const { cookie, csrf } = await login(mf);
+
+    // No CSRF => 403.
+    const noCsrf = await mf.dispatchFetch(`${BASE}/api/admin/terms`, {
+      method: 'POST', headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify({ term: 'spammy' }),
+    });
+    expect(noCsrf.status).toBe(403);
+
+    const add = await mf.dispatchFetch(`${BASE}/api/admin/terms`, {
+      method: 'POST', headers: authedHeaders(cookie, csrf), body: JSON.stringify({ term: 'SPAMMY' }),
+    });
+    expect(add.status).toBe(201);
+
+    const list = await (await mf.dispatchFetch(`${BASE}/api/admin/terms`, { headers: { cookie } })).json() as { terms: { id: number; term: string }[] };
+    expect(list.terms.map((t) => t.term)).toEqual(['spammy']); // normalized lowercase
+
+    // Comment containing the term (case-insensitive) is auto-rejected, never stored.
+    const bad = await postComment(mf, 'Alice', 'this is SPAMMY content');
+    expect(bad.status).toBe(403);
+    expect(JSON.stringify(bad.body)).toMatch(/blocked term/i);
+    const all = await (await mf.dispatchFetch(`${BASE}/api/admin/comments?status=all`, { headers: { cookie } })).json() as { total: number };
+    expect(all.total).toBe(0);
+
+    // Clean comment still works.
+    const ok = await postComment(mf, 'Alice', 'a nice comment');
+    expect(ok.status).toBe(200);
+
+    // Remove the term => previously-blocked content now passes.
+    await mf.dispatchFetch(`${BASE}/api/admin/terms/${list.terms[0].id}`, {
+      method: 'DELETE', headers: authedHeaders(cookie, csrf, false),
+    });
+    const again = await postComment(mf, 'Alice', 'spammy is fine now');
+    expect(again.status).toBe(200);
+  });
+
+  it('check-updates endpoint requires a session and reports the current version', async () => {
+    mf = await spawnWorker();
+    expect((await mf.dispatchFetch(`${BASE}/api/admin/updates`)).status).toBe(401);
+    const { cookie } = await login(mf);
+    const res = await mf.dispatchFetch(`${BASE}/api/admin/updates`, { headers: { cookie } });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { current: string; updateAvailable: boolean };
+    expect(data.current).toBe('1.0.0');
+    expect(typeof data.updateAvailable).toBe('boolean');
+  });
+});

@@ -56,6 +56,27 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Admin polish round (Round 21.4): updates, word blacklist, guided Access, recovery.**
+  - **In-panel update checker**: new admin **Updates** tab → `GET /api/admin/updates`
+    fetches `updates.json` from the official site (var `UPDATES_URL`), compares
+    with the runtime version and, when a newer release exists, links to the
+    hosted installer (which re-deploys preserving secrets). Read-only; applying
+    is a re-deploy. `RUNTIME_VERSION` → `1.0.0`; site ships `public/updates.json`.
+  - **Blocked terms (word blacklist)**: migration `005_blocked_terms.sql`;
+    comments whose body contains a blocked term are auto-rejected at submit
+    (403) and never stored. Admin CRUD via `GET/POST/DELETE /api/admin/terms`;
+    new panel in the Lists tab. SCHEMA_VERSION=5.
+  - **Cloudflare Access guided at install**: the wizard step 3 now offers
+    optional **Cloudflare Access team / AUID** fields; when provided, the
+    installer pre-configures `CF_ACCESS_TEAM`/`CF_ACCESS_AUD` vars on the
+    deployed worker (both node + hosted installer). Admin login shows
+    "Sign in with Cloudflare" automatically.
+  - **Password recovery guidance**: the admin Settings panel and FAQ document
+    rotation via `wrangler secret put ADMIN_SECRET` (and that re-running the
+    installer preserves secrets, so it won't rotate them). Cloudflare Access
+    removes the problem entirely.
+  - Tests: blocked terms + updates + installer CF vars (+ mock records deploy
+    metadata). Suite now **191/191**, typecheck 0.
 - **Admin console v2 + Cloudflare Access login (Round 21.3).** Big upgrade:
   - **"Sign in with Cloudflare"**: new `POST /api/admin/access` verifies a
     Cloudflare Access `Cf-Access-Jwt-Assertion` (RS256, JWKS from the team,

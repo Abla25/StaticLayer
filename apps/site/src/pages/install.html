@@ -41,7 +41,7 @@
           <li><b>Start it:</b> one command (<code>npm run dev:installer</code>) launches a small local app at <code>http://localhost:8788</code>. There is no email step — just press <b>Start →</b>. From here on, everything happens in the browser.</li>
           <li><b>Connect Cloudflare — choose a method:</b> <b>(A)</b> one-click <b>OAuth</b>: the app redirects you to the official Cloudflare consent screen with the minimal scopes (Workers deploy, D1, account read). <b>(B)</b> paste an <b>API token</b> (permissions: Workers Scripts: Edit, Cloudflare D1: Edit, Account Settings: Read). Your Cloudflare password is never seen by StaticLayer; pasted tokens are kept only in memory.</li>
           <li><b>Pick your account:</b> choose the Cloudflare account to deploy into.</li>
-          <li><b>Review the plan:</b> the engine lists exactly what it will create — nothing happens until you confirm.</li>
+          <li><b>Review the plan (optional but recommended):</b> add your <b>Cloudflare Access team</b> to enable <b>"Sign in with Cloudflare"</b> in your admin — no password to remember. Protect <code>/admin.html</code> with an Access app in your account and the wizard pre-configures the worker for you.</li>
           <li><b>Deploy:</b> the app generates the three secrets locally, creates the D1 database, deploys the Worker and binds the secrets via the Bulk Secrets API, then verifies the deployed state.</li>
           <li><b>Cleanup:</b> the OAuth token is <b>revoked immediately</b>; a pasted token is cleared from memory. Nothing is stored on disk — no token, no secrets.</li>
         </ol>

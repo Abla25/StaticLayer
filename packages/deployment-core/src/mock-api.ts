@@ -22,6 +22,9 @@ export class MockCloudflareApi implements CloudflareApi {
   deployCalls = 0;
   secretCalls = 0;
 
+  /** Last deploy request (code + metadata) — recorded for assertions. */
+  lastDeployRequest: DeployWorkerRequest | null = null;
+
   failCreateDatabase = false;
   lieCreateDatabase = false;
   failDeploy = false;
@@ -59,8 +62,9 @@ export class MockCloudflareApi implements CloudflareApi {
     this.secrets.set(workerName, set);
   }
 
-  async deployWorker(workerName: string, _request: DeployWorkerRequest): Promise<void> {
+  async deployWorker(workerName: string, request: DeployWorkerRequest): Promise<void> {
     this.deployCalls += 1;
+    this.lastDeployRequest = request;
     if (this.failDeploy) {
       throw new ApiError(500, `deploy ${workerName} failed`, `/workers/scripts/${workerName}`);
     }

@@ -114,7 +114,8 @@
     published: document.getElementById('tab-published'),
     pages: document.getElementById('tab-pages'),
     lists: document.getElementById('tab-lists'),
-    settings: document.getElementById('tab-settings')
+    settings: document.getElementById('tab-settings'),
+    updates: document.getElementById('tab-updates')
   };
   tabButtons.forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -124,6 +125,7 @@
       if (tab === 'pages') loadPages();
       else if (tab === 'lists') loadLists();
       else if (tab === 'settings') loadSettings();
+      else if (tab === 'updates') loadUpdates();
       else if (tab === 'queue') loadQueue();
       else if (tab === 'published') loadPublished();
     });
@@ -372,6 +374,10 @@
       .then(function (data) {
         renderChips('allow-chips', data.allow, 'allow');
         renderChips('block-chips', data.block, 'block');
+        return api('/api/admin/terms');
+      })
+      .then(function (data) {
+        renderTermChips(data.terms || []);
       })
       .catch(function (err) { showStatus(document.getElementById('lists-status'), 'Error: ' + err.message, true); });
   }
@@ -417,6 +423,77 @@
       }
     });
   });
+
+  // ---- blocked terms -----------------------------------------------------
+  function renderTermChips(terms) {
+    var box = document.getElementById('term-chips');
+    box.replaceChildren();
+    terms.forEach(function (item) {
+      var chip = el('span', 'chip block', '"' + item.term + '"');
+      var x = el('button', 'x', '×');
+      x.title = 'Remove term';
+      x.addEventListener('click', function () {
+        api('/api/admin/terms/' + item.id, { method: 'DELETE' })
+          .then(loadLists)
+          .catch(function (err) { showStatus(document.getElementById('lists-status'), 'Error: ' + err.message, true); });
+      });
+      chip.appendChild(x);
+      box.appendChild(chip);
+    });
+    if (terms.length === 0) box.appendChild(el('span', 'chip', 'no terms blocked'));
+  }
+  document.getElementById('term-add').addEventListener('click', function () {
+    var v = document.getElementById('term-input').value;
+    if (!v.trim()) return;
+    api('/api/admin/terms', { method: 'POST', body: JSON.stringify({ term: v }) })
+      .then(loadLists)
+      .catch(function (err) { showStatus(document.getElementById('lists-status'), 'Error: ' + err.message, true); });
+    document.getElementById('term-input').value = '';
+  });
+  document.getElementById('term-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('term-add').click(); }
+  });
+
+  // ---- updates -----------------------------------------------------------
+  function loadUpdates() {
+    var card = document.getElementById('updates-card');
+    var status = document.getElementById('updates-status');
+    var detail = document.getElementById('updates-detail');
+    status.textContent = 'Checking…';
+    detail.textContent = '';
+    api('/api/admin/updates', { csrf: false })
+      .then(function (data) {
+        card.replaceChildren();
+        if (data.error) {
+          card.appendChild(el('p', 'lsub', 'You are on v' + data.current + '.'));
+          status.textContent = 'Could not reach the update server (' + data.error + ').';
+          status.classList.add('err');
+          return;
+        }
+        if (data.updateAvailable) {
+          card.appendChild(el('p', 'lsub', 'A newer release is available: <b>v' + data.latest + '</b> (you are on v' + data.current + ').'));
+          card.appendChild(el('p', 'lsub', 'Update with the hosted installer — it re-deploys the latest version into your account and <b>preserves your secrets</b> (including the admin password).'));
+          var row = el('div', 'row');
+          var open = el('a', 'btn', 'Open hosted installer →');
+          open.href = data.installerUrl || 'https://staticlayer-installer.staticlayer.workers.dev';
+          open.target = '_blank';
+          open.rel = 'noopener';
+          row.appendChild(open);
+          card.appendChild(row);
+          status.textContent = 'Update available — ' + (data.date || '');
+          status.classList.remove('err');
+          status.classList.add('ok');
+          if (data.notes) detail.textContent = data.notes;
+        } else {
+          card.appendChild(el('p', 'lsub', 'You are on the latest release (<b>v' + data.current + '</b>).'));
+          status.textContent = 'Up to date';
+          status.classList.remove('err');
+          status.classList.add('ok');
+          if (data.notes) detail.textContent = data.notes;
+        }
+      })
+      .catch(function (err) { status.textContent = 'Error: ' + err.message; status.classList.add('err'); });
+  }
 
   // ---- settings ---------------------------------------------------------
   function loadSettings() {

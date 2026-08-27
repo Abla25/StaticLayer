@@ -53,6 +53,8 @@ export interface Env {
   CF_ACCESS_AUD?: string;
   /** Optional JWKS endpoint override (default https://{team}/cdn-cgi/access/certs). */
   CF_ACCESS_JWKS_URL?: string;
+  /** Optional update-manifest URL for the admin "Check for updates" tab. */
+  UPDATES_URL?: string;
 }
 
 export const DEFAULTS = {

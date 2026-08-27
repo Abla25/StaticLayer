@@ -2,9 +2,12 @@ import type { ExportedHandler, ScheduledController, ExecutionContext } from '@cl
 import { handleAdminAccessLogin, handleAdminAccessStatus } from './admin-access.ts';
 import {
   handleAdminAddList,
+  handleAdminAddTerm,
   handleAdminDeleteList,
+  handleAdminDeleteTerm,
   handleAdminGetLists,
   handleAdminGetSettings,
+  handleAdminGetTerms,
   handleAdminPutSettings,
 } from './admin-config.ts';
 import { handleAdminLogin, handleAdminLogout } from './admin.ts';
@@ -24,6 +27,7 @@ import { json, SECURITY_HEADERS } from './http.ts';
 import { purgeUsedChallenges } from './retention.ts';
 import { handleListReactions, handlePostReaction, handleReactionChallenge } from './reactions.ts';
 import { handleStatic } from './static.ts';
+import { handleAdminCheckUpdates } from './updates.ts';
 import { healthPayload } from './version.ts';
 
 /**
@@ -52,6 +56,10 @@ import { healthPayload } from './version.ts';
  *   DELETE /api/admin/lists/:id              remove list entry (+ CSRF)
  *   GET    /api/admin/settings               effective settings
  *   PUT    /api/admin/settings               update settings (+ CSRF)
+ *   GET    /api/admin/terms                  blocked terms (word blacklist)
+ *   POST   /api/admin/terms                  add term (+ CSRF)
+ *   DELETE /api/admin/terms/:id              remove term (+ CSRF)
+ *   GET    /api/admin/updates                check for a newer release
  *
  * Static assets:
  *   /widget.js, /pow-worker.js, /admin.html, /admin.js
@@ -144,6 +152,19 @@ const worker: ExportedHandler<Env> = {
     }
     if (pathname === '/api/admin/settings' && method === 'PUT') {
       return respond(handleAdminPutSettings(request, env));
+    }
+    if (pathname === '/api/admin/terms' && method === 'GET') {
+      return respond(handleAdminGetTerms(request, env));
+    }
+    if (pathname === '/api/admin/terms' && method === 'POST') {
+      return respond(handleAdminAddTerm(request, env));
+    }
+    const termMatch = pathname.match(/^\/api\/admin\/terms\/(\d+)$/);
+    if (termMatch && method === 'DELETE') {
+      return respond(handleAdminDeleteTerm(request, env, termMatch[1] as string));
+    }
+    if (pathname === '/api/admin/updates' && method === 'GET') {
+      return respond(handleAdminCheckUpdates(request, env));
     }
     const adminMatch = pathname.match(/^\/api\/admin\/comments\/([^/]+)$/);
     if (adminMatch && method === 'PATCH') {

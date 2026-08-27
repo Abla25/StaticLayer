@@ -28,6 +28,10 @@ export interface InstallerInput {
   workerName?: string;
   databaseName?: string;
   ratelimitNamespaceId?: string;
+  /** Optional Cloudflare Access team — enables "Sign in with Cloudflare" in the admin. */
+  cfAccessTeam?: string;
+  /** Optional Access Application AUID enforced in the JWT `aud` claim. */
+  cfAccessAud?: string;
   dryRun: boolean;
 }
 
@@ -71,6 +75,12 @@ export async function runInstallerDeployWorker(options: {
     secrets: [...INSTALLER_SECRETS],
     workerEntry: 'packages/runtime/src/index.ts',
   };
+  // Guided Cloudflare Access: when the operator provides a team, pre-configure
+  // the worker var so the admin login shows "Sign in with Cloudflare".
+  const team = options.input.cfAccessTeam?.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+  if (team) config.vars.CF_ACCESS_TEAM = team;
+  const aud = options.input.cfAccessAud?.trim();
+  if (aud) config.vars.CF_ACCESS_AUD = aud;
   if (options.input.ratelimitNamespaceId) {
     config.ratelimit = {
       binding: 'RATE_LIMITER',

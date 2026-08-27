@@ -377,6 +377,12 @@
       <input id="db-name" value="staticlayer">
       <label for="rl-ns">Rate limit namespace ID <span style="font-weight:400">(optional)</span></label>
       <input id="rl-ns" placeholder="leave empty to disable rate limiting">
+      <div class="divider"><span>Admin sign-in — recommended</span></div>
+      <label for="cf-access-team">Cloudflare Access team <span style="font-weight:400">(recommended — enables "Sign in with Cloudflare" in your admin, no password to remember)</span></label>
+      <input id="cf-access-team" placeholder="e.g. myteam">
+      <label for="cf-access-aud">Access application AUID <span style="font-weight:400">(optional — hardens the login)</span></label>
+      <input id="cf-access-aud" placeholder="your-access-app-uid">
+      <div class="note">How it works: protect <code>/admin.html</code> with a Cloudflare Access app (Zero Trust) in your account, then add the team name here. Cloudflare verifies who you are — StaticLayer never sees your Cloudflare password. The admin password is still shown once as a fallback.</div>
       <div class="row">
         <button id="plan" class="btn btn-ghost">Preview plan</button>
         <button id="deploy" class="btn btn-primary hidden">Deploy →</button>

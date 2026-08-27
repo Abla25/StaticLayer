@@ -13,6 +13,7 @@ import {
   type ModerationMode,
 } from './settings.ts';
 import { normalizeListValue, type ListKind } from './moderation-lists.ts';
+import { normalizeTerm } from './blocked-terms.ts';
 
 /**
  * Admin configuration API (session + CSRF protected):
@@ -20,6 +21,9 @@ import { normalizeListValue, type ListKind } from './moderation-lists.ts';
  *   GET    /api/admin/lists            allow + block lists (with ids)
  *   POST   /api/admin/lists            { kind, value }   (+ X-CSRF-Token)
  *   DELETE /api/admin/lists/:id                          (+ X-CSRF-Token)
+ *   GET    /api/admin/terms            blocked terms
+ *   POST   /api/admin/terms            { term }          (+ X-CSRF-Token)
+ *   DELETE /api/admin/terms/:id                          (+ X-CSRF-Token)
  *   GET    /api/admin/settings         effective settings (table merged w/ env)
  *   PUT    /api/admin/settings         { settings }      (+ X-CSRF-Token)
  */
@@ -84,6 +88,53 @@ export async function handleAdminDeleteList(request: Request, env: Env, id: stri
 
   const result = await env.DB.prepare('DELETE FROM moderation_lists WHERE id = ?').bind(Number(id)).run();
   if (result.meta.changes === 0) return json({ error: 'list entry not found' }, 404);
+  return json({ ok: true });
+}
+
+export async function handleAdminGetTerms(request: Request, env: Env): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return auth.response;
+  const { results } = await env.DB.prepare(
+    'SELECT id, term, created_at FROM blocked_terms ORDER BY term ASC',
+  ).all<{ id: number; term: string; created_at: number }>();
+  return json({ terms: results });
+}
+
+export async function handleAdminAddTerm(request: Request, env: Env): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return auth.response;
+  if (!(await requireCsrf(request, auth.payload))) return json({ error: 'invalid csrf token' }, 403);
+
+  const read = await readJsonBody(request, 2048);
+  if (!read.ok || typeof read.value !== 'object' || read.value === null) {
+    return json({ error: 'invalid body' }, 400);
+  }
+  const rawTerm = (read.value as Record<string, unknown>).term;
+  if (typeof rawTerm !== 'string') return json({ error: 'term is required' }, 400);
+  const term = normalizeTerm(rawTerm);
+  if (!term) return json({ error: 'term is empty' }, 400);
+
+  const createdAt = Math.floor(Date.now() / 1000);
+  const result = await env.DB
+    .prepare('INSERT OR IGNORE INTO blocked_terms (term, created_at) VALUES (?, ?)')
+    .bind(term, createdAt)
+    .run();
+  if (result.meta.changes === 0) return json({ error: 'term already blocked' }, 409);
+  const row = await env.DB
+    .prepare('SELECT id, term, created_at FROM blocked_terms WHERE term = ?')
+    .bind(term)
+    .first<{ id: number; term: string; created_at: number }>();
+  return json({ term: row }, 201);
+}
+
+export async function handleAdminDeleteTerm(request: Request, env: Env, id: string): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return auth.response;
+  if (!(await requireCsrf(request, auth.payload))) return json({ error: 'invalid csrf token' }, 403);
+  if (!/^\d+$/.test(id)) return json({ error: 'invalid term id' }, 400);
+
+  const result = await env.DB.prepare('DELETE FROM blocked_terms WHERE id = ?').bind(Number(id)).run();
+  if (result.meta.changes === 0) return json({ error: 'term not found' }, 404);
   return json({ ok: true });
 }
 

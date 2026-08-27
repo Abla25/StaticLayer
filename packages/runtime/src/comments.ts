@@ -19,6 +19,7 @@ import { json, readJsonBody, validField } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
 import { readSettings, settingModerationMode, settingNumber } from './settings.ts';
 import { decide, readLists } from './moderation-lists.ts';
+import { findBlockedTerm, readBlockedTerms } from './blocked-terms.ts';
 
 /**
  * POST /api/comments
@@ -191,6 +192,11 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
   const decision = decide(nickname, lists);
   if (decision.verdict === 'blocked') {
     return json({ error: 'this nickname is not allowed' }, 403);
+  }
+  // ---- 6.6 blocked terms (word blacklist) — auto-reject, never stored ----
+  const blockedTerm = findBlockedTerm(body, await readBlockedTerms(env.DB));
+  if (blockedTerm) {
+    return json({ error: 'comment contains a blocked term' }, 403);
   }
   let status = 'pending'; // moderation pipeline: pending -> approved (Phase 2)
   if (decision.verdict === 'allowlisted') {

@@ -354,6 +354,8 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
         typeof body.ratelimitNamespaceId === 'string' && body.ratelimitNamespaceId.trim()
           ? body.ratelimitNamespaceId.trim()
           : undefined,
+      cfAccessTeam: typeof body.cfAccessTeam === 'string' && body.cfAccessTeam.trim() ? body.cfAccessTeam.trim() : undefined,
+      cfAccessAud: typeof body.cfAccessAud === 'string' && body.cfAccessAud.trim() ? body.cfAccessAud.trim() : undefined,
       dryRun,
     };
 
