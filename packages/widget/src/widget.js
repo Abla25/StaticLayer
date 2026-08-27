@@ -306,6 +306,7 @@
 
     // -------- mode: standalone poll --------
     var pollId = String(((opts && opts.pollId) || root.getAttribute('data-poll-id') || '')).trim();
+    var pollStyle = String(((opts && opts.pollStyle) || root.getAttribute('data-poll-style') || 'bars')).trim();
     if (pollId) {
       initPoll();
       return;
@@ -765,13 +766,23 @@
           var pct = total > 0 ? Math.round((c / total) * 100) : 0;
           var li = el('li', 'sl-poll-option');
           if (showResults) {
-            var label = el('div', 'sl-poll-opt-label');
-            label.append(el('span', 'sl-poll-opt-name', o), el('span', 'sl-poll-opt-meta', c + ' · ' + pct + '%'));
-            var bar = el('div', 'sl-poll-bar');
-            var fill = el('div', 'sl-poll-fill');
-            fill.style.width = pct + '%';
-            bar.appendChild(fill);
-            li.append(label, bar);
+            if (pollStyle !== 'counts') {
+              var label = el('div', 'sl-poll-opt-label');
+              var meta;
+              if (pollStyle === 'percent') meta = pct + '%';
+              else if (pollStyle === 'minimal') meta = '';
+              else meta = c + ' · ' + pct + '%';
+              label.append(el('span', 'sl-poll-opt-name', o), el('span', 'sl-poll-opt-meta', meta));
+              var bar = el('div', 'sl-poll-bar');
+              var fill = el('div', 'sl-poll-fill');
+              fill.style.width = pct + '%';
+              bar.appendChild(fill);
+              li.append(label, bar);
+            } else {
+              var cLabel = el('div', 'sl-poll-opt-label');
+              cLabel.append(el('span', 'sl-poll-opt-name', o), el('span', 'sl-poll-opt-meta', String(c)));
+              li.appendChild(cLabel);
+            }
           } else {
             var btn = el('button', 'sl-poll-btn', o);
             btn.type = 'button';

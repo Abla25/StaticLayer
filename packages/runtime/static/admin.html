@@ -205,6 +205,12 @@
   .switch input:checked + .slider { background:var(--acc-grad); box-shadow:var(--shadow-acc); }
   .switch input:checked + .slider::before { transform:translateX(18px); }
   .switch-label { font-size:12.5px; color:var(--ink-soft); line-height:1.5; }
+  .privacy-callout { margin-top:14px; padding:14px 16px; border:1px solid color-mix(in srgb,var(--warn) 40%,transparent); border-radius:14px; background:var(--warn-soft); font-size:12.5px; color:var(--ink-soft); line-height:1.6; }
+  .privacy-callout b { color:var(--warn); }
+  .privacy-callout ul { margin:8px 0 0; padding-left:18px; }
+  .privacy-callout li { margin:3px 0; }
+  .privacy-callout code { font-family:var(--mono); font-size:11.5px; background:rgba(0,0,0,.05); border-radius:6px; padding:1px 6px; }
+  .tab-sep { width:1px; background:var(--line-strong); margin:6px 8px; align-self:stretch; flex:none; }
 
   footer { margin-top:28px; text-align:center; font-size:12px; color:var(--muted); }
   .hidden { display:none !important; }
@@ -252,10 +258,12 @@
       <button class="tab active" data-tab="queue">Queue</button>
       <button class="tab" data-tab="published">Published</button>
       <button class="tab" data-tab="pages">Pages</button>
+      <span class="tab-sep" role="presentation"></span>
       <button class="tab" data-tab="lists">Lists</button>
       <button class="tab" data-tab="settings">Settings</button>
       <button class="tab" data-tab="widget">Widget</button>
       <button class="tab" data-tab="polls">Polls</button>
+      <span class="tab-sep" role="presentation"></span>
       <button class="tab" data-tab="updates">Updates</button>
     </div>
 
@@ -469,6 +477,16 @@
             </select>
             <p class="hint">Pick a poll to embed a standalone poll instead of comments. Create polls in the <b>Polls</b> tab.</p>
           </div>
+          <div class="w-field" id="w-poll-style-field">
+            <label for="w-poll-style">Poll results style</label>
+            <select id="w-poll-style">
+              <option value="bars">Bars — count + percentage</option>
+              <option value="percent">Percentage only</option>
+              <option value="counts">Counts only (no bars)</option>
+              <option value="minimal">Minimal bars (no numbers)</option>
+            </select>
+            <p class="hint">How the results are shown after voting (or when the poll is closed).</p>
+          </div>
         </div>
 
         <div class="list-panel">
@@ -570,6 +588,15 @@
           <div class="switch-row">
             <label class="switch"><input type="checkbox" id="poll-single-vote"><span class="slider"></span></label>
             <span class="switch-label">One vote per browser — stores an <b>anonymous</b> token in the visitor's browser (no cookies, no personal data)</span>
+          </div>
+          <div class="privacy-callout">
+            <b>Privacy &amp; GDPR — read before enabling.</b>
+            <ul>
+              <li>Enabling this makes the widget store a <b>random, anonymous token</b> in each visitor's browser (<code>localStorage</code>). It is <b>not</b> a cookie and contains <b>no personal data</b>; only a <b>hash</b> of it is kept in your own D1 — never sent to us.</li>
+              <li>It is nevertheless a <b>persistent local identifier</b>: the widget uses it to recognise "this browser already voted" across visits. Under GDPR that is a form of identification, so <b>inform visitors in your privacy policy</b> if you use it.</li>
+              <li>It does <b>not</b> guarantee "one person = one vote": a visitor can clear browser storage and vote again. It only raises the bar against casual double-voting.</li>
+              <li>You remain the <b>data controller</b> for your site; StaticLayer never receives, stores or sees the token.</li>
+            </ul>
           </div>
           <div class="row mt"><button id="poll-create" class="btn">Create poll</button></div>
         </div>
