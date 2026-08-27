@@ -53,6 +53,8 @@ StaticLayer is a source-available, Cloudflare-native comment system designed for
 - 🕵️ **No tracking** — the public widget sets no cookies and stores nothing in the browser.
 - 🔁 **Idempotent, verifiable deploys** — a Desired State Engine observes → plans → applies → verifies. It never fails silently.
 - 🔔 **Telegram alerts (optional)** — get a private notification when a comment awaits moderation; GDPR-minimal (no comment data in the message), configured from the admin panel.
+- 🗳️ **Polls** — StrawPoll-style, privacy-first (no IP, no cookies), PoW-protected votes; optional anonymous **one-vote-per-browser** guard, created & managed from the admin.
+- 🧵 **Nested replies** — up to 3 levels, with "Reply" inline, moderator-aware (pending parents hide the thread; deleted parents keep replies with a placeholder).
 - 🧩 **Drop-in widget** — a few lines of HTML on any static site (Astro, Hugo, Jekyll, plain HTML…).
 
 ---
@@ -107,6 +109,38 @@ Done. Moderate comments at `https://comments.yourdomain.com/admin.html`.
 > (see `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates`), then **Save settings**. When a
 > comment awaits moderation you get a private message with a link to the queue — the message
 > contains **no comment data** (privacy-first).
+
+---
+
+## 🗳️ Polls (optional)
+
+Create StrawPoll-style polls from the admin (**Polls** tab): article path, question, 2–10
+options, and an optional **one vote per browser** guard. Then embed on any page:
+
+```html
+<div data-staticlayer
+     data-endpoint="https://comments.yourdomain.com"
+     data-poll-id="<poll id from the admin>"></div>
+<script src="https://comments.yourdomain.com/widget.js" defer></script>
+```
+
+Votes are anonymous (no IP, no cookies), protected by the same Proof-of-Work + atomic
+anti-replay as comments. With the single-vote guard, the server issues an **anonymous** token
+that lives only in the visitor's browser (localStorage) and stores only a hash of it — so a
+returning visitor cannot vote twice, and no personal data ever leaves the device.
+
+> Honest limitation: without an identity, "one vote = one person" cannot be guaranteed for
+> visitors who clear their browser storage — the same trade-off every anonymous poll (StrawPoll
+> included) accepts.
+
+## 🧵 Nested replies
+
+Comments support replies up to **3 levels** (comment → reply → reply). Click **Reply** on any
+comment: the same PoW + moderation pipeline applies. Moderation rules:
+
+- A reply is visible only when **it and its parent** are approved.
+- If a parent is deleted, its replies stay visible with a *"parent comment removed"* placeholder.
+- The admin queue shows a **"↳ reply to …"** badge so you can moderate threads in context.
 
 > 🧙 No terminal? The **Web Installer** (`npm run dev:installer`) guides you
 > through the same deploy with OAuth — scopes are least-privilege by design

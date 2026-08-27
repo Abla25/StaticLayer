@@ -38,7 +38,7 @@ describe('D1 schema bootstrap (installer gap)', () => {
     expect(await res.json()).toEqual({ error: 'unauthorized' });
 
     // The tables now exist (spot-check the ones the queue queries hit).
-    for (const table of ['comments', 'reactions', 'settings', 'moderation_lists', 'blocked_terms', 'used_challenges']) {
+    for (const table of ['comments', 'reactions', 'settings', 'moderation_lists', 'blocked_terms', 'used_challenges', 'polls', 'poll_votes']) {
       const row = await db
         .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?")
         .bind(table)
@@ -53,7 +53,7 @@ describe('D1 schema bootstrap (installer gap)', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('application/json');
     const body = (await res.json()) as { schemaVersion: number };
-    expect(body.schemaVersion).toBe(5);
+    expect(body.schemaVersion).toBe(7);
   });
 
   it('bootstrap is idempotent across repeated calls', async () => {

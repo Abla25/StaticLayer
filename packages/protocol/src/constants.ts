@@ -33,6 +33,12 @@ export const MAX_NICKNAME_BYTES = 50;
 /** Max comment body length (UTF-8 bytes). */
 export const MAX_BODY_BYTES = 3000;
 
+/** Max poll id length (UTF-8 bytes). */
+export const MAX_POLL_ID_BYTES = 64;
+
+/** Max poll option length (UTF-8 bytes). */
+export const MAX_OPTION_BYTES = 100;
+
 /** PoW difficulty bounds, in leading-zero bits of the SHA-256 digest. */
 export const MIN_DIFFICULTY = 0;
 export const MAX_DIFFICULTY = 256;

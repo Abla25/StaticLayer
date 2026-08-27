@@ -83,6 +83,18 @@
         </ul>
         <p>Programmatic equivalent: <code>StaticLayer.mount(el, { …, reactions: ['👍', '❤️'] })</code>.</p>
 
+        <h2>Polls (optional)</h2>
+        <p>StrawPoll-style polls, created in the admin (<b>Polls</b> tab) and embedded anywhere with a dedicated host element — fully independent of comments/reactions:</p>
+<pre><code>&lt;div data-staticlayer
+     data-api="https://comments.example.com"
+     data-poll-id="&lt;poll id from the admin&gt;"&gt;&lt;/div&gt;
+&lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
+        <p>Votes are anonymous (no IP, no cookie) and protected by the same <b>Proof-of-Work + atomic anti-replay</b> as comments. The optional <b>one vote per browser</b> guard issues an <b>anonymous</b> token that lives only in the visitor's browser and stores only a hash on your D1 — a returning visitor cannot vote twice, and no personal data is collected. Honest limit: clearing browser storage resets the guard, as with every anonymous poll.</p>
+        <p>Programmatic equivalent: <code>StaticLayer.mount(el, { …, pollId: '&lt;id&gt;' })</code>.</p>
+
+        <h2>Nested replies</h2>
+        <p>Comments support replies up to <b>3 levels</b>: click <b>Reply</b> on any comment to open an inline form with the same Proof-of-Work + moderation pipeline. A reply becomes public only when it <b>and its parent</b> are approved; if a parent is deleted, its replies stay visible with a <i>"comment removed"</i> placeholder. The admin queue shows a <b>↳ reply to</b> badge on replies.</p>
+
         <h2>Where to place it on your page</h2>
         <p>The widget renders exactly where you put the host element in your HTML — the script tag can stay once in your layout. Two jobs, two placements:</p>
         <ul>

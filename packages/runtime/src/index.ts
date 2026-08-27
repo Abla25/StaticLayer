@@ -26,6 +26,13 @@ import type { Env } from './env.ts';
 import { json, SECURITY_HEADERS } from './http.ts';
 import { purgeUsedChallenges } from './retention.ts';
 import { handleListReactions, handlePostReaction, handleReactionChallenge } from './reactions.ts';
+import { handleListPolls, handlePollChallenge, handlePollVote } from './polls.ts';
+import {
+  handleAdminCreatePoll,
+  handleAdminDeletePoll,
+  handleAdminListPolls,
+  handleAdminPatchPoll,
+} from './admin-polls.ts';
 import { handleStatic } from './static.ts';
 import { handleAdminCheckUpdates } from './updates.ts';
 import { ensureSchema } from './schema.ts';
@@ -129,6 +136,16 @@ const worker: ExportedHandler<Env> = {
     if (pathname === '/api/reactions' && method === 'POST') {
       return respond(handlePostReaction(request, env));
     }
+    /* Polls (public): list / challenge / vote */
+    if (pathname === '/api/polls' && method === 'GET') {
+      return respond(handleListPolls(request, env));
+    }
+    if (pathname === '/api/polls/challenge' && method === 'GET') {
+      return respond(handlePollChallenge(request, env));
+    }
+    if (pathname === '/api/polls/vote' && method === 'POST') {
+      return respond(handlePollVote(request, env));
+    }
     if (pathname === '/api/admin/login' && method === 'POST') {
       return respond(handleAdminLogin(request, env));
     }
@@ -181,6 +198,20 @@ const worker: ExportedHandler<Env> = {
     }
     if (pathname === '/api/admin/updates' && method === 'GET') {
       return respond(handleAdminCheckUpdates(request, env));
+    }
+    /* Polls (admin): list / create / patch / delete */
+    if (pathname === '/api/admin/polls' && method === 'GET') {
+      return respond(handleAdminListPolls(request, env));
+    }
+    if (pathname === '/api/admin/polls' && method === 'POST') {
+      return respond(handleAdminCreatePoll(request, env));
+    }
+    const pollMatch = pathname.match(/^\/api\/admin\/polls\/([^/]+)$/);
+    if (pollMatch && method === 'PATCH') {
+      return respond(handleAdminPatchPoll(request, env, pollMatch[1] as string));
+    }
+    if (pollMatch && method === 'DELETE') {
+      return respond(handleAdminDeletePoll(request, env, pollMatch[1] as string));
     }
     const adminMatch = pathname.match(/^\/api\/admin\/comments\/([^/]+)$/);
     if (adminMatch && method === 'PATCH') {

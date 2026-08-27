@@ -6,8 +6,11 @@ import { json, validField } from './http.ts';
  * GET /api/comments?article_path=...&host_context=...
  *
  * Public, read-only. Returns only `status = 'approved'` comments for the
- * article, as plain text fields. Response is cacheable for 60s
- * (`Cache-Control: public, max-age=60`) and NEVER sets a cookie — no tracking.
+ * article, as plain text fields, with `parent_id` for nested replies. A reply
+ * is included when its parent is approved OR no longer exists (deleted); a
+ * reply whose parent is still pending is hidden (its thread is not public
+ * yet). Response is cacheable for 60s (`Cache-Control: public, max-age=60`)
+ * and NEVER sets a cookie — no tracking.
  */
 export async function handleListComments(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
@@ -25,11 +28,14 @@ export async function handleListComments(request: Request, env: Env): Promise<Re
   }
 
   const { results } = await env.DB.prepare(
-    `SELECT id, nickname, body, created_at
-     FROM comments
-     WHERE article_path = ? AND status = ?
-     ORDER BY created_at ASC
-     LIMIT 200`,
+    `SELECT c.id, c.nickname, c.body, c.created_at, c.parent_id
+     FROM comments c
+     WHERE c.article_path = ? AND c.status = ?
+       AND (c.parent_id IS NULL
+            OR EXISTS (SELECT 1 FROM comments p WHERE p.id = c.parent_id AND p.status = 'approved')
+            OR NOT EXISTS (SELECT 1 FROM comments p WHERE p.id = c.parent_id))
+     ORDER BY c.created_at ASC
+     LIMIT 500`,
   )
     .bind(articlePath, 'approved')
     .all();

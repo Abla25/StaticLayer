@@ -17,6 +17,11 @@
  *   → STANDALONE reactions bar (no comment UI) — place it anywhere, separate
  *     from a comments widget.
  *
+ *   <div data-staticlayer data-api="..." data-poll-id="..."></div>
+ *   → STANDALONE poll (StrawPoll-style) — question, options, live results.
+ *     The poll is created in the admin (Polls tab); single-vote polls use an
+ *     anonymous browser token (localStorage, no cookies, no personal data).
+ *
  * Optional look & feel (all can also be passed via window.StaticLayer.mount
  * opts: lang, theme, accent, accent2, radius, maxWidth, texts):
  *   data-lang="auto|en|it"        UI language (default auto-detect)
@@ -104,7 +109,17 @@
       slowDown: 'Slow down — too many reactions.',
       challengeUsed: 'Challenge already used — try again.',
       countOne: '1 comment',
-      countMany: '{n} comments'
+      countMany: '{n} comments',
+      voted: '✓ You voted',
+      closed: 'This poll is closed',
+      pollMissing: 'Poll not found',
+      alreadyVoted: 'You already voted in this poll',
+      pollLoadError: 'Failed to load the poll',
+      reply: 'Reply',
+      cancelReply: 'Cancel',
+      replyPlaceholder: 'Write a reply…',
+      showMoreReplies: 'Show more replies ({n})',
+      parentRemoved: 'Parent comment removed'
     },
     it: {
       title: 'Commenti',
@@ -123,7 +138,17 @@
       slowDown: 'Rallenta — troppe reazioni.',
       challengeUsed: 'Challenge già usata — riprova.',
       countOne: '1 commento',
-      countMany: '{n} commenti'
+      countMany: '{n} commenti',
+      voted: '✓ Hai votato',
+      closed: 'Sondaggio chiuso',
+      pollMissing: 'Sondaggio non trovato',
+      alreadyVoted: 'Hai già votato in questo sondaggio',
+      pollLoadError: 'Impossibile caricare il sondaggio',
+      reply: 'Rispondi',
+      cancelReply: 'Annulla',
+      replyPlaceholder: 'Scrivi una risposta…',
+      showMoreReplies: 'Mostra altre risposte ({n})',
+      parentRemoved: 'Commento padre rimosso'
     }
   };
 
@@ -188,6 +213,33 @@
     '.sl-reaction .sl-reaction-count{font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}' +
     '.sl-reaction-status{min-height:16px;margin:0 2px 12px;font-size:12px;color:var(--muted)}' +
     '.sl-reaction-status[data-kind="ok"]{color:#16a34a}.sl-reaction-status[data-kind="err"]{color:#dc2626}' +
+    '.sl-poll-heading{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px}' +
+    '.sl-poll-heading h3{margin:0;font-size:15px;font-weight:650;letter-spacing:-.1px;line-height:1.4}' +
+    '.sl-poll-options{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:10px}' +
+    '.sl-poll-btn{appearance:none;width:100%;text-align:left;cursor:pointer;font:inherit;font-size:14px;padding:12px 16px;' +
+    'border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);' +
+    'transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}' +
+    '.sl-poll-btn:hover{transform:translateY(-1px);border-color:var(--accent);' +
+    'box-shadow:0 4px 14px -6px color-mix(in srgb,var(--accent) 45%,transparent)}' +
+    '.sl-poll-btn:disabled{opacity:.55;cursor:progress;transform:none}' +
+    '.sl-poll-opt-label{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}' +
+    '.sl-poll-opt-name{font-size:14px;font-weight:600}' +
+    '.sl-poll-opt-meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}' +
+    '.sl-poll-bar{height:8px;border-radius:999px;background:color-mix(in srgb,var(--border) 60%,transparent);overflow:hidden}' +
+    '.sl-poll-fill{height:100%;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-2));' +
+    'transition:width .5s ease}' +
+    '.sl-poll-status{display:flex;align-items:center;gap:8px;min-height:20px;margin:10px 2px 0;font-size:13px;color:var(--muted)}' +
+    '.sl-poll-status[data-kind="ok"]{color:#16a34a}.sl-poll-status[data-kind="err"]{color:#dc2626}' +
+    '.sl-replies{list-style:none;margin:14px 0 0;padding:0 0 0 16px;display:flex;flex-direction:column;gap:14px;' +
+    'border-left:2px solid color-mix(in srgb,var(--border) 70%,transparent)}' +
+    '.sl-reply .sl-avatar{width:28px;height:28px;font-size:12px;border-radius:8px}' +
+    '.sl-reply .sl-nick{font-size:12.5px}' +
+    '.sl-reply-btn{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;' +
+    'font-weight:600;cursor:pointer;padding:0;margin-top:6px;transition:color .15s}' +
+    '.sl-reply-btn:hover{color:var(--accent)}' +
+    '.sl-reply-form{margin-top:12px}' +
+    '.sl-parent-removed{color:var(--muted);font-style:italic}' +
+    '.sl-show-more{list-style:none}' +
     '@keyframes sl-spin{to{transform:rotate(360deg)}}';
 
   function injectStyles() {
@@ -251,6 +303,13 @@
     if (radius) root.style.setProperty('--radius', radius.replace(/[^0-9.]/g, '') + 'px');
     var maxWidth = String(((opts && opts.maxWidth) || root.getAttribute('data-max-width') || '')).trim();
     if (maxWidth) root.style.setProperty('max-width', maxWidth.replace(/[^0-9.]/g, '') + 'px');
+
+    // -------- mode: standalone poll --------
+    var pollId = String(((opts && opts.pollId) || root.getAttribute('data-poll-id') || '')).trim();
+    if (pollId) {
+      initPoll();
+      return;
+    }
 
     // -------- mode: comments only / reactions only / both --------
     // `data-reactions-only` (or opts.reactionsOnly) renders a STANDALONE
@@ -339,6 +398,143 @@
       status.appendChild(document.createTextNode(message));
     }
 
+    var MAX_DEPTH = 3;
+    var REPLIES_PER_PAGE = 5;
+
+    function buildTree(comments) {
+      var byId = {};
+      var roots = [];
+      comments.forEach(function (c) { c.children = []; c.parentMissing = false; byId[c.id] = c; });
+      comments.forEach(function (c) {
+        if (c.parent_id && byId[c.parent_id]) {
+          byId[c.parent_id].children.push(c);
+        } else {
+          if (c.parent_id) c.parentMissing = true; // parent deleted/hidden
+          roots.push(c);
+        }
+      });
+      return roots;
+    }
+
+    function renderComment(c, depth) {
+      var li = el('li', 'sl-comment' + (depth > 0 ? ' sl-reply' : ''));
+      var nick = (c.nickname && c.nickname.trim()) || t('anonymous');
+      var avatar = el('div', 'sl-avatar', nick.charAt(0).toUpperCase());
+      avatar.style.background = AVATAR_GRADIENTS[hashString(nick) % AVATAR_GRADIENTS.length];
+      var main = el('div', 'sl-main');
+      var head = el('div', 'sl-head');
+      head.append(el('span', 'sl-nick', nick), el('span', 'sl-time', new Date(c.created_at * 1000).toLocaleString()));
+      var bodyEl = c.parentMissing ? el('p', 'sl-body sl-parent-removed', t('parentRemoved')) : el('p', 'sl-body', c.body);
+      main.append(head, bodyEl);
+      if (depth < MAX_DEPTH) {
+        var replyBtn = el('button', 'sl-reply-btn', t('reply'));
+        replyBtn.type = 'button';
+        replyBtn.addEventListener('click', function () { toggleReplyForm(c, main, replyBtn); });
+        main.appendChild(replyBtn);
+      }
+      li.append(avatar, main);
+      if (c.children && c.children.length) {
+        var ul = el('ul', 'sl-replies');
+        var visible = c.children.slice(0, REPLIES_PER_PAGE);
+        visible.forEach(function (ch) { ul.appendChild(renderComment(ch, depth + 1)); });
+        var hidden = c.children.slice(REPLIES_PER_PAGE);
+        if (hidden.length) {
+          var more = el('li', 'sl-show-more');
+          var moreBtn = el('button', 'sl-reply-btn', t('showMoreReplies').replace('{n}', String(hidden.length)));
+          moreBtn.type = 'button';
+          moreBtn.addEventListener('click', function () {
+            hidden.forEach(function (ch) { ul.insertBefore(renderComment(ch, depth + 1), more); });
+            more.remove();
+          });
+          more.appendChild(moreBtn);
+          ul.appendChild(more);
+        }
+        li.appendChild(ul);
+      }
+      return li;
+    }
+
+    function toggleReplyForm(c, main, btn) {
+      var existing = main.querySelector('.sl-reply-form');
+      if (existing) { existing.remove(); btn.textContent = t('reply'); return; }
+      var form = el('form', 'sl-form sl-reply-form');
+      var nickInput = el('input');
+      nickInput.type = 'text';
+      nickInput.maxLength = 50;
+      nickInput.placeholder = t('nickPlaceholder');
+      nickInput.className = 'sl-nick-input';
+      var bodyInput = el('textarea');
+      bodyInput.maxLength = 3000;
+      bodyInput.rows = 2;
+      bodyInput.placeholder = t('replyPlaceholder');
+      bodyInput.className = 'sl-body-input';
+      var row = el('div', 'sl-form-row');
+      var submit = el('button', 'sl-submit', t('post'));
+      submit.type = 'submit';
+      var cancel = el('button', 'sl-reply-btn', t('cancelReply'));
+      cancel.type = 'button';
+      cancel.addEventListener('click', function () { form.remove(); btn.textContent = t('reply'); });
+      row.append(cancel, submit);
+      form.append(nickInput, bodyInput, row);
+      var statusEl = el('p', 'sl-status');
+      form.appendChild(statusEl);
+      var busy = false;
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (busy) return;
+        var nickname = nickInput.value.trim();
+        var body = bodyInput.value.trim();
+        if (!body) { statusEl.textContent = t('emptyComment'); return; }
+        busy = true;
+        submit.disabled = true;
+        statusEl.textContent = t('solving');
+        fetch(
+          endpoint + '/api/comments/challenge?hostContext=' + encodeURIComponent(hostContext) +
+          '&articlePath=' + encodeURIComponent(articlePath)
+        )
+          .then(function (res) { if (!res.ok) throw new Error('challenge request failed'); return res.json(); })
+          .then(function (challenge) {
+            return solveWithWorker(challenge, 'comment', nickname, body).then(function (nonce) {
+              return { challenge: challenge, nonce: nonce };
+            });
+          })
+          .then(function (solved) {
+            return fetch(endpoint + '/api/comments', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                challengeId: solved.challenge.challengeId,
+                hostContext: solved.challenge.hostContext,
+                articlePath: solved.challenge.articlePath,
+                nickname: nickname,
+                body: body,
+                parentId: c.id,
+                difficulty: solved.challenge.difficulty,
+                expiresAt: solved.challenge.expiresAt,
+                signature: solved.challenge.signature,
+                nonce: solved.nonce
+              })
+            });
+          })
+          .then(function (res) {
+            return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+          })
+          .then(function (outcome) {
+            if (outcome.ok) {
+              statusEl.textContent = outcome.data.comment && outcome.data.comment.status === 'pending' ? t('pending') : t('posted');
+              bodyInput.value = '';
+              return loadComments();
+            }
+            statusEl.textContent = 'Error: ' + (outcome.data && outcome.data.error ? outcome.data.error : 'unknown');
+          })
+          .catch(function (err) { statusEl.textContent = 'Error: ' + err.message; })
+          .finally(function () { busy = false; submit.disabled = false; });
+      });
+      main.appendChild(form);
+      btn.textContent = t('cancelReply');
+      bodyInput.focus();
+    }
+
     function loadComments() {
       return fetch(
         endpoint + '/api/comments?article_path=' + encodeURIComponent(articlePath) +
@@ -353,19 +549,7 @@
             list.appendChild(el('li', 'sl-empty', t('empty')));
             return;
           }
-          comments.forEach(function (c) {
-            var nick = (c.nickname && c.nickname.trim()) || t('anonymous');
-            var li = el('li', 'sl-comment');
-            var avatar = el('div', 'sl-avatar', nick.charAt(0).toUpperCase());
-            avatar.style.background = AVATAR_GRADIENTS[hashString(nick) % AVATAR_GRADIENTS.length];
-            var main = el('div', 'sl-main');
-            var head = el('div', 'sl-head');
-            head.append(el('span', 'sl-nick', nick), el('span', 'sl-time', new Date(c.created_at * 1000).toLocaleString()));
-            var bodyEl = el('p', 'sl-body', c.body); // textContent only — XSS-safe
-            main.append(head, bodyEl);
-            li.append(avatar, main);
-            list.appendChild(li);
-          });
+          buildTree(comments).forEach(function (r) { list.appendChild(renderComment(r, 0)); });
         });
     }
 
@@ -379,7 +563,7 @@
         .then(function (blob) { return URL.createObjectURL(blob); });
     }
 
-    function solveWithWorker(challenge, nickname, body) {
+    function solveWithWorker(challenge, kind, a, b) {
       return new Promise(function (resolve, reject) {
         createPowWorkerUrl()
           .then(function (url) {
@@ -392,7 +576,10 @@
               else reject(new Error((e.data && e.data.message) || 'pow worker failed'));
             };
             worker.onerror = function () { URL.revokeObjectURL(url); worker.terminate(); reject(new Error('pow worker error')); };
-            worker.postMessage({ challenge: challenge, nickname: nickname, body: body });
+            var msg = { challenge: challenge };
+            if (kind === 'poll') { msg.pollId = a; msg.option = b; }
+            else { msg.nickname = a; msg.body = b; }
+            worker.postMessage(msg);
             return null;
           })
           .catch(reject);
@@ -413,7 +600,7 @@
       )
         .then(function (res) { if (!res.ok) throw new Error('challenge request failed'); return res.json(); })
         .then(function (challenge) {
-          return solveWithWorker(challenge, nickname, body).then(function (nonce) {
+          return solveWithWorker(challenge, 'comment', nickname, body).then(function (nonce) {
             return { challenge: challenge, nonce: nonce };
           });
         })
@@ -501,7 +688,7 @@
       )
         .then(function (res) { if (!res.ok) throw new Error('challenge request failed'); return res.json(); })
         .then(function (challenge) {
-          return solveWithWorker(challenge, '', '').then(function (nonce) {
+          return solveWithWorker(challenge, 'comment', '', '').then(function (nonce) {
             return { challenge: challenge, nonce: nonce };
           });
         })
@@ -541,6 +728,134 @@
         })
         .catch(function (err) { setReactStatus('Error: ' + err.message, 'err'); })
         .finally(function () { setReactBusy(false); });
+    }
+
+    /* -------- standalone poll (data-poll-id) -------- */
+    function initPoll() {
+      // Anonymous voter token — ONLY used for single-vote polls, lives only in
+      // the visitor's browser (no cookies, no personal data, never sent to us).
+      var voterKey = 'sl-voter-token';
+      var voterToken = null;
+      try { voterToken = localStorage.getItem(voterKey); } catch (e) { voterToken = null; }
+
+      var heading = el('div', 'sl-poll-heading');
+      var qEl = el('h3', null, '…');
+      heading.appendChild(qEl);
+      var statusEl = el('p', 'sl-poll-status');
+      var listEl = el('ul', 'sl-poll-options');
+      root.append(heading, listEl, statusEl);
+
+      function setStatus(message, kind) {
+        statusEl.replaceChildren();
+        statusEl.removeAttribute('data-kind');
+        if (kind === 'ok') { statusEl.setAttribute('data-kind', 'ok'); statusEl.appendChild(el('span', null, '✓')); }
+        else if (kind === 'err') { statusEl.setAttribute('data-kind', 'err'); statusEl.appendChild(el('span', null, '✕')); }
+        else if (kind === 'busy') { statusEl.appendChild(el('span', 'sl-spinner')); }
+        statusEl.appendChild(document.createTextNode(message));
+      }
+
+      function renderPoll(poll) {
+        qEl.textContent = poll.question || '';
+        var opts = Array.isArray(poll.options) ? poll.options : [];
+        var total = Number(poll.total) || 0;
+        var showResults = poll.status !== 'open' || !!poll.voted;
+        listEl.replaceChildren();
+        opts.forEach(function (o) {
+          var c = poll.counts && poll.counts[o] ? Number(poll.counts[o]) : 0;
+          var pct = total > 0 ? Math.round((c / total) * 100) : 0;
+          var li = el('li', 'sl-poll-option');
+          if (showResults) {
+            var label = el('div', 'sl-poll-opt-label');
+            label.append(el('span', 'sl-poll-opt-name', o), el('span', 'sl-poll-opt-meta', c + ' · ' + pct + '%'));
+            var bar = el('div', 'sl-poll-bar');
+            var fill = el('div', 'sl-poll-fill');
+            fill.style.width = pct + '%';
+            bar.appendChild(fill);
+            li.append(label, bar);
+          } else {
+            var btn = el('button', 'sl-poll-btn', o);
+            btn.type = 'button';
+            btn.addEventListener('click', function () { vote(o, btn); });
+            li.appendChild(btn);
+          }
+          listEl.appendChild(li);
+        });
+        if (showResults) {
+          setStatus(poll.status !== 'open' ? t('closed') : t('voted'), poll.status !== 'open' ? undefined : 'ok');
+        } else {
+          setStatus('');
+        }
+      }
+
+      function loadPoll() {
+        var url = endpoint + '/api/polls?article_path=' + encodeURIComponent(articlePath);
+        if (voterToken) url += '&voterToken=' + encodeURIComponent(voterToken);
+        return fetch(url)
+          .then(function (res) { if (!res.ok) throw new Error(t('pollLoadError')); return res.json(); })
+          .then(function (data) {
+            var found = null;
+            (Array.isArray(data.polls) ? data.polls : []).forEach(function (p) { if (p.id === pollId) found = p; });
+            if (!found) { qEl.textContent = t('pollMissing'); return; }
+            renderPoll(found);
+          })
+          .catch(function () { setStatus(t('pollLoadError'), 'err'); });
+      }
+
+      function vote(option, btn) {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        setStatus(t('solving'), 'busy');
+        fetch(
+          endpoint + '/api/polls/challenge?hostContext=' + encodeURIComponent(hostContext) +
+          '&articlePath=' + encodeURIComponent(articlePath)
+        )
+          .then(function (res) { if (!res.ok) throw new Error('challenge request failed'); return res.json(); })
+          .then(function (challenge) {
+            return solveWithWorker(challenge, 'poll', pollId, option).then(function (nonce) {
+              return { challenge: challenge, nonce: nonce };
+            });
+          })
+          .then(function (solved) {
+            var payload = {
+              challengeId: solved.challenge.challengeId,
+              hostContext: solved.challenge.hostContext,
+              articlePath: solved.challenge.articlePath,
+              pollId: pollId,
+              option: option,
+              difficulty: solved.challenge.difficulty,
+              expiresAt: solved.challenge.expiresAt,
+              signature: solved.challenge.signature,
+              nonce: solved.nonce
+            };
+            if (voterToken) payload.voterToken = voterToken;
+            return fetch(endpoint + '/api/polls/vote', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+          })
+          .then(function (res) {
+            return res.json().then(function (data) { return { ok: res.ok, status: res.status, data: data }; });
+          })
+          .then(function (outcome) {
+            if (outcome.ok) {
+              if (outcome.data.voterToken) {
+                voterToken = outcome.data.voterToken;
+                try { localStorage.setItem(voterKey, voterToken); } catch (e) { /* private mode */ }
+              }
+              renderPoll(outcome.data.poll);
+            } else if (outcome.status === 409) {
+              setStatus(t('alreadyVoted'), 'err');
+              loadPoll();
+            } else {
+              setStatus('Error: ' + (outcome.data && outcome.data.error ? outcome.data.error : 'unknown'), 'err');
+            }
+          })
+          .catch(function (err) { setStatus('Error: ' + err.message, 'err'); })
+          .finally(function () { btn.disabled = false; });
+      }
+
+      loadPoll();
     }
   }
 

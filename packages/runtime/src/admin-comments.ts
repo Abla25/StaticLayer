@@ -24,10 +24,13 @@ interface CommentRow {
   body: string;
   status: string;
   created_at: number;
+  parent_id?: string | null;
+  parent_nickname?: string | null;
 }
 
 const LIST_SELECT =
-  'SELECT id, article_path, nickname, body, status, created_at FROM comments';
+  'SELECT c.id, c.article_path, c.nickname, c.body, c.status, c.created_at, c.parent_id, p.nickname AS parent_nickname ' +
+  'FROM comments c LEFT JOIN comments p ON p.id = c.parent_id';
 
 /**
  * Grouped overview of which pages have comments and reactions: article_path
@@ -98,21 +101,21 @@ export async function handleAdminListComments(request: Request, env: Env): Promi
   const where: string[] = [];
   const bind: (string | number)[] = [];
   if (statusParam !== 'all') {
-    where.push('status = ?');
+    where.push('c.status = ?');
     bind.push(statusParam);
   }
   if (q) {
-    where.push('(nickname LIKE ? OR body LIKE ?)');
+    where.push('(c.nickname LIKE ? OR c.body LIKE ?)');
     bind.push(`%${q}%`, `%${q}%`);
   }
   if (article) {
-    where.push('article_path = ?');
+    where.push('c.article_path = ?');
     bind.push(article);
   }
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
   const totalRow = await env.DB
-    .prepare(`SELECT COUNT(*) AS c FROM comments ${whereSql}`)
+    .prepare(`SELECT COUNT(*) AS c FROM comments c ${whereSql}`)
     .bind(...bind)
     .first<{ c: number }>();
   const total = Number(totalRow?.c ?? 0);
@@ -121,7 +124,7 @@ export async function handleAdminListComments(request: Request, env: Env): Promi
   const offset = (currentPage - 1) * perPage;
 
   const { results } = await env.DB.prepare(
-    `${LIST_SELECT} ${whereSql} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+    `${LIST_SELECT} ${whereSql} ORDER BY c.created_at DESC, c.id DESC LIMIT ? OFFSET ?`,
   )
     .bind(...bind, perPage, offset)
     .all<CommentRow>();
@@ -198,7 +201,7 @@ export async function handleAdminPatchComment(
     return json({ error: 'comment not found' }, 404);
   }
 
-  const row = await env.DB.prepare(`${LIST_SELECT} WHERE id = ?`).bind(id).first();
+  const row = await env.DB.prepare(`${LIST_SELECT} WHERE c.id = ?`).bind(id).first();
   return json({ comment: row });
 }
 

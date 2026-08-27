@@ -4,6 +4,8 @@ import {
   MAX_BODY_BYTES,
   MAX_HOST_CONTEXT_BYTES,
   MAX_NICKNAME_BYTES,
+  MAX_OPTION_BYTES,
+  MAX_POLL_ID_BYTES,
   NONCE_BYTES,
   PROTOCOL_VERSION,
   UINT64_MAX,
@@ -26,6 +28,21 @@ export interface CanonicalPayload {
   articlePath: string;
   nickname: string;
   body: string;
+  challengeId: Uint8Array; // exactly CHALLENGE_ID_BYTES
+  nonce: bigint; // 0 <= nonce <= UINT64_MAX
+}
+
+/**
+ * PoW payload for POLL VOTES (a separate canonical schema from comments).
+ * Uses a distinct encoding so polls do not touch the comment wire format:
+ * version + host_context + article_path + poll_id + option + challenge_id + nonce.
+ */
+export interface PollCanonicalPayload {
+  version: number;
+  hostContext: string;
+  articlePath: string;
+  pollId: string;
+  option: string;
   challengeId: Uint8Array; // exactly CHALLENGE_ID_BYTES
   nonce: bigint; // 0 <= nonce <= UINT64_MAX
 }
@@ -122,6 +139,95 @@ export function encodeCanonicalPayload(p: CanonicalPayload): Uint8Array {
     // Defensive: internal invariant. If this ever fires, the encoding above
     // and the byte accounting diverged — never ship such a state.
     throw new ProtocolError(`internal encoding error: wrote ${o} of ${total} bytes`);
+  }
+
+  return out;
+}
+
+/**
+ * Canonical binary encoding of a POLL VOTE payload (schema "poll").
+ *
+ *   offset  size  field
+ *   0       1     version          uint8
+ *   1       2     host_context_len uint16 BE   (max 255)
+ *   3       n     host_context     UTF-8
+ *   ...     2     article_path_len uint16 BE   (max 255)
+ *   ...     n     article_path     UTF-8
+ *   ...     2     poll_id_len      uint16 BE   (max 64)
+ *   ...     n     poll_id          UTF-8
+ *   ...     2     option_len       uint16 BE   (max 100)
+ *   ...     n     option           UTF-8
+ *   ...     32    challenge_id     raw bytes
+ *   ...     8     nonce            uint64 BE
+ */
+export function encodeCanonicalPollPayload(p: PollCanonicalPayload): Uint8Array {
+  if (p.version !== PROTOCOL_VERSION) {
+    throw new ProtocolError(`Unsupported protocol version: ${p.version}`);
+  }
+
+  const host = utf8EncodeStrict(p.hostContext);
+  const path = utf8EncodeStrict(p.articlePath);
+  const pollId = utf8EncodeStrict(p.pollId);
+  const option = utf8EncodeStrict(p.option);
+
+  assertByteLen('hostContext', host.length, MAX_HOST_CONTEXT_BYTES);
+  assertByteLen('articlePath', path.length, MAX_ARTICLE_PATH_BYTES);
+  assertByteLen('pollId', pollId.length, MAX_POLL_ID_BYTES);
+  assertByteLen('option', option.length, MAX_OPTION_BYTES);
+
+  if (p.challengeId.length !== CHALLENGE_ID_BYTES) {
+    throw new ProtocolError(
+      `challengeId must be exactly ${CHALLENGE_ID_BYTES} bytes, got ${p.challengeId.length}`,
+    );
+  }
+  if (p.nonce < 0n || p.nonce > UINT64_MAX) {
+    throw new ProtocolError('nonce out of uint64 range');
+  }
+
+  const total =
+    1 +
+    2 + host.length +
+    2 + path.length +
+    2 + pollId.length +
+    2 + option.length +
+    CHALLENGE_ID_BYTES +
+    NONCE_BYTES;
+
+  const out = new Uint8Array(total);
+  const view = new DataView(out.buffer);
+  let o = 0;
+
+  view.setUint8(o, p.version);
+  o += 1;
+
+  view.setUint16(o, host.length, false);
+  o += 2;
+  out.set(host, o);
+  o += host.length;
+
+  view.setUint16(o, path.length, false);
+  o += 2;
+  out.set(path, o);
+  o += path.length;
+
+  view.setUint16(o, pollId.length, false);
+  o += 2;
+  out.set(pollId, o);
+  o += pollId.length;
+
+  view.setUint16(o, option.length, false);
+  o += 2;
+  out.set(option, o);
+  o += option.length;
+
+  out.set(p.challengeId, o);
+  o += CHALLENGE_ID_BYTES;
+
+  view.setBigUint64(o, p.nonce, false);
+  o += NONCE_BYTES;
+
+  if (o !== total) {
+    throw new ProtocolError(`internal poll encoding error: wrote ${o} of ${total} bytes`);
   }
 
   return out;

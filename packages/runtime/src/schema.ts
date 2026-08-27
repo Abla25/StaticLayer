@@ -1,13 +1,17 @@
 import type { Env } from './env.ts';
 
 /**
- * Idempotent D1 schema bootstrap (migrations 001..005).
+ * Idempotent D1 schema bootstrap (migrations 001..007).
  *
  * The installers create the D1 database and bind it as `DB`, but they cannot
  * run `wrangler d1 migrations apply` inside the customer's account — so the
  * runtime applies the same DDL lazily, once per isolate, before any DB-backed
  * API call. Every statement is `IF NOT EXISTS`, so concurrent isolates and
  * re-deploys are safe; after the first run the batch is skipped entirely.
+ *
+ * Migration 007 uses `ALTER TABLE ... ADD COLUMN`, which has no `IF NOT
+ * EXISTS` form in SQLite — it runs separately and ignores the duplicate-column
+ * error on databases that already have it.
  */
 
 const SCHEMA_STATEMENTS: string[] = [
@@ -61,6 +65,28 @@ const SCHEMA_STATEMENTS: string[] = [
     term TEXT NOT NULL UNIQUE,
     created_at INTEGER NOT NULL
   )`,
+  // 006_polls.sql
+  `CREATE TABLE IF NOT EXISTS polls (
+    id TEXT PRIMARY KEY,
+    article_path TEXT NOT NULL,
+    question TEXT NOT NULL,
+    options TEXT NOT NULL,
+    multi INTEGER NOT NULL DEFAULT 0,
+    single_vote INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'open',
+    created_at INTEGER NOT NULL
+  ) WITHOUT ROWID`,
+  `CREATE INDEX IF NOT EXISTS idx_polls_article ON polls (article_path, status)`,
+  `CREATE TABLE IF NOT EXISTS poll_votes (
+    id TEXT PRIMARY KEY,
+    poll_id TEXT NOT NULL,
+    option TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    challenge_id TEXT NOT NULL,
+    voter_hash TEXT,
+    UNIQUE (poll_id, voter_hash)
+  ) WITHOUT ROWID`,
+  `CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes (poll_id, option)`,
 ];
 
 let schemaReady = false;
@@ -73,6 +99,13 @@ let schemaReady = false;
 export async function ensureSchema(env: Env): Promise<void> {
   if (schemaReady) return;
   await env.DB.batch(SCHEMA_STATEMENTS.map((sql) => env.DB.prepare(sql)));
+  // Migration 007: ALTER TABLE ... ADD COLUMN is NOT idempotent. Run it
+  // separately and ignore the duplicate-column error on re-deploys.
+  try {
+    await env.DB.prepare('ALTER TABLE comments ADD COLUMN parent_id TEXT').run();
+  } catch {
+    /* column already exists — safe on re-deploy */
+  }
   schemaReady = true;
 }
 

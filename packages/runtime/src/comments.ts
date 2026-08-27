@@ -134,6 +134,18 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
   if (!validField(body, MAX_BODY_BYTES)) {
     return json({ error: `body must be valid UTF-8 within ${MAX_BODY_BYTES} bytes` }, 400);
   }
+  // Optional nested reply: parent_id (validated server-side — the parent must
+  // exist, be approved and belong to the same article). The PoW payload does
+  // not cover parent_id: it is pure routing, and content+volume stay protected
+  // by PoW + anti-replay + rate limits, so re-pointing a reply is not an
+  // abuse vector.
+  let parentId: string | null = null;
+  if (record.parentId !== undefined) {
+    const pid = requireString(record, 'parentId');
+    if (pid === null) return json({ error: 'parentId must be a string' }, 400);
+    parentId = pid;
+  }
+  if (parentId !== null && parentId.length > 64) return json({ error: 'parentId too long' }, 400);
 
   // ---- 3. challenge signature (constant-time, fail closed) ----
   const challenge: ChallengeFields = {
@@ -207,6 +219,17 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
   }
 
   // ---- 7. ATOMIC anti-replay ----
+  // ---- 6.7 nested reply: the parent must exist, be approved, same article ----
+  if (parentId !== null) {
+    const parent = await env.DB
+      .prepare('SELECT id, status, article_path FROM comments WHERE id = ?')
+      .bind(parentId)
+      .first<{ id: string; status: string; article_path: string }>();
+    if (!parent) return json({ error: 'parent comment not found' }, 400);
+    if (parent.status !== 'approved') return json({ error: 'cannot reply to a comment that is not approved' }, 400);
+    if (parent.article_path !== articlePath) return json({ error: 'parent comment is on a different article' }, 400);
+  }
+
   const id = crypto.randomUUID();
   const createdAt = nowSec;
 
@@ -216,10 +239,10 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
 
   // Conditional insert: only fires when THIS batch consumed the challenge.
   const insertComment = env.DB.prepare(
-    `INSERT INTO comments (id, article_path, nickname, body, status, created_at, challenge_id)
-     SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7
+    `INSERT INTO comments (id, article_path, nickname, body, status, created_at, challenge_id, parent_id)
+     SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
      WHERE changes() = 1`,
-  ).bind(id, articlePath, nickname, body, status, createdAt, challengeIdB64);
+  ).bind(id, articlePath, nickname, body, status, createdAt, challengeIdB64, parentId);
 
   let results: D1Result[];
   try {

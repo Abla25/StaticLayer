@@ -1,6 +1,6 @@
 {
-  "latest": "1.1.0",
+  "latest": "1.2.0",
   "date": "2026-08-27",
-  "notes": "v1.1.0 — Widget builder (live preview + 7 templates, language IT/EN, theme, accent, custom texts), browser keychain password save + session restore, Cloudflare Access step-by-step guide, GDPR-minimal Telegram alerts for pending comments, automatic D1 schema bootstrap.",
+  "notes": "v1.2.0 — Polls (StrawPoll-style, PoW-protected, optional anonymous one-vote-per-browser) + nested replies (3 levels, moderator-aware) + admin Polls tab + widget builder poll template.",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }
