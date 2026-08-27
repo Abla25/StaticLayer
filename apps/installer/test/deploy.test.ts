@@ -132,7 +132,7 @@ describe('installer deploy — apply (secrets never returned)', () => {
     expect((result as { secrets?: unknown }).secrets).toBeUndefined();
   });
 
-  it('is idempotent: a second apply finds the state already in sync', async () => {
+  it('a second apply refreshes the worker but preserves secrets (update semantics)', async () => {
     const api = makeApi();
     const opts = {
       accessToken: 'tok-1',
@@ -143,15 +143,18 @@ describe('installer deploy — apply (secrets never returned)', () => {
     };
     const first = await runInstallerDeploy(opts);
     expect(first.alreadyInSync).toBe(false);
-    const calls = [api.createCalls, api.deployCalls, api.secretCalls];
+    expect(api.secretCalls).toBe(1); // first install bound the 3 secrets
+    expect(first.adminSecret).toBe('a'); // shown exactly once on first install
 
     const second = await runInstallerDeploy(opts);
-    expect(second.alreadyInSync).toBe(true);
-    expect(second.actions).toEqual([]);
-    // No additional API mutations.
-    expect(api.createCalls).toBe(calls[0]);
-    expect(api.deployCalls).toBe(calls[1]);
-    expect(api.secretCalls).toBe(calls[2]);
+    // The worker is re-deployed (forced) so code/vars/metadata stay in sync…
+    expect(second.actions.some((a) => a.includes('forced re-deploy'))).toBe(true);
+    expect(api.deployCalls).toBe(2);
+    // …but secrets are NOT re-set and the admin password is unchanged.
+    expect(api.secretCalls).toBe(1);
+    expect(second.adminSecret).toBeUndefined();
+    // Workers are always published on *.workers.dev.
+    expect(api.lastDeployRequest?.metadata?.workers_dev).toBe(true);
   });
 
   it('propagates engine errors (never silent) and applies nothing partial', async () => {

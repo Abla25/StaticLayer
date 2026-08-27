@@ -143,7 +143,13 @@ export async function runInstallerDeploy(
     options.apiFactory?.(options.accessToken) ??
     new CloudflareApiClient({ accountId: config.accountId, apiToken: options.accessToken });
 
-  const result = await runEngine(api, desired, { dryRun: options.input.dryRun });
+  const result = await runEngine(api, desired, {
+    dryRun: options.input.dryRun,
+    // On a real apply, force a worker re-deploy so code + vars + metadata
+    // (e.g. workers_dev, ALLOWED_ORIGINS, CF_ACCESS_*) always match the latest
+    // desired state. Secrets are preserved (the engine only sets missing ones).
+    force: !options.input.dryRun,
+  });
 
   // Only return the admin password when it was ACTUALLY applied (i.e. a
   // set-secret action ran). On an update/re-run the worker already has the

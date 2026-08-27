@@ -93,6 +93,9 @@ export function buildMetadata(desired: CliConfig, d1Id: string | undefined): Wor
     compatibility_date: desired.compatibilityDate,
     bindings,
     triggers: { crons: desired.crons },
+    // Publish on *.workers.dev — without this flag, API-deployed workers are
+    // not reachable on their workers.dev URL (they return "nothing here").
+    workers_dev: true,
   };
 }
 

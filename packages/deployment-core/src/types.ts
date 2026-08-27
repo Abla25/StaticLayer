@@ -68,6 +68,8 @@ export interface WorkerMetadata {
   compatibility_date: string;
   bindings: WorkerBinding[];
   triggers?: { crons: string[] };
+  /** Expose the worker on its *.workers.dev URL (default true). */
+  workers_dev?: boolean;
 }
 
 export interface DeployWorkerRequest {
