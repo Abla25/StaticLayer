@@ -12,6 +12,17 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Public-readiness
+- **PUBLIC_RELEASE_AUDIT.md updated** — no longer "v1.0.0-beta.1, not
+  production-grade": now reflects v1.7.0 (160 tests / 22 files, typecheck 0,
+  deployed and running).
+- **Anonymous GitHub pulse** — the site footer shows an aggregate
+  ★ stars / 👀 watchers / 🍴 forks badge only when the repo is public; it
+  sends no personal data and stays hidden otherwise (no cookies, no tracking).
+- **README "Adoption & privacy"** — documents how to gauge usage without
+  telemetry (GitHub aggregates + platform request counts), reinforcing the
+  no-cookie/no-banner stance.
+
 ### Brand & UI polish (site / admin / installers)
 - **Brand icon** — the project icon (`assets/brand/staticlayer-icon.png`) now
   replaces the placeholder mark EVERYWHERE and is rendered **free** (no tile,

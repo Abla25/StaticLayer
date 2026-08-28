@@ -331,3 +331,17 @@ npm run test:demo      # demo daily-purge tests
   provided "AS IS". You operate it on **your own Cloudflare account** (BYOC)
   and remain responsible for your content, your infrastructure, your security
   configuration and your legal compliance.
+
+## 📊 Adoption & privacy
+
+StaticLayer ships **no telemetry**: no analytics, no cookies, no "phone home"
+in the widget, the Worker or the installers — by design, so site owners stay
+out of GDPR consent-banner territory. How to gauge adoption without tracking:
+
+- **GitHub stars / watchers / forks** are the public, aggregate signal (the
+  site footer shows a small badge once the repo is public — it stays hidden
+  otherwise, and the API call sends no personal data).
+- **Your own copies** of `updates.json` (the admin "Updates" tab fetches it)
+  and the hosted installer are served from static/Cloudflare assets — the
+  platform's own dashboards give you aggregate request counts if you ever
+  need a rough number; nothing is logged or sent back to StaticLayer.

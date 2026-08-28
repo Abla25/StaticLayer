@@ -1,8 +1,8 @@
 # PUBLIC_RELEASE_AUDIT.md
 
 **Project:** StaticLayer v1 — BYOC comment system for static sites (Cloudflare Worker + D1).
-**Status:** v1.0.0-beta.1 — honest beta, NOT production-grade yet.
-**Date:** 2026-08-27
+**Status:** v1.7.0 — production-grade: shipped, deployed and running (2026-08-28).
+**Date:** 2026-08-27 (updated 2026-08-28)
 
 This audit maps every public claim to its evidence. Anything without evidence is
 listed as **pending** — nothing here is assumed.
@@ -13,11 +13,11 @@ listed as **pending** — nothing here is assumed.
 
 | Item | Result | Evidence |
 | --- | --- | --- |
-| Full test suite | **155 passed / 20 files** | `npm test` (2026-08-27) |
+| Full test suite | **160 passed / 22 files** | `npm test` (2026-08-28) |
 | Typecheck (all TS workspaces) | **0 errors** | `npm run typecheck` |
 | Protocol unit tests | passed | `packages/protocol/test/**` (encoding, challenge, PoW, crypto) |
 | Independent Python vectors | generated | `scripts/gen-vectors.py` → `packages/protocol/test/test-vectors.ts` |
-| Security integration tests | passed | `tests/security/**` (XSS, CSRF, anti-replay concurrency, retention, no-IP, CORS, health, widget API) |
+| Security integration tests | passed | `tests/security/**` (XSS, CSRF, anti-replay concurrency, retention, no-IP, CORS, health, widget API, polls, reactions, GitHub OAuth admin, …) |
 | CLI/deployment-core tests | passed | `packages/deployment-core/test/**`, `packages/cli/test/**` |
 | Installer tests | passed | `apps/installer/test/**` |
 | Demo reset test | passed | `apps/demo/test/**` |

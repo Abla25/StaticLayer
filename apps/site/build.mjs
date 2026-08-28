@@ -154,7 +154,7 @@ ${body}
       <a href="${siteConfig.repo}/blob/main/SECURITY.md" target="_blank" rel="noopener">Report a vulnerability</a>
       <a href="${BASE}docs.html#quick-start">Quick start</a>
     </div>
-    <p class="footer-legal">Source-available (Elastic License 2.0) · BYOC · <a href="${siteConfig.repo}/blob/main/TERMS.md" target="_blank" rel="noopener">Terms</a></p>
+    <p class="footer-legal">Source-available (Elastic License 2.0) · BYOC · <a href="${siteConfig.repo}/blob/main/TERMS.md" target="_blank" rel="noopener">Terms</a><span class="gh-pulse" id="gh-pulse" hidden data-repo="${siteConfig.repo}"></span></p>
   </div>
 </footer>
 <script src="${BASE}assets/main.js" defer></script>

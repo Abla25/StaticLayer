@@ -89,6 +89,25 @@
   });
   if (cards.length && detail) cards[0].click();
 
+  /* GitHub pulse — aggregate stars/watchers/forks (only when the repo is
+     public). No cookies, no personal data, no tracking; the badge simply
+     stays hidden if the repo is private or the API is unreachable. */
+  (function () {
+    var el = document.getElementById('gh-pulse');
+    if (!el) return;
+    var repo = (el.getAttribute('data-repo') || '').replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
+    if (!repo) return;
+    fetch('https://api.github.com/repos/' + repo, { headers: { accept: 'application/vnd.github+json' } })
+      .then(function (r) { if (!r.ok) throw new Error('not public'); return r.json(); })
+      .then(function (d) {
+        if (!d || typeof d.stargazers_count !== 'number') return;
+        var s = '\u2605 ' + d.stargazers_count + ' \u00b7 \ud83d\udc40 ' + d.watchers_count + ' \u00b7 \ud83c\udf54 ' + d.forks_count;
+        el.textContent = s;
+        el.hidden = false;
+      })
+      .catch(function () { /* private repo or offline — keep hidden */ });
+  })();
+
   /* Reveal on view (subtle, respects reduced motion via CSS transitions) */
   if ('IntersectionObserver' in window) {
     var reveals = document.querySelectorAll('[data-reveal]');

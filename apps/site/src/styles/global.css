@@ -891,6 +891,15 @@ pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 1
 .footer-links a { color: var(--muted); font-size: 13.5px; font-weight: 500; }
 .footer-links a:hover { color: var(--ink); }
 .footer-legal { grid-column: 1 / -1; color: var(--muted); font-size: 12.5px; margin: 26px 0 0; border-top: 1px solid var(--line); padding-top: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.gh-pulse {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 650; color: var(--muted);
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 12px; font-variant-numeric: tabular-nums;
+}
+.gh-pulse[hidden] { display: none; }
+.gh-pulse a { color: var(--ink-soft); }
+.gh-pulse a:hover { color: var(--acc); }
 
 /* ---------- responsive ---------- */
 @media (max-width: 960px) {
