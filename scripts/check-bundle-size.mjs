@@ -15,11 +15,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ASSETS = join(ROOT, 'apps/site/dist/assets');
 
 // bytes per file (soft budgets; adjust consciously, not casually)
+// 2026-08-28: raised for the v1.8 polish — the hero widget grew into a
+// carousel (comments/reactions/poll), the simulator gained modes + likes +
+// a live poll, and global.css gained skeleton + poll bars + carousel styles.
 const BUDGETS = {
   'main.js': 6 * 1024,
-  'hero-widget.js': 12 * 1024,
-  'simulator.js': 25 * 1024,
-  'global.css': 60 * 1024,
+  'hero-widget.js': 20 * 1024,
+  'simulator.js': 32 * 1024,
+  'global.css': 72 * 1024,
 };
 
 let failed = false;
