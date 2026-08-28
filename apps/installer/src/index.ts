@@ -179,7 +179,7 @@ function requireJsonObject(body: string): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
-function getStaticFile(pathname: string): { contentType: string; body: string } | null {
+function getStaticFile(pathname: string): { contentType: string; body: string | Buffer } | null {
   if (pathname === '/' || pathname === '/index.html') {
     let body = readFileSync(join(PUBLIC_DIR, 'index.html'), 'utf8');
     // Rewrite the placeholder site/repo links with the real (env) values.
@@ -192,6 +192,9 @@ function getStaticFile(pathname: string): { contentType: string; body: string } 
   }
   if (pathname === '/nav.js') {
     return { contentType: 'application/javascript; charset=utf-8', body: readFileSync(join(PUBLIC_DIR, 'nav.js'), 'utf8') };
+  }
+  if (pathname === '/icon.png') {
+    return { contentType: 'image/png', body: readFileSync(join(PUBLIC_DIR, 'icon.png')) };
   }
   return null;
 }

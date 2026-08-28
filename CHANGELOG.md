@@ -12,6 +12,23 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Brand & UI polish (site / admin / installers)
+- **Brand icon** — the project icon (`assets/brand/staticlayer-icon.png`) now
+  replaces the placeholder mark EVERYWHERE and is rendered **free** (no tile,
+  no background, no border): site nav + footer + favicon + apple-touch-icon,
+  the admin console (served at `/icon.png` by the Worker, base64-inlined), and
+  the hosted + node installers. Accompanying "StaticLayer" text kept where it
+  belongs.
+- **Hero widget is now a compact carousel** — one feature at a time
+  (Comments · Reactions · Polls) with ‹ › arrows, so the hero stays short
+  instead of stacking everything; poll bars got roomier (inset track, more
+  padding).
+- **Docs sidebar unified** — the Quick start page now shows the same flat
+  sidebar as every other docs page (no grouping).
+- **Fix: hero skeleton** — the loading skeleton is shown only before the
+  widget initializes and disappears once the live widget renders (the inline
+  `display:flex` was overriding the `hidden` attribute).
+
 ### Site — v1.8 polish (home / docs / demo)
 - **Home redesigned** — clearer hierarchy: hero headline "Comments, reactions &
   polls for static sites — inside your Cloudflare account", an interactive

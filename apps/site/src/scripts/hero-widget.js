@@ -1,15 +1,18 @@
 /**
- * StaticLayer homepage — interactive hero widget (v2).
+ * StaticLayer homepage — interactive hero widget (v3).
  *
- * A tiny, real client-side simulation that shows the FULL engagement surface:
- * comments with likes + pin + sort, anonymous reactions, and a mini poll —
- * all with real Proof-of-Work (low difficulty so it stays snappy). No network,
- * no storage, no tracking, no secrets — exactly like the full simulator.
+ * A compact CAROUSEL so the hero stays short: one feature at a time
+ * (Comments · Reactions · Polls), switched with the ‹ › arrows. Everything is
+ * a real client-side simulation: comments with likes + pin + sort, anonymous
+ * reactions and a live poll — all with real Proof-of-Work (low difficulty).
+ * No network, no storage, no tracking, no secrets.
  */
 import { mineNonce, PROTOCOL_VERSION, randomBytes, serializeNonce } from '@staticlayer/protocol';
 
 const DIFFICULTY = 12; // fast on any device, still a genuine proof
 const REACT_EMOJIS = ['👍', '❤️', '🎉'];
+const SLIDES = ['comments', 'reactions', 'polls'];
+const SLIDE_TITLES = { comments: 'Comments', reactions: 'Reactions', polls: 'Polls' };
 
 function el(tag, cls, text) {
   const n = document.createElement(tag);
@@ -25,11 +28,12 @@ function init() {
   const bodyInput = root.querySelector('#hero-body');
   const post = root.querySelector('#hero-post');
   const list = root.querySelector('.wd-list');
-  const count = root.querySelector('.wd-count');
   const status = root.querySelector('#hero-status');
   const sortNewest = root.querySelector('#sort-newest');
   const sortBest = root.querySelector('#sort-best');
-  if (!nickInput || !bodyInput || !post || !list || !count) return;
+  const titleEl = root.querySelector('#hero-slide-title');
+  const countEl = root.querySelector('#hero-slide-count');
+  if (!nickInput || !bodyInput || !post || !list || !countEl) return;
 
   let busy = false;
 
@@ -43,15 +47,44 @@ function init() {
   let reactBusy = false;
   let pollVoted = false;
 
-  /* ---------- poll state ---------- */
   const poll = { q: 'Which do you use most?', options: [
     { label: 'Comments', votes: 54 },
     { label: 'Reactions', votes: 26 },
     { label: 'Polls', votes: 20 },
   ] };
 
+  let currentSlide = 0;
+
   function pollTotal() { return poll.options.reduce((a, o) => a + o.votes, 0); }
 
+  function slideCount() {
+    if (currentSlide === 0) {
+      const n = comments.length;
+      return `${n} comment${n === 1 ? '' : 's'}`;
+    }
+    if (currentSlide === 1) {
+      const t = Object.values(reactCounts).reduce((a, b) => a + b, 0);
+      return `${t} reaction${t === 1 ? '' : 's'}`;
+    }
+    return `${pollTotal()} votes`;
+  }
+
+  function renderHeader() {
+    if (titleEl) titleEl.textContent = SLIDE_TITLES[SLIDES[currentSlide]];
+    if (countEl) countEl.textContent = slideCount();
+  }
+
+  function showSlide(i) {
+    currentSlide = ((i % SLIDES.length) + SLIDES.length) % SLIDES.length;
+    root.querySelectorAll('.wd-slide').forEach(function (s) {
+      s.classList.toggle('on', s.dataset.slide === SLIDES[currentSlide]);
+    });
+    if (SLIDES[currentSlide] === 'reactions') renderReactions();
+    if (SLIDES[currentSlide] === 'polls') renderPoll();
+    renderHeader();
+  }
+
+  /* ---------- poll ---------- */
   function renderPoll() {
     const box = root.querySelector('#hero-poll');
     if (!box) return;
@@ -64,8 +97,7 @@ function init() {
       const btn = el('button', 'poll-option' + (pollVoted ? ' show' : ''));
       btn.type = 'button';
       btn.style.setProperty('--w', String((o.votes / total) * 100) + '%');
-      if (pollVoted) btn.setAttribute('aria-label', o.label + ' ' + Math.round((o.votes / total) * 100) + '%');
-      else btn.setAttribute('aria-label', 'Vote for ' + o.label);
+      btn.setAttribute('aria-label', pollVoted ? o.label + ' ' + Math.round((o.votes / total) * 100) + '%' : 'Vote for ' + o.label);
       const bar = el('span', 'poll-bar');
       const row = el('span', 'row');
       row.append(
@@ -73,38 +105,27 @@ function init() {
         el('span', 'pct', pollVoted ? Math.round((o.votes / total) * 100) + '%' : ''),
       );
       btn.append(bar, row);
-      if (!pollVoted) {
-        btn.addEventListener('click', function () { onPollVote(i); });
-      }
+      if (!pollVoted) btn.addEventListener('click', function () { onPollVote(i); });
       box.append(btn);
-      // stagger the reveal
       setTimeout(function () { btn.classList.add('show'); }, 150 + i * 120);
     });
     const note = el('p', 'wd-poll-note', pollVoted ? '✓ Your vote counted — results update live.' : 'Anonymous · PoW-protected · try it');
     box.append(note);
+    renderHeader();
   }
 
   function onPollVote(i) {
     if (pollVoted) return;
     pollVoted = true;
     poll.options[i].votes += 1;
-    // tiny mining feel, keep it snappy
-    setPollNote('Verifying proof…');
-    setTimeout(function () { renderPoll(); }, 350);
-  }
-
-  function setPollNote(msg) {
     const note = root.querySelector('.wd-poll-note');
-    if (note) note.textContent = msg;
+    if (note) note.textContent = 'Verifying proof…';
+    setTimeout(function () { renderPoll(); }, 350);
   }
 
   /* ---------- comments ---------- */
   function bumpCount() {
-    const n = list.querySelectorAll('.wd-item').length;
-    count.textContent = `${n} comment${n === 1 ? '' : 's'}`;
-    count.classList.remove('tick-pop');
-    void count.offsetWidth;
-    count.classList.add('tick-pop');
+    renderHeader();
   }
 
   function sorted() {
@@ -145,11 +166,8 @@ function init() {
   }
 
   async function onLike(c, btn) {
-    if (c.voted) {
-      c.voted = false; c.likes -= 1;
-    } else {
-      c.voted = true; c.likes += 1;
-    }
+    if (c.voted) { c.voted = false; c.likes -= 1; }
+    else { c.voted = true; c.likes += 1; }
     btn.classList.add('bump');
     const ctr = btn.querySelector('.count');
     if (ctr) {
@@ -181,6 +199,7 @@ function init() {
       btn.addEventListener('click', function () { onReact(r, btn); });
       reactBar.append(btn);
     });
+    renderHeader();
   }
 
   function setReactStatus(msg, kind) {
@@ -209,6 +228,7 @@ function init() {
       reactCounts[r] = (reactCounts[r] || 0) + 1;
       btn.querySelector('.wd-reaction-count').textContent = String(reactCounts[r]);
       setReactStatus(`✓ ${r} recorded · difficulty ${DIFFICULTY} · proof in ${ms} ms`, 'ok');
+      renderHeader();
     } catch {
       setReactStatus('Something went wrong in the simulation — try again.');
     } finally {
@@ -263,6 +283,16 @@ function init() {
   }
 
   /* ---------- skeleton → live ---------- */
+  // Lock the preview window height to the comments slide, so the reactions
+  // and poll slides fit inside the SAME window (arrows stay put).
+  function fixSlideHeight() {
+    const container = root.querySelector('.wd-slides');
+    const commentsSlide = root.querySelector('.wd-slide[data-slide="comments"]');
+    if (container && commentsSlide && commentsSlide.offsetHeight > 0) {
+      container.style.minHeight = commentsSlide.offsetHeight + 'px';
+    }
+  }
+
   function showSkeleton() {
     const skel = root.querySelector('#hero-skeleton');
     const live = root.querySelector('#hero-live');
@@ -273,8 +303,8 @@ function init() {
       skel.hidden = true;
       live.hidden = false;
       renderComments();
-      renderReactions();
-      renderPoll();
+      fixSlideHeight();
+      showSlide(0);
     }, 650);
   }
 
@@ -282,6 +312,10 @@ function init() {
   bodyInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') onPost(); });
   if (sortNewest) sortNewest.addEventListener('click', function () { setSort('newest'); });
   if (sortBest) sortBest.addEventListener('click', function () { setSort('best'); });
+  const prev = root.querySelector('#wd-prev');
+  const next = root.querySelector('#wd-next');
+  if (prev) prev.addEventListener('click', function () { showSlide(currentSlide - 1); });
+  if (next) next.addEventListener('click', function () { showSlide(currentSlide + 1); });
 
   showSkeleton();
 }

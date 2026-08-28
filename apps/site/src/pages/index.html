@@ -8,15 +8,14 @@
     <div class="hero-grid">
       <div>
         <span class="hero-eyebrow">Private · Static-site native · 5-minute install</span>
-        <h1>Comments, reactions &amp; polls for static sites.<br><span class="grad grad-anim">Inside your Cloudflare account.</span></h1>
+        <h1>Interactions for static sites.<br><span class="grad grad-anim">Inside your Cloudflare account.</span></h1>
         <p class="hero-sub">StaticLayer adds <b>moderated comments</b>, <b>anonymous reactions</b> and <b>StrawPoll-style polls</b> to any static website — no trackers, no comment SaaS, no third-party database. Deploy once into your Cloudflare account and the data is yours.</p>
         <div class="hero-cta">
           <a class="btn btn-primary" href="{{BASE}}demo.html">Try the live demo →</a>
-          <a class="btn" href="{{BASE}}docs.html">Get started — 5 min</a>
         </div>
         <p class="hero-meta">
           <span class="live-dot">One widget · three ways to engage</span>
-          <span>No cookies · no tracking</span>
+          <a href="{{BASE}}docs.html">Get started — 5 min</a>
           <a href="{{BASE}}security.html">Security model</a>
         </p>
       </div>
@@ -32,8 +31,8 @@
           </div>
           <div class="browser-body">
             <div class="widget-demo">
-              <!-- skeleton while the preview "loads" -->
-              <div id="hero-skeleton" aria-hidden="true" style="display:flex;flex-direction:column;gap:12px">
+              <!-- skeleton while the preview "loads" (hidden once live) -->
+              <div id="hero-skeleton" class="wd-skeleton" aria-hidden="true">
                 <div class="wd-head">
                   <div class="skel" style="width:110px;height:15px"></div>
                   <div class="skel" style="width:64px;height:13px"></div>
@@ -55,29 +54,45 @@
                 <div class="skel" style="height:46px;margin-top:2px"></div>
               </div>
 
-              <!-- live widget -->
+              <!-- live widget: carousel (comments / reactions / polls) -->
               <div id="hero-live" hidden>
                 <div class="wd-head">
-                  <h3>Comments</h3>
-                  <span class="wd-count">2 comments</span>
-                </div>
-                <div class="wd-tools">
-                  <span class="wd-hint">Likes · pin · sort</span>
-                  <div class="wd-sort" role="group" aria-label="Sort comments">
-                    <button id="sort-newest" class="active" type="button">Newest</button>
-                    <button id="sort-best" type="button">Best</button>
+                  <h3 id="hero-slide-title">Comments</h3>
+                  <span class="wd-count" id="hero-slide-count">2 comments</span>
+                  <div class="wd-nav" role="group" aria-label="Preview feature">
+                    <button id="wd-prev" type="button" aria-label="Previous feature">‹</button>
+                    <button id="wd-next" type="button" aria-label="Next feature">›</button>
                   </div>
                 </div>
-                <div class="wd-list" aria-live="polite"></div>
-                <div class="wd-reactions" id="hero-reactions" role="group" aria-label="Reactions"></div>
-                <p class="wd-react-status" id="hero-react-status"></p>
-                <div id="hero-poll" aria-label="Poll preview"></div>
-                <div class="wd-form">
-                  <input id="hero-nick" class="wd-input" placeholder="Your name (optional)" aria-label="Your name" maxlength="50">
-                  <input id="hero-body" class="wd-input" placeholder="Write a comment…" aria-label="Write a comment" maxlength="3000">
-                  <div class="wd-row">
-                    <span class="wd-hint">Live preview · real proof-of-work</span>
-                    <button id="hero-post" class="btn btn-primary btn-sm">Post comment</button>
+                <div class="wd-slides">
+                  <!-- comments -->
+                  <div class="wd-slide on" data-slide="comments">
+                    <div class="wd-tools">
+                      <span class="wd-hint">Likes · pin · sort</span>
+                      <div class="wd-sort" role="group" aria-label="Sort comments">
+                        <button id="sort-newest" class="active" type="button">Newest</button>
+                        <button id="sort-best" type="button">Best</button>
+                      </div>
+                    </div>
+                    <div class="wd-list" aria-live="polite"></div>
+                    <div class="wd-form">
+                      <input id="hero-nick" class="wd-input" placeholder="Your name (optional)" aria-label="Your name" maxlength="50">
+                      <input id="hero-body" class="wd-input" placeholder="Write a comment…" aria-label="Write a comment" maxlength="3000">
+                      <div class="wd-row">
+                        <span class="wd-hint">Live preview · real proof-of-work</span>
+                        <button id="hero-post" class="btn btn-primary btn-sm">Post comment</button>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- reactions -->
+                  <div class="wd-slide" data-slide="reactions">
+                    <p class="wd-hint" style="margin:0 0 10px">Anonymous reactions · real PoW per click · escalating difficulty</p>
+                    <div class="wd-reactions" id="hero-reactions" role="group" aria-label="Reactions"></div>
+                    <p class="wd-react-status" id="hero-react-status"></p>
+                  </div>
+                  <!-- polls -->
+                  <div class="wd-slide" data-slide="polls">
+                    <div id="hero-poll" aria-label="Poll preview"></div>
                   </div>
                 </div>
                 <span class="wd-pill" id="hero-status">Try it — post, react, vote. All live.</span>

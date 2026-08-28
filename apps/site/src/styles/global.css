@@ -158,8 +158,8 @@ pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 1
 .nav-inner { display: flex; align-items: center; gap: 12px; height: 64px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; font-size: 17px; letter-spacing: -0.3px; }
 .brand:hover { text-decoration: none; }
-.brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--ink); color: transparent; }
-.brand-mark svg { width: 20px; height: 20px; display: block; }
+.brand-mark { display: grid; place-items: center; width: 30px; height: 30px; }
+.brand-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .nav-links { display: flex; align-items: center; gap: 2px; margin-left: auto; }
 .nav-links a { color: var(--muted); font-size: 14px; font-weight: 500; padding: 8px 12px; border-radius: 9px; transition: color 0.15s, background 0.15s; }
 .nav-links a:hover { color: var(--ink); background: var(--surface-2); text-decoration: none; }
@@ -344,6 +344,24 @@ pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 1
 }
 .wd-pill.err { color: #dc2626; background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.28); }
 .wd-pill[hidden] { display: none; }
+
+/* hero widget skeleton — only before the live widget appears */
+.wd-skeleton { display: flex; flex-direction: column; gap: 12px; }
+.wd-skeleton[hidden] { display: none; }
+
+/* hero widget carousel (one feature at a time) */
+.wd-slides { display: flex; flex-direction: column; }
+.wd-slide { display: none; flex-direction: column; gap: 12px; }
+.wd-slide.on { display: flex; animation: pop-in 0.3s var(--ease); }
+.wd-nav { display: flex; gap: 6px; margin-left: auto; }
+.wd-nav button {
+  width: 26px; height: 26px; border-radius: 999px; border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; line-height: 1;
+  cursor: pointer; display: grid; place-items: center; padding: 0;
+  transition: transform 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.wd-nav button:hover { transform: translateY(-1px); border-color: var(--acc); color: var(--acc); }
+.wd-nav button:active { transform: translateY(0); }
 
 /* hero reactions bar */
 .wd-reactions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -977,10 +995,10 @@ pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 1
 .wd-poll-head h4 { margin: 0; font-size: 12.5px; font-weight: 700; letter-spacing: -0.1px; }
 .wd-poll-head .wd-count { font-size: 10px; }
 .poll-option {
-  appearance: none; display: flex; flex-direction: column; gap: 4px; width: 100%;
+  appearance: none; display: flex; flex-direction: column; gap: 5px; width: 100%;
   font: inherit; text-align: left; cursor: pointer;
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 11px;
-  padding: 9px 12px; position: relative; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 13px;
+  padding: 12px 14px; position: relative; overflow: hidden;
   transition: transform 0.15s var(--ease), border-color 0.15s var(--ease);
 }
 .poll-option:hover { transform: translateY(-1px); border-color: var(--acc); }
@@ -988,13 +1006,15 @@ pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 1
 .poll-option .label { font-size: 12.5px; font-weight: 600; }
 .poll-option .pct { font-size: 11.5px; font-weight: 700; color: var(--acc); font-variant-numeric: tabular-nums; }
 .poll-bar {
-  position: absolute; inset: 0; z-index: 0;
+  position: absolute; inset: 4px; z-index: 0;
   background: linear-gradient(90deg, rgba(255, 138, 42, 0.16), rgba(255, 61, 84, 0.14));
+  border-radius: 9px;
   transform: scaleX(0); transform-origin: left;
   transition: transform 0.7s var(--ease);
 }
 .poll-option.show .poll-bar { transform: scaleX(var(--w, 0)); }
 .wd-poll-note { font-size: 10.5px; color: var(--muted); min-height: 14px; }
+.wd-poll { gap: 9px; }
 
 /* ---------- skeleton ---------- */
 .skel { position: relative; overflow: hidden; background: var(--surface-2); border-radius: 9px; }

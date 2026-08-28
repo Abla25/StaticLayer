@@ -19,17 +19,11 @@ const SRC = join(ROOT, 'src');
 const PUBLIC = join(ROOT, 'public');
 const OUT = join(ROOT, 'dist');
 
-// --- brand mark (layered strata) ------------------------------------------
-const LOGO_SVG =
-  '<svg viewBox="0 0 64 64" fill="none" aria-hidden="true">' +
-  '<defs><linearGradient id="slg" x1="0" y1="0" x2="1" y2="1">' +
-  '<stop offset="0" stop-color="#ff8a2a"/><stop offset="1" stop-color="#ff3d54"/>' +
-  '</linearGradient></defs>' +
-  '<g fill="url(#slg)">' +
-  '<rect x="15" y="39" width="34" height="7" rx="3.5"/>' +
-  '<rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/>' +
-  '<rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/>' +
-  '</g></svg>';
+// --- brand mark (StaticLayer icon) ------------------------------------------
+// The project icon is a PNG (assets/brand/staticlayer-icon.png); a square,
+// padded variant is shipped at /brand/icon-square.png and used everywhere.
+const brandMark = (size) =>
+  `<img src="${BASE}brand/icon-square.png" alt="" width="${size}" height="${size}" aria-hidden="true">`;
 
 // --- resolve base path (GitHub Pages subpath support) ---------------------
 function resolveBase() {
@@ -96,7 +90,8 @@ function layout({ title, description, body, active, withSimulator, withHeroWidge
 <meta name="twitter:description" content="${description}">
 <meta name="twitter:image" content="${BASE}og-image.png">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="${BASE}favicon.svg" type="image/svg+xml">
+<link rel="icon" href="${BASE}favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="${BASE}apple-touch-icon.png">
 <link rel="stylesheet" href="${BASE}assets/global.css">
 <script>
   // Respect reduced motion before first paint
@@ -110,7 +105,7 @@ function layout({ title, description, body, active, withSimulator, withHeroWidge
 <header class="site-nav" id="site-nav">
   <div class="container nav-inner">
     <a class="brand" href="${BASE}index.html" aria-label="StaticLayer home">
-      <span class="brand-mark" aria-hidden="true">${LOGO_SVG}</span>
+      <span class="brand-mark" aria-hidden="true">${brandMark(30)}</span>
       <span class="brand-name">StaticLayer</span>
     </a>
     <nav class="nav-links" aria-label="Primary">
@@ -143,7 +138,7 @@ ${body}
 <footer class="site-footer">
   <div class="container footer-inner">
     <div>
-      <p class="footer-brand"><span class="brand-mark" aria-hidden="true">${LOGO_SVG}</span>StaticLayer</p>
+      <p class="footer-brand"><span class="brand-mark" aria-hidden="true">${brandMark(26)}</span>StaticLayer</p>
       <p class="footer-tag">Comments for static sites — without the comment SaaS.</p>
     </div>
     <div class="footer-links">

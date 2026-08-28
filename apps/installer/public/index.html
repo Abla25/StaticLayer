@@ -71,8 +71,8 @@
   .nav-inner { display:flex; align-items:center; gap:12px; height:64px; }
   .brand { display:inline-flex; align-items:center; gap:10px; color:var(--ink); font-weight:700; font-size:17px; letter-spacing:-.3px; }
   .brand:hover { text-decoration:none; }
-  .brand-mark { display:grid; place-items:center; width:30px; height:30px; border-radius:9px; background:var(--ink); color:transparent; }
-  .brand-mark svg { width:20px; height:20px; display:block; }
+  .brand-mark { display:grid; place-items:center; width:30px; height:30px; }
+  .brand-mark img { width:100%; height:100%; object-fit:contain; display:block; }
   .nav-links { display:flex; align-items:center; gap:2px; margin-left:auto; }
   .nav-links a { color:var(--muted); font-size:14px; font-weight:500; padding:8px 12px; border-radius:9px; transition:color .15s, background .15s; }
   .nav-links a:hover { color:var(--ink); background:var(--surface-2); text-decoration:none; }
@@ -216,7 +216,7 @@
   .site-footer { border-top:1px solid var(--line); background:var(--bg-2); padding:60px 0 34px; }
   .footer-inner { display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px; }
   .footer-brand { display:flex; align-items:center; gap:10px; font-weight:750; font-size:16px; margin:0 0 6px; letter-spacing:-.3px; }
-  .footer-brand .brand-mark { width:26px; height:26px; border-radius:8px; }
+  .footer-brand .brand-mark { width:26px; height:26px; }
   .footer-tag { color:var(--muted); font-size:13.5px; margin:0 0 16px; max-width:300px; }
   .footer-links { display:flex; flex-direction:column; gap:9px; }
   .footer-links a { color:var(--muted); font-size:13.5px; font-weight:500; }
@@ -248,7 +248,7 @@
 <header class="site-nav">
   <div class="container nav-inner">
     <a class="brand" href="https://staticlayer.github.io/staticlayer/" aria-label="StaticLayer home">
-      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="slg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a2a"/><stop offset="1" stop-color="#ff3d54"/></linearGradient></defs><g fill="url(#slg)"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg></span>
+      <span class="brand-mark" aria-hidden="true"><img src="icon.png" alt="" width="30" height="30"></span>
       <span class="brand-name">StaticLayer</span>
     </a>
     <nav class="nav-links" aria-label="Primary">
@@ -438,7 +438,7 @@
 <footer class="site-footer">
   <div class="container footer-inner">
     <div>
-      <p class="footer-brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><g fill="url(#slg)"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg></span>StaticLayer</p>
+      <p class="footer-brand"><span class="brand-mark" aria-hidden="true"><img src="icon.png" alt="" width="26" height="26"></span>StaticLayer</p>
       <p class="footer-tag">Comments for static sites — without the comment SaaS.</p>
     </div>
     <div class="footer-links">

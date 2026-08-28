@@ -1,4 +1,5 @@
 import { ADMIN_HTML, ADMIN_JS, POW_WORKER_JS, WIDGET_JS } from './static-content.ts';
+import { BRAND_ICON_BASE64 } from './static/brand-icon.ts';
 import { SECURITY_HEADERS } from './http.ts';
 
 /**
@@ -8,6 +9,7 @@ import { SECURITY_HEADERS } from './http.ts';
  *   /pow-worker.js   PoW Web Worker bundle     Cache-Control: public, max-age=3600
  *   /admin.html      admin UI (CSP, no-store)
  *   /admin.js        admin UI logic (no-store)
+ *   /icon.png        brand icon (96×96, base64-inlined)
  *
  * Content is inlined at build time by scripts/sync-static.mjs (generated
  * `static-content.ts`), so the Worker has zero external dependencies at
@@ -25,6 +27,18 @@ export const ADMIN_CSP =
 const PUBLIC_ASSET_HEADERS: Record<string, string> = {
   'access-control-allow-origin': '*',
 };
+
+let iconBody: ArrayBuffer | null = null;
+
+/** Decode the inlined base64 PNG once, then reuse the buffer. */
+function iconArrayBuffer(): ArrayBuffer {
+  if (iconBody) return iconBody;
+  const bin = atob(BRAND_ICON_BASE64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  iconBody = out.buffer;
+  return iconBody;
+}
 
 function staticAsset(
   content: string,
@@ -54,6 +68,15 @@ export function handleStatic(pathname: string): Response | null {
       });
     case '/admin.js':
       return staticAsset(ADMIN_JS, 'application/javascript; charset=utf-8', 'no-store');
+    case '/icon.png':
+      return new Response(iconArrayBuffer(), {
+        headers: {
+          'content-type': 'image/png',
+          'cache-control': 'public, max-age=3600',
+          ...SECURITY_HEADERS,
+          ...PUBLIC_ASSET_HEADERS,
+        },
+      });
     default:
       return null;
   }

@@ -31,6 +31,7 @@ import {
 } from './auth.ts';
 import { runInstallerDeployWorker } from './deploy-worker.ts';
 import { INDEX_HTML, APP_JS, NAV_JS } from './static-assets.ts';
+import { BRAND_ICON_BASE64 } from '../../../packages/runtime/src/static/brand-icon.ts';
 import type { ExportedHandler } from '@cloudflare/workers-types';
 
 const SESSION_TTL_MS = 30 * 60 * 1000;
@@ -170,6 +171,18 @@ async function readJson(request: Request, capBytes: number): Promise<Record<stri
 /* Routes                                                              */
 /* ------------------------------------------------------------------ */
 
+let brandIconBody: ArrayBuffer | null = null;
+
+/** Decode the inlined base64 PNG once, then reuse the buffer. */
+function brandIconBuffer(): ArrayBuffer {
+  if (brandIconBody) return brandIconBody;
+  const bin = atob(BRAND_ICON_BASE64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  brandIconBody = out.buffer;
+  return brandIconBody;
+}
+
 const worker: ExportedHandler<Env> = {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -187,6 +200,11 @@ const worker: ExportedHandler<Env> = {
     }
     if (url.pathname === '/nav.js') {
       return new Response(NAV_JS, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-store' } });
+    }
+    if (url.pathname === '/icon.png') {
+      return new Response(brandIconBuffer(), {
+        headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=3600' },
+      });
     }
 
     /* meta */

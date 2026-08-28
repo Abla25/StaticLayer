@@ -47,8 +47,8 @@
       var(--bg); } }
   .wrap { max-width:900px; margin:0 auto; padding:36px 20px 80px; }
   .brand { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
-  .brand .logo { width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center;
-    background:var(--acc-grad); box-shadow:var(--shadow-acc); flex:none; }
+  .brand .logo { width:44px; height:44px; display:flex; align-items:center; justify-content:center; flex:none; }
+  .brand .logo img { width:100%; height:100%; object-fit:contain; display:block; }
   .brand h1 { margin:0; font-size:18px; letter-spacing:-.4px; font-weight:750; }
   .brand .sub { margin:1px 0 0; font-size:12.5px; color:var(--muted); }
   .glass { backdrop-filter:blur(var(--blur)) saturate(1.4); -webkit-backdrop-filter:blur(var(--blur)) saturate(1.4);
@@ -226,7 +226,7 @@
   <section id="login-view" class="glass card login-card">
     <div class="brand login-brand">
       <div class="logo">
-        <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><g fill="#fff"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg>
+        <img src="/icon.png" alt="" width="44" height="44" aria-hidden="true">
       </div>
       <div><h1>StaticLayer</h1><p class="sub">Moderation console</p></div>
     </div>
@@ -260,7 +260,7 @@
     <div class="topbar">
       <div class="brand">
         <div class="logo">
-          <svg viewBox="0 0 64 64" width="24" height="24" aria-hidden="true"><g fill="#fff"><rect x="15" y="39" width="34" height="7" rx="3.5"/><rect x="15" y="30" width="27" height="7" rx="3.5" opacity="0.82"/><rect x="15" y="21" width="20" height="7" rx="3.5" opacity="0.64"/></g></svg>
+          <img src="/icon.png" alt="" width="44" height="44" aria-hidden="true">
         </div>
         <div><h1>StaticLayer</h1><p class="sub" id="whoami">Moderation console</p></div>
       </div>
