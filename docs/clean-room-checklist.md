@@ -36,7 +36,9 @@
       `<div data-staticlayer data-api="<worker-url>" data-article-id="/hello"></div>`
       and `<script src="<worker-url>/widget.js" defer></script>`.
 2. [ ] Visitor posts a comment → PoW spinner → "awaiting moderation".
-3. [ ] Admin opens `<worker-url>/admin.html`, signs in with `ADMIN_SECRET`.
+3. [ ] Admin opens `<worker-url>/admin.html`, signs in with `ADMIN_SECRET`
+      (or **"Sign in with GitHub"** when GitHub OAuth is configured — see the
+      in-app guide under Settings → Admin access & sign-in).
 4. [ ] Approve → the comment appears on the page on reload.
 5. [ ] The same article shows exactly ONE copy of the comment (anti-replay).
 

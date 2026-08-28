@@ -13,6 +13,15 @@ Cloudflare Worker + D1 runtime for StaticLayer.
 - `POST /api/admin/login` — timing-safe `ADMIN_SECRET` comparison; sets
   `__Host-StaticLayerSession` (Secure; HttpOnly; SameSite=Strict; Path=/; NO
   `Domain`); returns a 32-byte session-bound CSRF token.
+- `GET /api/admin/github` — `{ configured }` for the login screen.
+- `GET /api/admin/github/start` — 302 to GitHub with a signed 10-minute state
+  cookie (password-less "Sign in with GitHub"; free, no Zero Trust plan).
+- `GET /api/admin/github/callback` — verifies the state, exchanges the code,
+  checks the allowlist (`GITHUB_ADMIN_IDS` / `GITHUB_ADMIN_LOGINS`) and issues
+  the SAME admin session as password login. The GitHub token is used once and
+  discarded — never stored, no visitor data ever leaves the Worker.
+  (Cloudflare Access "Sign in with Cloudflare" — `/api/admin/access` — is also
+  supported.)
 - `GET/PATCH/DELETE /api/admin/comments[/:id]` — moderation queue (401 without
   session; PATCH/DELETE additionally require `X-CSRF-Token`, 403 on mismatch).
 - Static assets: `/widget.js`, `/pow-worker.js` (public, max-age=3600),

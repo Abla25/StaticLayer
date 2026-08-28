@@ -266,6 +266,30 @@ registration — see `docs/oauth-scopes.md` and
   (real RS256 keypair: valid/expired/wrong-issuer/wrong-audience/unknown-kid/
   tampered-sig/malformed; endpoint configured-flag + no-token → 401 + never a
   session cookie on failure).
+- **I18 — Admin "Sign in with GitHub" (OAuth) verifies state, allowlist and
+  issues the same admin session** (v1.7.0): when `GITHUB_CLIENT_ID` +
+  `GITHUB_CLIENT_SECRET` + an allowlist (`GITHUB_ADMIN_IDS` numeric ids and/or
+  `GITHUB_ADMIN_LOGINS`, case-insensitive) are set, the login screen shows
+  "Sign in with GitHub". `GET /api/admin/github/start` redirects (302) to
+  `github.com/login/oauth/authorize` with a `state` nonce and sets a signed
+  10-minute state cookie (`__Host-SL-OAuth = <state>.<HMAC-SESSION_SECRET>`);
+  `GET /api/admin/github/callback` verifies that cookie (HMAC + constant-time
+  state compare) — fail-closed, then exchanges the `code` (client_secret
+  POSTed directly, never exposed), fetches `api.github.com/user`, checks the
+  allowlist, and on success issues the SAME stateless admin session cookie as
+  password login (`method: 'github'` surfaced in `/api/admin/session`). The
+  GitHub access token is used ONCE and discarded — never stored, never logged,
+  never sent anywhere; GitHub sees only the operator's own login, no visitor
+  data ever leaves the Worker. Non-allowlisted users are redirected back with
+  `?github=denied` and NO session cookie. OAuth state cookie is cleared in
+  every callback outcome; start/callback are rate-limited (`login` key);
+  unconfigured → 501. The password path remains as fallback. Evidence:
+  `tests/security/github-auth.test.ts` (full flow with an in-Miniflare mock
+  worker via `GITHUB_OAUTH_SERVICE` service binding: configured flag, 501,
+  302 + signed state cookie, missing/invalid state → 401, happy path →
+  session passes `requireAdmin` with `method: github`, denied allowlist →
+  `?github=denied` no cookie, logins allowlist case-insensitive, GitHub code
+  rejection → 401).
 - Installer session cookie: HMAC-signed, HttpOnly, SameSite=Lax; constant-time
   verification (proven in `auth.test.ts`).
 - Deploy reuses the deployment-core engine verbatim: dry-run = plan only;

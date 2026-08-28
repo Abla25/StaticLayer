@@ -70,7 +70,12 @@ Each unique article ID gets its own moderated thread.
 
 ## 7 · Open the admin
 
-Visit `https://comments.example.com/admin.html`, sign in with `ADMIN_SECRET`.
+Visit `https://comments.example.com/admin.html` and sign in with `ADMIN_SECRET`
+(the password shown once at install). Password-less is optional and free:
+set `GITHUB_CLIENT_ID`, `GITHUB_ADMIN_IDS` (your GitHub numeric id) and the
+`GITHUB_CLIENT_SECRET` secret on the Worker, and the login also shows
+**"Sign in with GitHub"** — see the step-by-step guide in the admin console
+(*Settings → Admin access & sign-in*). The password stays as a fallback.
 The console shows one moderation queue for all articles: approve or delete
 pending comments. Approved comments appear on their article immediately.
 
