@@ -99,8 +99,8 @@ describe('installer deploy — dry run', () => {
         dryRun: false,
         githubClientId: 'Iv1.abc123',
         githubClientSecret: 'shh-client-secret',
-        githubAdminIds: '108115781',
-        githubAdminLogins: 'abla25',
+        githubAdminIds: '1234567',
+        githubAdminLogins: 'octocat',
       },
       apiFactory: () => api,
       workerCode: WORKER_CODE,
@@ -113,8 +113,8 @@ describe('installer deploy — dry run', () => {
       if (b.type === 'plain_text' && typeof b.name === 'string') varMap[b.name] = String((b as { text?: unknown }).text ?? '');
     }
     expect(varMap.GITHUB_CLIENT_ID).toBe('Iv1.abc123');
-    expect(varMap.GITHUB_ADMIN_IDS).toBe('108115781');
-    expect(varMap.GITHUB_ADMIN_LOGINS).toBe('abla25');
+    expect(varMap.GITHUB_ADMIN_IDS).toBe('1234567');
+    expect(varMap.GITHUB_ADMIN_LOGINS).toBe('octocat');
     // The client secret is a SECRET, not a var — it flows through the Bulk
     // Secrets API, never as a plain_text binding.
     expect(varMap.GITHUB_CLIENT_SECRET).toBeUndefined();

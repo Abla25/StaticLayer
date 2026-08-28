@@ -72,7 +72,7 @@ export default {
     if (url.pathname === '/user') {
       const status = typeof env.MOCK_USER_STATUS === 'number' ? env.MOCK_USER_STATUS : 200;
       return new Response(
-        JSON.stringify(env.MOCK_USER_JSON ?? { id: 108115781, login: 'Abla25' }),
+        JSON.stringify(env.MOCK_USER_JSON ?? { id: 1234567, login: 'octocat' }),
         { status, headers },
       );
     }

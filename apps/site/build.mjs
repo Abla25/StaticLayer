@@ -38,6 +38,15 @@ function resolveBase() {
 }
 const BASE = resolveBase();
 
+// Canonical domain: SITE_URL wins, else derive the GitHub Pages URL from
+// GITHUB_REPOSITORY (owner.github.io), else fall back (local builds only).
+const DOMAIN = (
+  process.env.SITE_URL ||
+  (process.env.GITHUB_REPOSITORY
+    ? `https://${process.env.GITHUB_REPOSITORY.split('/')[0]}.github.io`
+    : 'https://example.com')
+).replace(/\/+$/, '');
+
 // --- front matter helpers --------------------------------------------------
 const FM = {
   title: /<!--\s*title:\s*(.+?)\s*-->/,
@@ -78,7 +87,7 @@ function layout({ title, description, body, active, withSimulator, withHeroWidge
 <title>${title}</title>
 <meta name="description" content="${description}">
 <meta name="keywords" content="${siteConfig.keywords.join(', ')}">
-<link rel="canonical" href="${process.env.SITE_URL || 'https://example.com'}${BASE}${slug}">
+<link rel="canonical" href="${DOMAIN}${BASE}${slug}">
 <meta property="og:type" content="website">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
@@ -89,6 +98,28 @@ function layout({ title, description, body, active, withSimulator, withHeroWidge
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${description}">
 <meta name="twitter:image" content="${BASE}og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "StaticLayer",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Any",
+  "description": ${JSON.stringify(description)},
+  "url": "${DOMAIN}${BASE}",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "publisher": { "@type": "Organization", "name": "StaticLayer" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "StaticLayer",
+  "url": "${DOMAIN}${BASE}",
+  "description": ${JSON.stringify(description)}
+}
+</script>
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="${BASE}favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="${BASE}apple-touch-icon.png">
@@ -227,7 +258,7 @@ for (const file of pages) {
 }
 
 // sitemap.xml + robots.txt
-const domain = (process.env.SITE_URL || 'https://example.com').replace(/\/+$/, '');
+const domain = DOMAIN;
 writeFileSync(
   join(OUT, 'sitemap.xml'),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${slugs

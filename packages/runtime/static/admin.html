@@ -410,7 +410,7 @@
               <li><b>Authorization callback URL</b>: <code id="github-callback">…</code> — this exact URL.</li>
               <li>Click <b>Register application</b>, then copy the <b>Client ID</b> shown on the page.</li>
               <li>Click <b>Generate a new client secret</b>, then copy the <b>Client secret</b> (shown only once).</li>
-              <li>Find your GitHub numeric user id: open <code>https://api.github.com/users/<i>your-login</i></code> — copy the <code>"id"</code> number (e.g. <code>108115781</code>).</li>
+              <li>Find your GitHub numeric user id: open <code>https://api.github.com/users/<i>your-login</i></code> — copy the <code>"id"</code> number (e.g. <code>1234567</code>).</li>
               <li>Set the Worker vars: <code>GITHUB_CLIENT_ID</code> = the Client ID, <code>GITHUB_ADMIN_IDS</code> = your numeric id (or <code>GITHUB_ADMIN_LOGINS</code> = your login). Set <code>GITHUB_CLIENT_SECRET</code> as a <b>secret</b>: <code>npx wrangler secret put GITHUB_CLIENT_SECRET</code> (or in the dashboard: your Worker → <b>Settings</b> → <b>Variables</b> → <b>Edit</b> → add as a secret).</li>
               <li>Re-deploy (hosted installer or <code>npx wrangler deploy</code>), then refresh this page: the login shows <b>"Sign in with GitHub"</b>. Only accounts in your allowlist can open the console.</li>
             </ol>

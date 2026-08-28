@@ -61,7 +61,7 @@ export interface Env {
   GITHUB_CLIENT_ID?: string;
   /** GitHub OAuth App Client Secret — store with `wrangler secret put`. */
   GITHUB_CLIENT_SECRET?: string;
-  /** Comma-separated GitHub user IDs allowed to sign in, e.g. "108115781". */
+  /** Comma-separated GitHub user IDs allowed to sign in, e.g. "1234567". */
   GITHUB_ADMIN_IDS?: string;
   /** Comma-separated GitHub logins allowed to sign in (case-insensitive). */
   GITHUB_ADMIN_LOGINS?: string;

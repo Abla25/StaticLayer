@@ -20,7 +20,7 @@ const BASE = 'http://localhost';
 const GITHUB_ENV = {
   GITHUB_CLIENT_ID: 'client-abc123',
   GITHUB_CLIENT_SECRET: 'secret-xyz789',
-  GITHUB_ADMIN_IDS: '108115781',
+  GITHUB_ADMIN_IDS: '1234567',
 };
 
 let mf: Miniflare | undefined;
@@ -173,8 +173,8 @@ describe('github oauth callback', () => {
 
   it('allows sign-in via GITHUB_ADMIN_LOGINS (case-insensitive)', async () => {
     const worker = await spawnWithMock({
-      userJson: { id: 123, login: 'Abla25' },
-      env: { GITHUB_ADMIN_IDS: '', GITHUB_ADMIN_LOGINS: 'abla25' },
+      userJson: { id: 987654, login: 'OctoCat' },
+      env: { GITHUB_ADMIN_IDS: '', GITHUB_ADMIN_LOGINS: 'octocat' },
     });
     const { origin, state, stateCookie } = await startAndExtract(worker);
     const callback = await fetch(`${origin}/api/admin/github/callback?code=abc&state=${state}`, {
