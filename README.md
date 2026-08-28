@@ -51,6 +51,7 @@ StaticLayer is a source-available, Cloudflare-native comment system designed for
 - 🧑‍💼 **Moderation queue** — new comments are `pending` until an admin approves them.
 - 🔒 **XSS-safe** — comments are **plain text only** (no Markdown, no HTML). Rendered exclusively with `textContent`.
 - 🔐 **CSRF-safe admin** — session-bound, constant-time-verified tokens.
+- 👤 **Password-less admin sign-in (v1.7)** — optional **"Sign in with GitHub"** via OAuth: free, no credit card, no Zero Trust plan. The GitHub token is used once to read your id and discarded — never stored; the allowlist (`GITHUB_ADMIN_IDS` / `GITHUB_ADMIN_LOGINS`) decides who can open the console. The password stays as a fallback. (Cloudflare Access — "Sign in with Cloudflare" — is also supported.)
 - 🕵️ **No tracking** — the public widget sets no cookies and stores nothing in the browser.
 - 🔁 **Idempotent, verifiable deploys** — a Desired State Engine observes → plans → applies → verifies. It never fails silently.
 - 🔔 **Telegram alerts (optional)** — get a private notification when a comment awaits moderation; GDPR-minimal (no comment data in the message), configured from the admin panel.

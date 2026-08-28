@@ -1,6 +1,6 @@
 {
-  "latest": "1.6.3",
+  "latest": "1.7.0",
   "date": "2026-08-28",
-  "notes": "v1.6.3 — Fix: multi-select polls now accept a SINGLE selected option (the widget always sends an \"options\" array for multi polls, even with one choice — previously it sent a bare \"option\" string and the server correctly rejected it with 400).",
+  "notes": "v1.7.0 — Password-less admin sign-in with GitHub OAuth: free, no credit card, no Zero Trust plan. Create a GitHub OAuth App, set GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET / GITHUB_ADMIN_IDS on your Worker (step-by-step guide in Settings → Admin access & sign-in), and the admin login shows \"Sign in with GitHub\". The token is used once and discarded; the password stays as a fallback.",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }

@@ -110,7 +110,7 @@ describe('admin session restore + telegram settings API', () => {
     const { cookie, csrf } = await login();
     const authed = await mf.dispatchFetch(`${BASE}/api/admin/session`, { headers: { cookie } });
     expect(authed.status).toBe(200);
-    expect(await authed.json()).toEqual({ authed: true, csrf });
+    expect(await authed.json()).toEqual({ authed: true, csrf, method: 'password' });
   });
 
   it('persists telegram settings via the admin API (roundtrip)', async () => {

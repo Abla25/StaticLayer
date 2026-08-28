@@ -59,14 +59,19 @@
   var adminView = document.getElementById('admin-view');
   var loginForm = document.getElementById('login-form');
   var loginStatus = document.getElementById('login-status');
-  var accessBtn = document.getElementById('access-btn');
-  var accessDivider = document.getElementById('access-divider');
+  var githubBtn = document.getElementById('github-btn');
+  var githubDivider = document.getElementById('github-divider');
+  var githubSetup = document.getElementById('github-setup');
 
   function showApp(me) {
     loginView.classList.add('hidden');
     adminView.classList.remove('hidden');
-    if (me && me.email && me.via === 'cloudflare-access') {
-      document.getElementById('whoami').textContent = 'Signed in via Cloudflare as ' + me.email;
+    if (me) {
+      if (me.method === 'github') {
+        document.getElementById('whoami').textContent = 'Signed in via GitHub';
+      } else if (me.via === 'cloudflare-access' && me.email) {
+        document.getElementById('whoami').textContent = 'Signed in via Cloudflare as ' + me.email;
+      }
     }
     loadPages();
     loadQueue();
@@ -77,7 +82,7 @@
   // lets the keychain save it after the POST reload below).
   api('/api/admin/session', { csrf: false })
     .then(function (data) {
-      if (data && data.authed) { csrf = data.csrf; showApp(null); }
+      if (data && data.authed) { csrf = data.csrf; showApp(data); }
     })
     .catch(function () { /* not signed in */ });
 
@@ -108,22 +113,36 @@
       .catch(function () { showStatus(loginStatus, 'Incorrect password.', true); });
   });
 
-  accessBtn.addEventListener('click', function () {
-    showStatus(loginStatus, 'Verifying Cloudflare session…');
-    api('/api/admin/access', { method: 'POST', csrf: false })
-      .then(function (data) {
-        csrf = data.csrf;
-        showApp(data);
-      })
-      .catch(function (err) { showStatus(loginStatus, 'Cloudflare sign-in failed: ' + err.message, true); });
-  });
-
-  // Hide the Cloudflare button when Access is not configured.
-  api('/api/admin/access', { method: 'GET', csrf: false })
+  // Show the GitHub button only when GitHub sign-in is configured; otherwise
+  // show the short setup hint so the operator can enable it from here.
+  api('/api/admin/github', { method: 'GET', csrf: false })
     .then(function (data) {
-      if (!data.configured) { accessBtn.classList.add('hidden'); accessDivider.classList.add('hidden'); }
+      var origin = location.origin;
+      var el = document.getElementById('github-origin-login');
+      if (el) el.textContent = origin;
+      el = document.getElementById('github-callback-login');
+      if (el) el.textContent = origin + '/api/admin/github/callback';
+      if (data && data.configured) {
+        githubSetup.classList.add('hidden');
+      } else {
+        githubBtn.classList.add('hidden');
+        githubDivider.classList.add('hidden');
+        githubSetup.classList.remove('hidden');
+      }
     })
-    .catch(function () { /* keep visible; harmless */ });
+    .catch(function () {
+      githubBtn.classList.add('hidden');
+      githubDivider.classList.add('hidden');
+    });
+
+  // One-line notice when GitHub redirects back after the OAuth dance.
+  (function () {
+    var q = new URLSearchParams(window.location.search);
+    var outcome = q.get('github');
+    if (outcome === 'signed-in') { showStatus(loginStatus, 'Signed in with GitHub — welcome back.'); }
+    else if (outcome === 'denied') { showStatus(loginStatus, 'This GitHub account is not in the admin allowlist.', true); }
+    if (outcome) { history.replaceState(null, '', window.location.pathname); }
+  })();
 
   document.getElementById('signout').addEventListener('click', function () {
     api('/api/admin/logout', { method: 'POST', csrf: false }).catch(function () {});
@@ -593,17 +612,24 @@
         document.getElementById('set-owner-nick').value = s.owner_nickname || 'Site owner';
       })
       .catch(function (err) { showStatus(document.getElementById('settings-status'), 'Error: ' + err.message, true); });
-    // Show the step-by-step Cloudflare Access guide only when Access is not
-    // configured yet.
-    api('/api/admin/access', { csrf: false })
+    // Fill this Worker's URLs into the GitHub step-by-step guide and show a
+    // small configured / not-configured status at the top.
+    api('/api/admin/github', { csrf: false })
       .then(function (data) {
-        var guide = document.getElementById('access-guide');
+        var guide = document.getElementById('github-guide');
         if (guide) {
-          guide.classList.toggle('hidden', !!(data && data.configured));
-          document.getElementById('access-domain').textContent = location.origin;
+          document.getElementById('github-origin').textContent = location.origin;
+          document.getElementById('github-callback').textContent = location.origin + '/api/admin/github/callback';
+          var badge = document.createElement('p');
+          badge.className = 'lsub';
+          badge.style.cssText = 'margin:0 0 10px;padding:8px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-weight:600';
+          badge.textContent = data && data.configured
+            ? '\u2713 GitHub sign-in is configured \u2014 refresh the login screen to use "Sign in with GitHub".'
+            : 'Not configured yet \u2014 follow the steps below, then re-deploy and refresh.';
+          guide.insertBefore(badge, guide.firstChild);
         }
       })
-      .catch(function () { /* keep guide hidden on errors */ });
+      .catch(function () { /* keep the guide as-is on errors */ });
   }
   document.getElementById('settings-save').addEventListener('click', function () {
     var payload = {

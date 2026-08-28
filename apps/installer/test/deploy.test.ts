@@ -88,6 +88,39 @@ describe('installer deploy — dry run', () => {
     expect(varMap.CF_ACCESS_AUD).toBe('aud-123');
   });
 
+  it('pre-configures GitHub OAuth vars and stores the client secret as a secret', async () => {
+    const api = makeApi();
+    const result = await runInstallerDeploy({
+      accessToken: 'tok-1',
+      input: {
+        ...baseInput,
+        workerName: 'pc',
+        databaseName: 'pc-db',
+        dryRun: false,
+        githubClientId: 'Iv1.abc123',
+        githubClientSecret: 'shh-client-secret',
+        githubAdminIds: '108115781',
+        githubAdminLogins: 'abla25',
+      },
+      apiFactory: () => api,
+      workerCode: WORKER_CODE,
+      generateSecrets: fixedSecrets,
+    });
+    expect(result.alreadyInSync).toBe(false);
+    const bindings = api.lastDeployRequest?.metadata?.bindings ?? [];
+    const varMap: Record<string, string> = {};
+    for (const b of bindings) {
+      if (b.type === 'plain_text' && typeof b.name === 'string') varMap[b.name] = String((b as { text?: unknown }).text ?? '');
+    }
+    expect(varMap.GITHUB_CLIENT_ID).toBe('Iv1.abc123');
+    expect(varMap.GITHUB_ADMIN_IDS).toBe('108115781');
+    expect(varMap.GITHUB_ADMIN_LOGINS).toBe('abla25');
+    // The client secret is a SECRET, not a var — it flows through the Bulk
+    // Secrets API, never as a plain_text binding.
+    expect(varMap.GITHUB_CLIENT_SECRET).toBeUndefined();
+    expect(result.actions).toContain('Bind secret "GITHUB_CLIENT_SECRET" to "pc"');
+  });
+
   it('pre-configures ALLOWED_ORIGINS (CORS) from the site URL', async () => {
     const api = makeApi();
     await runInstallerDeploy({

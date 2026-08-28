@@ -237,9 +237,20 @@
       <input type="password" id="password" name="password" autocomplete="current-password" required>
       <div class="row mt"><button type="submit" class="btn">Sign in</button></div>
     </form>
-    <div class="divider" id="access-divider">or</div>
-    <div class="row" id="access-row">
-      <button id="access-btn" class="btn ghost" style="width:100%">Sign in with Cloudflare</button>
+    <div class="divider" id="github-divider">or</div>
+    <div class="row" id="github-row">
+      <a id="github-btn" class="btn ghost" style="width:100%" href="/api/admin/github/start">Sign in with GitHub</a>
+    </div>
+    <div id="github-setup" class="hidden" style="margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)">
+      <h4 style="margin:0 0 8px;font-size:13px">Sign in with GitHub (password-less)</h4>
+      <p class="lsub">Free, no credit card, no Zero Trust plan. Create a GitHub OAuth App, set 4 Worker vars once, and from then on this button signs you in without a password.</p>
+      <ol class="guide-list">
+        <li>GitHub → <b>Settings</b> → <b>Developer settings</b> → <b>OAuth Apps</b> → <b>New OAuth App</b>.</li>
+        <li>Homepage URL: <code id="github-origin-login">…</code></li>
+        <li>Authorization callback URL: <code id="github-callback-login">…</code></li>
+        <li>Set <code>GITHUB_CLIENT_ID</code>, <code>GITHUB_CLIENT_SECRET</code>, <code>GITHUB_ADMIN_IDS</code> (your GitHub numeric id) on the Worker and re-deploy.</li>
+      </ol>
+      <p class="lsub">Full step-by-step guide: sign in with your password once → <b>Settings</b> → <b>Admin access &amp; sign-in</b>.</p>
     </div>
     <p id="login-status" class="status"></p>
   </section>
@@ -388,19 +399,22 @@
       <div class="settings-form" style="margin-top:22px">
         <div class="list-panel">
           <h3>Admin access &amp; sign-in</h3>
-          <p class="lsub">Password-less login with Cloudflare Access is built in: protect <code>/admin.html</code> with an Access application and set the Worker var <code>CF_ACCESS_TEAM</code> (optionally <code>CF_ACCESS_AUD</code>) — the login screen then shows <b>"Sign in with Cloudflare"</b> and you never type a password. The hosted installer offers this in step 3.</p>
-          <p class="lsub"><b>Lost the admin password?</b> With Cloudflare Access enabled, just sign in with Cloudflare. Otherwise rotate it: <code>npx wrangler secret put ADMIN_SECRET</code> (you choose the new value) — or reinstall fresh. Re-running the installer preserves your existing secrets (including the current password) by design.</p>
-          <div id="access-guide" class="hidden" style="margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)">
-            <h4 style="margin:0 0 8px;font-size:13px">Set up Cloudflare Access — step by step</h4>
+          <p class="lsub">Password-less login with <b>GitHub OAuth</b> is built in and free — no Cloudflare Zero Trust plan, no credit card, and no password to remember after the first setup. Create a GitHub OAuth App once, set 4 Worker vars, and the login screen shows <b>"Sign in with GitHub"</b>. Your admin password stays as a fallback and is never sent to GitHub.</p>
+          <p class="lsub"><b>Lost the admin password?</b> Once GitHub sign-in is configured, just click "Sign in with GitHub". Otherwise rotate it: <code>npx wrangler secret put ADMIN_SECRET</code> (you choose the new value) — or reinstall fresh. Re-running the installer preserves your existing secrets (including the current password) by design.</p>
+          <div id="github-guide" style="margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)">
+            <h4 style="margin:0 0 8px;font-size:13px">Set up GitHub sign-in — step by step</h4>
             <ol class="guide-list">
-              <li>Open <code>dash.cloudflare.com</code> → your account → <b>Zero Trust</b> → <b>Access</b> → <b>Applications</b>.</li>
-              <li>Click <b>Add an application</b> → <b>Self-hosted</b>.</li>
-              <li>Application domain: your Worker URL — <code id="access-domain">…</code> (and optionally your custom domain).</li>
-              <li>Policy: give it a name (e.g. "StaticLayer admin"), action <b>Allow</b>, include <b>Emails</b> → your email (or a group you manage).</li>
-              <li>Save the application. Then, in <b>Access → Service Auth</b>, copy the <b>Audience tag</b> of the app (optional but recommended).</li>
-              <li>Set the Worker vars (re-run the hosted installer, or in the dashboard: your Worker → <b>Settings</b> → <b>Variables</b>): <code>CF_ACCESS_TEAM</code> = your team name — the part before <code>.cloudflareaccess.com</code> in your Zero Trust URL — and optionally <code>CF_ACCESS_AUD</code> = the audience tag.</li>
-              <li>Re-deploy (installer) or save, then refresh this page: the login shows <b>"Sign in with Cloudflare"</b>. Only your email (or group) can open the console.</li>
+              <li>Open <code>github.com</code> → your avatar → <b>Settings</b> → <b>Developer settings</b> (bottom of the sidebar) → <b>OAuth Apps</b> → <b>New OAuth App</b>.</li>
+              <li><b>Application name</b>: anything, e.g. "StaticLayer admin".</li>
+              <li><b>Homepage URL</b>: <code id="github-origin">…</code></li>
+              <li><b>Authorization callback URL</b>: <code id="github-callback">…</code> — this exact URL.</li>
+              <li>Click <b>Register application</b>, then copy the <b>Client ID</b> shown on the page.</li>
+              <li>Click <b>Generate a new client secret</b>, then copy the <b>Client secret</b> (shown only once).</li>
+              <li>Find your GitHub numeric user id: open <code>https://api.github.com/users/<i>your-login</i></code> — copy the <code>"id"</code> number (e.g. <code>108115781</code>).</li>
+              <li>Set the Worker vars: <code>GITHUB_CLIENT_ID</code> = the Client ID, <code>GITHUB_ADMIN_IDS</code> = your numeric id (or <code>GITHUB_ADMIN_LOGINS</code> = your login). Set <code>GITHUB_CLIENT_SECRET</code> as a <b>secret</b>: <code>npx wrangler secret put GITHUB_CLIENT_SECRET</code> (or in the dashboard: your Worker → <b>Settings</b> → <b>Variables</b> → <b>Edit</b> → add as a secret).</li>
+              <li>Re-deploy (hosted installer or <code>npx wrangler deploy</code>), then refresh this page: the login shows <b>"Sign in with GitHub"</b>. Only accounts in your allowlist can open the console.</li>
             </ol>
+            <p class="lsub" style="margin-top:8px">Privacy: GitHub sees only <i>your</i> login — the identity provider you chose. The token is used once to read your id and is then discarded, never stored. No visitor data ever leaves your Worker.</p>
           </div>
         </div>
       </div>

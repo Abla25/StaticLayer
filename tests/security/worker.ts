@@ -36,7 +36,49 @@ export interface WorkerOptions {
   reactionOptions?: string;
   /** Skip applying migrations/*.sql — leaves the D1 database completely empty (installer scenario). */
   skipMigrations?: boolean;
+  /**
+   * When set, a second "github-mock" Worker is spawned and exposed to the
+   * runtime as the GITHUB_OAUTH_SERVICE service binding, stubbing GitHub's
+   * OAuth endpoints without any network (no outbound fetch needed).
+   */
+  mockGithub?: {
+    tokenJson?: unknown;
+    userJson?: unknown;
+    tokenStatus?: number;
+    userStatus?: number;
+    /** When set, the mock rejects token exchanges whose body `code` differs. */
+    expectCode?: string;
+  };
 }
+
+/** Inline mock Worker for the GitHub OAuth endpoints (see mockGithub option). */
+const GITHUB_MOCK_SCRIPT = `
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const headers = { 'content-type': 'application/json' };
+    if (url.pathname === '/login/oauth/access_token') {
+      let body = null;
+      try { body = await request.json(); } catch {}
+      if (env.MOCK_EXPECT_CODE && (!body || body.code !== env.MOCK_EXPECT_CODE)) {
+        return new Response(JSON.stringify({ error: 'bad_verification_code' }), { status: 401, headers });
+      }
+      const status = typeof env.MOCK_TOKEN_STATUS === 'number' ? env.MOCK_TOKEN_STATUS : 200;
+      return new Response(
+        JSON.stringify(env.MOCK_TOKEN_JSON ?? { access_token: 'gho_fake_token', token_type: 'bearer' }),
+        { status, headers },
+      );
+    }
+    if (url.pathname === '/user') {
+      const status = typeof env.MOCK_USER_STATUS === 'number' ? env.MOCK_USER_STATUS : 200;
+      return new Response(
+        JSON.stringify(env.MOCK_USER_JSON ?? { id: 108115781, login: 'Abla25' }),
+        { status, headers },
+      );
+    }
+    return new Response('{"error":"not mocked"}', { status: 404, headers });
+  }
+}`;
 // Passed INLINE via `script:` (not `scriptPath:`): in the installed Miniflare
 // v4, loading a bundled file through `scriptPath` fails with an opaque workerd
 // "internal error", while inline `script:` works (verified 2026-08-26,
@@ -87,23 +129,45 @@ export async function spawnWorker(
   if (options.reactionIntervalSeconds !== undefined) bindings.REACTION_MIN_INTERVAL_SECONDS = options.reactionIntervalSeconds;
   if (options.reactionOptions !== undefined) bindings.REACTION_OPTIONS = options.reactionOptions;
 
-  const mf = new Miniflare(
-    convertV4MiniflareOptions({
-      workers: [
-        {
-          name: 'staticlayer',
-          modules: true,
-          script,
-          compatibilityDate: '2026-08-26',
-          bindings,
-          ...(options.withRateLimiter
-            ? { ratelimits: { RATE_LIMITER: { namespace_id: '1', simple: { limit: 1000, period: 60 } } } }
-            : {}),
-          d1Databases: { DB: 'staticlayer-test' },
-        },
-      ],
-    }),
-  );
+  const converted = convertV4MiniflareOptions({
+    workers: [
+      {
+        name: 'staticlayer',
+        modules: true,
+        script,
+        compatibilityDate: '2026-08-26',
+        bindings,
+        ...(options.withRateLimiter
+          ? { ratelimits: { RATE_LIMITER: { namespace_id: '1', simple: { limit: 1000, period: 60 } } } }
+          : {}),
+        ...(options.mockGithub
+          ? { serviceBindings: { GITHUB_OAUTH_SERVICE: 'github-mock' } }
+          : {}),
+        d1Databases: { DB: 'staticlayer-test' },
+      },
+      ...(options.mockGithub
+        ? [
+            {
+              name: 'github-mock',
+              modules: true,
+              script: GITHUB_MOCK_SCRIPT,
+              compatibilityDate: '2026-08-26',
+              bindings: Object.fromEntries(
+                Object.entries({
+                  MOCK_TOKEN_JSON: options.mockGithub.tokenJson,
+                  MOCK_USER_JSON: options.mockGithub.userJson,
+                  MOCK_TOKEN_STATUS: options.mockGithub.tokenStatus,
+                  MOCK_USER_STATUS: options.mockGithub.userStatus,
+                  MOCK_EXPECT_CODE: options.mockGithub.expectCode,
+                }).filter(([, v]) => v !== undefined),
+              ),
+            },
+          ]
+        : []),
+    ],
+  });
+
+  const mf = new Miniflare(converted);
 
   const db = await mf.getD1Database('DB');
   if (!options.skipMigrations) await applyMigrations(db);

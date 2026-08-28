@@ -54,7 +54,10 @@ export async function handleAdminLogin(request: Request, env: Env): Promise<Resp
   // double-submit CSRF token (Phase 2, SECURITY_REVIEW.md I9).
   const csrf = bytesToBase64Url(randomBytes(32));
 
-  const token = await signSession({ sub: 'admin', iat: nowSec, exp: nowSec + ttl, csrf }, env.SESSION_SECRET);
+  const token = await signSession(
+    { sub: 'admin', iat: nowSec, exp: nowSec + ttl, csrf, method: 'password' },
+    env.SESSION_SECRET,
+  );
 
   // __Host- prefix: Secure + Path=/ + NO Domain (RFC 6265bis).
   const cookie = `__Host-StaticLayerSession=${token}; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=${ttl}`;
@@ -76,5 +79,5 @@ export function handleAdminLogout(): Response {
 export async function handleAdminSession(request: Request, env: Env): Promise<Response> {
   const auth = await requireAdmin(request, env);
   if (!auth.ok) return json({ authed: false });
-  return json({ authed: true, csrf: auth.payload.csrf });
+  return json({ authed: true, csrf: auth.payload.csrf, method: auth.payload.method });
 }

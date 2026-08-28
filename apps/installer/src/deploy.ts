@@ -46,6 +46,14 @@ export interface InstallerInput {
   cfAccessTeam?: string;
   /** Optional Access Application AUID enforced in the JWT `aud` claim. */
   cfAccessAud?: string;
+  /** Optional GitHub OAuth App Client ID — enables "Sign in with GitHub" in the admin. */
+  githubClientId?: string;
+  /** Optional comma-separated GitHub user ids allowed to sign in (GITHUB_ADMIN_IDS). */
+  githubAdminIds?: string;
+  /** Optional comma-separated GitHub logins allowed to sign in (GITHUB_ADMIN_LOGINS). */
+  githubAdminLogins?: string;
+  /** Optional GitHub OAuth App Client Secret — stored as a secret (GITHUB_CLIENT_SECRET). */
+  githubClientSecret?: string;
   /** Optional site URL — pre-configures ALLOWED_ORIGINS (CORS) for the widget. */
   siteUrl?: string;
   dryRun: boolean;
@@ -125,6 +133,16 @@ export async function runInstallerDeploy(
   if (team) config.vars.CF_ACCESS_TEAM = team;
   const aud = options.input.cfAccessAud?.trim();
   if (aud) config.vars.CF_ACCESS_AUD = aud;
+  // Guided GitHub OAuth: pre-configure the vars so the admin login shows
+  // "Sign in with GitHub" (client secret is stored as a Worker secret).
+  const githubClientId = options.input.githubClientId?.trim();
+  if (githubClientId) config.vars.GITHUB_CLIENT_ID = githubClientId;
+  const githubAdminIds = options.input.githubAdminIds?.trim();
+  if (githubAdminIds) config.vars.GITHUB_ADMIN_IDS = githubAdminIds;
+  const githubAdminLogins = options.input.githubAdminLogins?.trim();
+  if (githubAdminLogins) config.vars.GITHUB_ADMIN_LOGINS = githubAdminLogins;
+  const githubClientSecret = options.input.githubClientSecret?.trim();
+  if (githubClientSecret) config.secrets.push('GITHUB_CLIENT_SECRET');
   // Site URL -> CORS allowlist so the widget can call this Worker from the site.
   const siteUrl = normalizeSiteUrl(options.input.siteUrl);
   if (siteUrl) config.vars.ALLOWED_ORIGINS = siteUrl;
@@ -141,6 +159,7 @@ export async function runInstallerDeploy(
   // empty map (the engine never applies). On a real apply the values flow
   // exclusively into the Bulk Secrets API request — never to the caller.
   const secretValues = options.input.dryRun ? {} : (options.generateSecrets ?? generateSecrets)();
+  if (githubClientSecret) secretValues.GITHUB_CLIENT_SECRET = githubClientSecret;
   const desired: DesiredState = { ...config, workerCode, secretValues };
 
   const api =

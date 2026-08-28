@@ -12,6 +12,22 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Password-less admin sign-in with GitHub OAuth (1.7.0)** — optional "Sign
+  in with GitHub" in the admin console: no Cloudflare Zero Trust plan, no
+  credit card, no password to remember. New Worker vars
+  `GITHUB_CLIENT_ID`, `GITHUB_ADMIN_IDS` / `GITHUB_ADMIN_LOGINS` (allowlist)
+  and secret `GITHUB_CLIENT_SECRET`; new endpoints
+  `GET /api/admin/github` (status), `GET /api/admin/github/start` (302 to
+  GitHub with a signed, 10-minute state cookie) and
+  `GET /api/admin/github/callback` (state verification → code exchange →
+  allowlist check → same stateless HMAC admin session). The GitHub token is
+  used once to read the operator's id and discarded — never stored; no
+  visitor data ever leaves the Worker. The password stays as a fallback.
+  The admin console now shows a step-by-step setup guide (Settings → Admin
+  access & sign-in) and the hosted installer accepts the GitHub Client ID /
+  Secret / user id during the review step.
+
 ### Fixed
 - **Multi polls with ONE selected option (1.6.3)** — the widget now sends an
   `options` array for multi-select polls even when a single choice is selected

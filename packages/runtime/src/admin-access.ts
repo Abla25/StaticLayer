@@ -179,7 +179,10 @@ export async function handleAdminAccessLogin(request: Request, env: Env): Promis
   const ttl = envNumber(env.SESSION_TTL_SECONDS, DEFAULTS.SESSION_TTL_SECONDS);
   const nowSec = Math.floor(Date.now() / 1000);
   const csrf = bytesToBase64Url(randomBytes(32));
-  const session = await signSession({ sub: 'admin', iat: nowSec, exp: nowSec + ttl, csrf }, env.SESSION_SECRET);
+  const session = await signSession(
+    { sub: 'admin', iat: nowSec, exp: nowSec + ttl, csrf, method: 'cloudflare' },
+    env.SESSION_SECRET,
+  );
   const cookie = `__Host-StaticLayerSession=${session}; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=${ttl}`;
 
   return json({ csrf, email: verified.email, via: 'cloudflare-access' }, 200, { 'set-cookie': cookie });

@@ -410,6 +410,18 @@ async function route(req: IncomingMessage, res: ServerResponse, url: URL): Promi
           : undefined,
       cfAccessTeam: typeof body.cfAccessTeam === 'string' && body.cfAccessTeam.trim() ? body.cfAccessTeam.trim() : undefined,
       cfAccessAud: typeof body.cfAccessAud === 'string' && body.cfAccessAud.trim() ? body.cfAccessAud.trim() : undefined,
+      githubClientId:
+        typeof body.githubClientId === 'string' && body.githubClientId.trim() ? body.githubClientId.trim() : undefined,
+      githubClientSecret:
+        typeof body.githubClientSecret === 'string' && body.githubClientSecret.trim()
+          ? body.githubClientSecret.trim()
+          : undefined,
+      githubAdminIds:
+        typeof body.githubAdminIds === 'string' && body.githubAdminIds.trim() ? body.githubAdminIds.trim() : undefined,
+      githubAdminLogins:
+        typeof body.githubAdminLogins === 'string' && body.githubAdminLogins.trim()
+          ? body.githubAdminLogins.trim()
+          : undefined,
       siteUrl: typeof body.siteUrl === 'string' && body.siteUrl.trim() ? body.siteUrl.trim() : undefined,
       dryRun,
     };

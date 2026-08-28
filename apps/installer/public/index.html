@@ -383,6 +383,14 @@
       <label for="cf-access-aud">Access application AUID <span style="font-weight:400">(optional — hardens the login)</span></label>
       <input id="cf-access-aud" placeholder="your-access-app-uid">
       <div class="note">How it works: protect <code>/admin.html</code> with a Cloudflare Access app (Zero Trust) in your account, then add the team name here. Cloudflare verifies who you are — StaticLayer never sees your Cloudflare password. The admin password is still shown once as a fallback.</div>
+      <div class="divider"><span>GitHub sign-in — free &amp; password-less</span></div>
+      <label for="gh-client-id">GitHub OAuth App Client ID <span style="font-weight:400">(optional — enables "Sign in with GitHub"; no credit card, no Zero Trust plan)</span></label>
+      <input id="gh-client-id" placeholder="e.g. Iv1.xxxxxxxxxxxxxxxx">
+      <label for="gh-client-secret">GitHub OAuth App Client Secret <span style="font-weight:400">(stored as a Worker secret)</span></label>
+      <input id="gh-client-secret" type="password" placeholder="your-client-secret">
+      <label for="gh-admin-ids">Your GitHub user id <span style="font-weight:400">(allowlist — find it at <code>api.github.com/users/&lt;your-login&gt;</code> → <code>"id"</code>)</span></label>
+      <input id="gh-admin-ids" placeholder="e.g. 108115781">
+      <div class="note">Create a free OAuth App on GitHub (<b>Settings → Developer settings → OAuth Apps</b>) with the Authorization callback URL <code>&lt;your-worker&gt;/api/admin/github/callback</code>, then paste the Client ID / Secret and your numeric user id here. GitHub only ever sees your own login — no visitor data ever leaves your Worker. The full step-by-step guide lives in the admin console → <b>Settings → Admin access &amp; sign-in</b>.</div>
       <div class="divider"><span>Your site — recommended</span></div>
       <label for="site-url">Your site URL <span style="font-weight:400">(recommended — lets the widget call this Worker from your site)</span></label>
       <div class="row">

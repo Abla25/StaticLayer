@@ -26,6 +26,8 @@ export interface SessionPayload {
   iat: number;
   exp: number;
   csrf: string;
+  /** Optional sign-in method, surfaced in the admin "whoami" line. */
+  method?: 'password' | 'cloudflare' | 'github';
 }
 
 export async function signSession(payload: SessionPayload, secret: string): Promise<string> {
@@ -35,6 +37,7 @@ export async function signSession(payload: SessionPayload, secret: string): Prom
     iat: payload.iat,
     exp: payload.exp,
     csrf: payload.csrf,
+    ...(payload.method ? { method: payload.method } : {}),
   });
   const bodyB64 = bytesToBase64Url(utf8EncodeStrict(body));
   const sig = await hmacSha256(utf8EncodeStrict(secret), utf8EncodeStrict(bodyB64));
@@ -75,5 +78,11 @@ export async function verifySession(token: string, secret: string): Promise<Sess
   const nowSec = Math.floor(Date.now() / 1000);
   if (p.exp <= nowSec) return null; // absolute TTL, no sliding renewal
 
-  return { sub: 'admin', iat: p.iat, exp: p.exp, csrf: p.csrf };
+  return {
+    sub: 'admin',
+    iat: p.iat,
+    exp: p.exp,
+    csrf: p.csrf,
+    method: p.method === 'password' || p.method === 'cloudflare' || p.method === 'github' ? p.method : undefined,
+  };
 }

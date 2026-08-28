@@ -1,5 +1,6 @@
 import type { ExportedHandler, ScheduledController, ExecutionContext } from '@cloudflare/workers-types';
 import { handleAdminAccessLogin, handleAdminAccessStatus } from './admin-access.ts';
+import { handleGithubCallback, handleGithubStart, handleGithubStatus } from './github-oauth.ts';
 import {
   handleAdminAddList,
   handleAdminAddTerm,
@@ -171,6 +172,15 @@ const worker: ExportedHandler<Env> = {
     }
     if (pathname === '/api/admin/access' && method === 'POST') {
       return respond(handleAdminAccessLogin(request, env));
+    }
+    if (pathname === '/api/admin/github' && method === 'GET') {
+      return respond(handleGithubStatus(request, env));
+    }
+    if (pathname === '/api/admin/github/start' && method === 'GET') {
+      return respond(handleGithubStart(request, env));
+    }
+    if (pathname === '/api/admin/github/callback' && method === 'GET') {
+      return respond(handleGithubCallback(request, env));
     }
     if (pathname === '/api/admin/comments' && method === 'GET') {
       return respond(handleAdminListComments(request, env));

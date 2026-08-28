@@ -129,6 +129,9 @@ async function computePlan() {
     ratelimitNamespaceId: $('rl-ns').value.trim() || undefined,
     cfAccessTeam: $('cf-access-team').value.trim() || undefined,
     cfAccessAud: $('cf-access-aud').value.trim() || undefined,
+    githubClientId: $('gh-client-id').value.trim() || undefined,
+    githubClientSecret: $('gh-client-secret').value.trim() || undefined,
+    githubAdminIds: $('gh-admin-ids').value.trim() || undefined,
     siteUrl: $('site-url').value.trim() || undefined,
     dryRun: true,
   };

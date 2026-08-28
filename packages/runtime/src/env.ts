@@ -1,4 +1,4 @@
-import type { D1Database, RateLimit } from '@cloudflare/workers-types';
+import type { D1Database, Fetcher, RateLimit } from '@cloudflare/workers-types';
 
 /**
  * Worker environment (bindings + vars), defined in `wrangler.jsonc`.
@@ -55,6 +55,25 @@ export interface Env {
   CF_ACCESS_AUD?: string;
   /** Optional JWKS endpoint override (default https://{team}/cdn-cgi/access/certs). */
   CF_ACCESS_JWKS_URL?: string;
+
+  // --- GitHub OAuth (optional password-less admin sign-in) ----------------
+  /** GitHub OAuth App Client ID (see the in-app step-by-step guide). */
+  GITHUB_CLIENT_ID?: string;
+  /** GitHub OAuth App Client Secret — store with `wrangler secret put`. */
+  GITHUB_CLIENT_SECRET?: string;
+  /** Comma-separated GitHub user IDs allowed to sign in, e.g. "108115781". */
+  GITHUB_ADMIN_IDS?: string;
+  /** Comma-separated GitHub logins allowed to sign in (case-insensitive). */
+  GITHUB_ADMIN_LOGINS?: string;
+  /** Test-only override for GitHub's token endpoint (default github.com). */
+  GITHUB_TOKEN_URL?: string;
+  /** Test-only override for GitHub's user endpoint (default api.github.com). */
+  GITHUB_USER_URL?: string;
+  /**
+   * Test-only service binding used in place of `fetch()` to GitHub, so
+   * integration tests can stub the OAuth endpoints with a mock Worker.
+   */
+  GITHUB_OAUTH_SERVICE?: Fetcher;
   /** Optional update-manifest URL for the admin "Check for updates" tab. */
   UPDATES_URL?: string;
 }
