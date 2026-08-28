@@ -4,10 +4,11 @@
  * Fully client-side and deterministic: no network calls, no backend, no writes.
  * It mines a REAL nonce with @staticlayer/protocol to teach the actual
  * Proof-of-Work mechanism, then simulates submission → moderation → publish.
- * The widget is restylable live (graphic themes), the embed snippet updates to
- * match, and the admin console shows login + the moderation queue
- * (approve/delete) with shared state. Nothing is stored; no data leaves the
- * page.
+ *
+ * Modes: try comments (with likes), reactions, polls — or everything at once.
+ * The widget is restylable live (graphic templates), the embed snippet updates
+ * to match, and the admin console shows login + the moderation queue. Nothing
+ * is stored; no data leaves the page.
  */
 import {
   base64UrlToBytes,
@@ -33,29 +34,35 @@ function delay(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
 /* ---------------- shared state ---------------- */
 
-const THREAD_ARTICLE = '/demo'; // the page the visitor is on
+const THREAD_ARTICLE = '/demo';
 const REACT_EDITOR_STEP = 5; // demo: +1 difficulty every 5 reactions on this page
-let reactOptions = ['👍', '❤️', '🎉']; // editable in the demo (like data-reactions)
 
-let comments = []; // { id, nick, body, mins, cool, articlePath, status: 'published' | 'pending' }
+let comments = []; // { id, nick, body, mins, cool, likes, voted, articlePath, status }
 let reactions = {}; // articlePath -> { [reaction]: count }
+let reactOptions = ['👍', '❤️', '🎉'];
 let nextId = 1;
 let adminIn = false;
 let currentTheme = 'classic';
+let currentMode = 'all';
 let reactBusy = false;
+
+// demo poll
+let pollVotes = { Comments: 54, Reactions: 26, Polls: 20 };
+let pollVoted = false;
 
 function seed() {
   comments = [
-    { id: nextId++, nick: 'Alice', body: 'This is beautifully simple.', mins: 1, cool: false, articlePath: THREAD_ARTICLE, status: 'published' },
-    { id: nextId++, nick: 'Bob', body: 'Exactly what static sites needed. No SaaS, no tracker.', mins: 4, cool: true, articlePath: '/blog/another-post', status: 'published' },
+    { id: nextId++, nick: 'Alice', body: 'This is beautifully simple.', mins: 1, cool: false, likes: 12, voted: false, articlePath: THREAD_ARTICLE, status: 'published' },
+    { id: nextId++, nick: 'Bob', body: 'Exactly what static sites needed. No SaaS, no tracker.', mins: 4, cool: true, likes: 4, voted: false, articlePath: '/blog/another-post', status: 'published' },
   ];
   reactions = {
     [THREAD_ARTICLE]: { '👍': 3, '❤️': 1 },
     '/blog/another-post': { '👍': 2 },
   };
+  pollVotes = { Comments: 54, Reactions: 26, Polls: 20 };
+  pollVoted = false;
 }
 
-/** The visitor only ever sees their own page's thread. */
 function threadComments() {
   return comments.filter((c) => c.articlePath === THREAD_ARTICLE);
 }
@@ -74,6 +81,39 @@ function updateCount() {
   for (const elm of document.querySelectorAll('.dt-count')) {
     elm.textContent = `${total} comment${total === 1 ? '' : 's'}`;
   }
+}
+
+/* ---------------- modes ---------------- */
+
+const MODE_HINTS = {
+  all: 'Everything below is real: post, like, react and vote — all with real Proof-of-Work.',
+  comments: 'Post a comment, like it, watch it land in the moderation queue — then approve it in the admin console.',
+  reactions: 'Every click pays a real Proof-of-Work. Difficulty rises as the page gets busier.',
+  polls: 'Vote anonymously — one Proof-of-Work, live ranked results with a leader.',
+};
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.demo-mode').forEach((btn) => {
+    const on = btn.dataset.mode === mode;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', String(on));
+  });
+  const views = {
+    comments: $('demo-view-comments'),
+    reactions: $('demo-view-reactions'),
+    poll: $('demo-view-poll'),
+  };
+  if (views.comments) views.comments.classList.toggle('on', mode === 'all' || mode === 'comments');
+  if (views.reactions) views.reactions.classList.toggle('on', mode === 'all' || mode === 'reactions');
+  if (views.poll) views.poll.classList.toggle('on', mode === 'all' || mode === 'polls');
+  const hint = $('demo-mode-hint');
+  if (hint) hint.textContent = MODE_HINTS[mode] || MODE_HINTS.all;
+  const side = $('side-hint');
+  if (side) side.textContent = mode === 'polls' ? 'A poll vote: challenge → PoW → atomic consume → ranked results.' : 'What the visitor and the system experience.';
+  if (mode === 'polls' && views.poll && views.poll.classList.contains('on')) renderPoll();
+  const embed = $('embed-code');
+  if (embed) embed.textContent = embedSnippet(currentTheme);
 }
 
 /* ---------------- render: visitor thread ---------------- */
@@ -95,13 +135,17 @@ function renderVisitor() {
     const main = el('div', 'dt-main');
     const meta = el('div', 'dt-meta');
     meta.append(el('span', 'dt-nick', c.nick || 'Anonymous'), el('span', 'dt-time', timeAgo(c.mins)));
-    if (c.status === 'pending') {
-      meta.append(el('span', 'dt-badge', 'Pending'));
-    }
+    if (c.status === 'pending') meta.append(el('span', 'dt-badge', 'Pending'));
     main.append(meta, el('p', 'dt-body', c.body));
-    item.append(avatar, main);
 
-    if (c.status === 'pending') {
+    if (c.status === 'published') {
+      const like = el('button', 'dt-like' + (c.voted ? ' voted' : ''));
+      like.type = 'button';
+      like.setAttribute('aria-label', 'Like this comment');
+      like.append(el('span', null, c.voted ? '❤️' : '🤍'), el('span', null, String(c.likes)));
+      like.addEventListener('click', () => onLike(c, like));
+      main.append(like);
+    } else {
       const row = el('div', 'dt-row');
       row.style.marginTop = '8px';
       row.style.justifyContent = 'flex-end';
@@ -109,11 +153,24 @@ function renderVisitor() {
       approve.type = 'button';
       approve.addEventListener('click', () => approveComment(c.id));
       row.append(approve);
-      item.append(row);
+      main.append(row);
     }
+    item.append(avatar, main);
     list.append(item);
   }
   updateCount();
+}
+
+function onLike(c, btn) {
+  if (c.voted) { c.voted = false; c.likes -= 1; }
+  else { c.voted = true; c.likes += 1; }
+  btn.classList.add('bump');
+  const ctr = btn.querySelectorAll('span')[1];
+  if (ctr) {
+    ctr.textContent = String(c.likes);
+    ctr.classList.remove('tick-pop'); void ctr.offsetWidth; ctr.classList.add('tick-pop');
+  }
+  setTimeout(() => btn.classList.remove('bump'), 420);
 }
 
 /* ---------------- render: admin console ---------------- */
@@ -215,8 +272,8 @@ function renderAdmin() {
 function reactionDifficulty(article) {
   const counts = reactions[article] || {};
   const votes = Object.values(counts).reduce((a, b) => a + b, 0);
-  const base = 12; // fast demo; production defaults to 16
-  const step = 5; // +1 difficulty every 5 votes on this page
+  const base = 12;
+  const step = 5;
   const ceiling = 15;
   return Math.min(base + Math.floor(votes / step), ceiling);
 }
@@ -226,21 +283,17 @@ function renderReactions() {
   if (!bar) return;
   bar.replaceChildren();
   const counts = reactions[THREAD_ARTICLE] || {};
-  const hint = $('dt-react-hint');
-  if (hint) {
-    hint.textContent =
-      `Anonymous reactions · PoW difficulty ${reactionDifficulty(THREAD_ARTICLE)} · ` +
-      `+1 every ${REACT_EDITOR_STEP} reactions on this page`;
-  }
+  const hint = $('demo-reactions');
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const ctr = $('dt-react-count');
+  if (ctr) ctr.textContent = `${total} reaction${total === 1 ? '' : 's'}`;
+  if (hint) hint.value = reactOptions.join(',');
   for (const r of reactOptions) {
     const btn = el('button', 'dt-reaction');
     btn.type = 'button';
     btn.setAttribute('aria-label', 'React with ' + r);
-    btn.append(
-      el('span', 'dt-reaction-emoji', r),
-      el('span', 'dt-reaction-count', String(counts[r] || 0)),
-    );
-    btn.addEventListener('click', () => submitReaction(r));
+    btn.append(el('span', null, r), el('span', 'dt-reaction-count', String(counts[r] || 0)));
+    btn.addEventListener('click', () => submitReaction(r, btn));
     bar.append(btn);
   }
 }
@@ -253,17 +306,10 @@ function applyReactionEditor() {
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
     .slice(0, 8);
-  if (parsed.length === 0) return; // keep the last valid set
+  if (parsed.length === 0) return;
   reactOptions = parsed;
   renderReactions();
   setReactStatus(`Reaction set updated: ${reactOptions.join(' ')}`, 'ok');
-}
-
-function applyReactionsOnly() {
-  const cb = $('demo-reactions-only');
-  if (!cb) return;
-  const thread = $('demo-thread');
-  if (thread) thread.classList.toggle('reacts-only', cb.checked);
 }
 
 function setReactStatus(msg, kind) {
@@ -273,7 +319,7 @@ function setReactStatus(msg, kind) {
   s.classList.toggle('ok', kind === 'ok');
 }
 
-async function submitReaction(r) {
+async function submitReaction(r, btn) {
   if (reactBusy) return;
   reactBusy = true;
   document.querySelectorAll('.dt-reaction').forEach((b) => { b.disabled = true; });
@@ -294,7 +340,13 @@ async function submitReaction(r) {
 
     const counts = (reactions[THREAD_ARTICLE] = reactions[THREAD_ARTICLE] || {});
     counts[r] = (counts[r] || 0) + 1;
-    renderReactions();
+    btn.querySelector('.dt-reaction-count').textContent = String(counts[r]);
+    const ctr = $('dt-react-count');
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    if (ctr) {
+      ctr.textContent = `${total} reaction${total === 1 ? '' : 's'}`;
+      ctr.classList.remove('tick-pop'); void ctr.offsetWidth; ctr.classList.add('tick-pop');
+    }
     renderAdmin();
     setReactStatus(`✓ ${r} recorded · difficulty ${difficulty} · proof in ${ms} ms`, 'ok');
   } catch {
@@ -303,6 +355,72 @@ async function submitReaction(r) {
     reactBusy = false;
     document.querySelectorAll('.dt-reaction').forEach((b) => { b.disabled = false; });
   }
+}
+
+/* ---------------- poll (anonymous, PoW, ranked results) ---------------- */
+
+function pollTotal() { return Object.values(pollVotes).reduce((a, b) => a + b, 0); }
+
+function renderPoll() {
+  const box = $('dt-poll');
+  if (!box) return;
+  box.replaceChildren();
+  const head = el('div', 'dt-poll-head');
+  head.append(el('h4', null, '📊 Which do you use most on your site?'), el('span', 'dt-count', pollTotal() + ' votes'));
+  box.append(head);
+  const total = pollTotal() || 1;
+  const entries = Object.entries(pollVotes).sort((a, b) => b[1] - a[1]);
+  entries.forEach(([label, votes], i) => {
+    const pct = Math.round((votes / total) * 100);
+    const opt = el('button', 'poll-option' + (pollVoted ? ' voted show' : ''));
+    opt.type = 'button';
+    opt.style.setProperty('--w', pct + '%');
+    opt.setAttribute('aria-label', pollVoted ? `${label}: ${pct}%` : `Vote for ${label}`);
+    const bar = el('span', 'poll-bar');
+    const row = el('span', 'row');
+    row.append(
+      el('span', 'label', (pollVoted && i === 0 ? '👑 ' : '') + label),
+      el('span', 'pct', pollVoted ? pct + '%' : ''),
+    );
+    opt.append(bar, row);
+    if (!pollVoted) opt.addEventListener('click', () => submitPollVote(label));
+    box.append(opt);
+    setTimeout(() => opt.classList.add('show'), 120 + i * 110);
+  });
+  const note = el('p', 'dt-note', pollVoted ? '✓ Vote counted — live ranked results. Leader highlighted.' : 'Anonymous · one Proof-of-Work per vote · optional one-vote-per-browser');
+  box.append(note);
+}
+
+async function submitPollVote(label) {
+  if (pollVoted) return;
+  pollVoted = true;
+  const note = boxNote('Solving proof-of-work…');
+  try {
+    const base = {
+      version: PROTOCOL_VERSION,
+      hostContext: 'demo.local',
+      articlePath: THREAD_ARTICLE,
+      nickname: '',
+      body: '',
+      challengeId: randomBytes(32),
+    };
+    const t0 = performance.now();
+    await mineNonce(base, 12);
+    const ms = Math.max(1, Math.round(performance.now() - t0));
+    pollVotes[label] = (pollVotes[label] || 0) + 1;
+    renderPoll();
+    logLine('pow', `poll vote → proof in ${ms} ms, atomic consume, ranked results`);
+  } catch {
+    if (note) note.textContent = 'Something went wrong — try again.';
+  }
+}
+
+function boxNote(msg) {
+  const box = $('dt-poll');
+  if (!box) return null;
+  const note = el('p', 'dt-note', msg);
+  box.append(note);
+  return note;
 }
 
 /* ---------------- actions ---------------- */
@@ -362,7 +480,7 @@ function resetTimeline() {
   if (log) { log.classList.remove('open'); log.replaceChildren(); }
 }
 
-/* ---------------- themes ---------------- */
+/* ---------------- themes / embed ---------------- */
 
 const THEME_META = {
   classic: { label: 'Classic', endpoint: 'https://comments.yourdomain.com' },
@@ -373,10 +491,20 @@ const THEME_META = {
 };
 
 function embedSnippet(theme) {
-  const comment = `<!-- StaticLayer · theme: ${theme} (${THEME_META[theme].label}) -->`;
-  const div = `<div data-staticlayer data-endpoint="${THEME_META[theme].endpoint}"\n     data-article-path="/demo"></div>`;
-  const script = `<script src="${THEME_META[theme].endpoint}/widget.js" defer><\/script>`;
-  return `${comment}\n${div}\n${script}`;
+  const meta = THEME_META[theme];
+  const endpoint = meta.endpoint;
+  const comment = `<!-- StaticLayer · theme: ${theme} (${meta.label}) -->`;
+  const parts = [];
+  if (currentMode === 'polls') {
+    parts.push(`<div data-staticlayer data-endpoint="${endpoint}"\n     data-article-path="/demo" data-poll-id="demo-poll"></div>`);
+  } else if (currentMode === 'reactions') {
+    parts.push(`<div data-staticlayer data-endpoint="${endpoint}"\n     data-article-path="/demo" data-reactions-only\n     data-reactions="${reactOptions.join(',')}"></div>`);
+  } else {
+    const reactions = currentMode === 'all' ? `\n     data-reactions="${reactOptions.join(',')}"` : '';
+    parts.push(`<div data-staticlayer data-endpoint="${endpoint}"\n     data-article-path="/demo"${reactions}></div>`);
+  }
+  parts.push(`<script src="${endpoint}/widget.js" defer><\/script>`);
+  return `${comment}\n${parts.join('\n')}`;
 }
 
 function setTheme(theme) {
@@ -403,7 +531,6 @@ async function run() {
   resetTimeline();
   logLine('step', '0 · Visitor submits a plain-text comment');
 
-  /* 1 · challenge */
   setStep('challenge', 'active');
   setStatus('Requesting a challenge…');
   await delay(320);
@@ -418,7 +545,6 @@ async function run() {
   logLine('GET', '/api/comments/challenge → signed challenge (HMAC, 5-min TTL)');
   setStep('challenge', 'done');
 
-  /* 2 · proof of work (real mining) */
   setStep('pow', 'active');
   setStatus('Generating proof…');
   const base = {
@@ -437,11 +563,10 @@ async function run() {
   setStep('pow', 'done');
   await delay(260);
 
-  /* 3 · submission — comment lands in the moderation queue */
   setStep('submission', 'active');
   setStatus('Submitting to the Worker…');
   await delay(320);
-  comments.push({ id: nextId++, nick, body, mins: 0, cool: false, articlePath: THREAD_ARTICLE, status: 'pending' });
+  comments.push({ id: nextId++, nick, body, mins: 0, cool: false, likes: 0, voted: false, articlePath: THREAD_ARTICLE, status: 'pending' });
   logLine('POST', '/api/comments → Worker verifies signature + proof');
   logLine('d1', 'challenge consumed atomically (D1 batch) → comment stored as pending');
   setStatus('Comment submitted — it is now in the moderation queue. Open the Admin console to approve it.');
@@ -494,21 +619,19 @@ function resetDemo() {
   seed();
   adminIn = false;
   reactOptions = ['👍', '❤️', '🎉'];
-  const editor = $('demo-reactions');
-  if (editor) editor.value = reactOptions.join(',');
-  const reactOnlyCb = $('demo-reactions-only');
-  if (reactOnlyCb) reactOnlyCb.checked = false;
   const thread = $('demo-thread');
   if (thread) thread.classList.remove('reacts-only');
-  $('sim-nick').value = '';
-  $('sim-body').value = '';
-  $('sim-post').disabled = false;
-  $('admin-pass').value = '';
+  const nick = $('sim-nick'); if (nick) nick.value = '';
+  const body = $('sim-body'); if (body) body.value = '';
+  const post = $('sim-post'); if (post) post.disabled = false;
+  const pass = $('admin-pass'); if (pass) pass.value = '';
   setReactStatus('');
   resetTimeline();
   setTheme(currentTheme);
+  setMode(currentMode);
   renderVisitor();
   renderReactions();
+  renderPoll();
   renderAdminView();
   showTab('visitor');
   setStatus('Write a comment, then press “Post comment”.');
@@ -519,8 +642,10 @@ function resetDemo() {
 function init() {
   seed();
   setTheme('classic');
+  setMode('all');
   renderVisitor();
   renderReactions();
+  renderPoll();
   renderAdminView();
   showTab('visitor');
   setStatus('Write a comment, then press “Post comment”.');
@@ -533,9 +658,10 @@ function init() {
   $('admin-signin').addEventListener('click', adminSignIn);
   const reactEditor = $('demo-reactions');
   if (reactEditor) reactEditor.addEventListener('change', applyReactionEditor);
-  const reactOnlyCb = $('demo-reactions-only');
-  if (reactOnlyCb) reactOnlyCb.addEventListener('change', applyReactionsOnly);
 
+  document.querySelectorAll('.demo-mode').forEach((btn) => {
+    btn.addEventListener('click', () => setMode(btn.dataset.mode));
+  });
   document.querySelectorAll('.theme-btn').forEach((btn) => {
     btn.addEventListener('click', () => setTheme(btn.dataset.theme));
   });

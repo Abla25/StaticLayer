@@ -1,5 +1,5 @@
 <!-- title: StaticLayer — Interactive Demo & Simulator -->
-<!-- description: A safe, client-side simulator of the StaticLayer flow: challenge, proof-of-work, moderation and admin approval. No data leaves your browser. -->
+<!-- description: A safe, client-side simulator of the StaticLayer flow: comments with likes, anonymous reactions, polls, proof-of-work, moderation and admin approval. No data leaves your browser. -->
 <!-- active: demo -->
 <!-- simulator: true -->
 
@@ -8,7 +8,15 @@
     <div class="sim-title">
       <span class="hero-eyebrow">Try it in 60 seconds</span>
       <h1>See StaticLayer in action</h1>
-      <p>A safe, deterministic simulator. It runs the <b>real proof-of-work</b> in your browser — no data leaves this page. Restyle the widget, post a comment, then open the <b>admin console</b> and moderate it.</p>
+      <p>A safe, deterministic simulator. It runs the <b>real proof-of-work</b> in your browser — no data leaves this page. Pick what you want to try, restyle the widget, then open the <b>admin console</b> and moderate.</p>
+    </div>
+
+    <!-- what to demo -->
+    <div class="demo-modes" role="group" aria-label="What to demo">
+      <button class="demo-mode active" data-mode="all" aria-pressed="true"><span class="check" aria-hidden="true">✓</span> All <span class="n">recommended</span></button>
+      <button class="demo-mode" data-mode="comments" aria-pressed="false"><span class="check" aria-hidden="true">✓</span> Comments</button>
+      <button class="demo-mode" data-mode="reactions" aria-pressed="false"><span class="check" aria-hidden="true">✓</span> Reactions</button>
+      <button class="demo-mode" data-mode="polls" aria-pressed="false"><span class="check" aria-hidden="true">✓</span> Polls</button>
     </div>
 
     <div class="sim-grid">
@@ -20,12 +28,12 @@
 
         <!-- ---------- visitor view ---------- -->
         <div class="sim-view" id="view-visitor" role="tabpanel">
-          <div class="panel-title">Comments widget
+          <div class="panel-title">Your widget
             <span class="dt-count" id="dt-count" style="margin-left:auto">0 comments</span>
           </div>
-          <p class="panel-sub">Pick a graphic theme, then post a comment. It will land in the moderation queue — check the Admin console.</p>
+          <p class="panel-sub" id="demo-mode-hint">Everything below is real: post a comment, like it, react, vote. It all runs in your browser with real Proof-of-Work.</p>
 
-          <div class="theme-picker" role="group" aria-label="Widget theme">
+          <div class="theme-picker" role="group" aria-label="Widget template">
             <button class="theme-btn active" data-theme="classic" aria-pressed="true"><span class="theme-swatch" style="background:linear-gradient(135deg,#fffdf8,#f4f2ec)"></span>Classic</button>
             <button class="theme-btn" data-theme="ink" aria-pressed="false"><span class="theme-swatch" style="background:#16130f"></span>Ink</button>
             <button class="theme-btn" data-theme="glass" aria-pressed="false"><span class="theme-swatch" style="background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.4))"></span>Glass</button>
@@ -33,42 +41,56 @@
             <button class="theme-btn" data-theme="sunset" aria-pressed="false"><span class="theme-swatch" style="background:linear-gradient(135deg,#ffece2,#fff5f0)"></span>Sunset</button>
           </div>
 
-          <div class="react-editor" role="group" aria-label="Reactions to show">
-            <span class="dt-hint">Reactions to show (comma-separated) — try editing or removing one</span>
-            <input id="demo-reactions" class="dt-input" value="👍,❤️,🎉" maxlength="80" aria-label="Reactions to show" spellcheck="false">
-            <label class="dt-toggle" title="data-reactions-only">
-              <input type="checkbox" id="demo-reactions-only"> Reactions only
-            </label>
-          </div>
-
           <div class="demo-thread" id="demo-thread" data-theme="classic">
-            <div class="dt-head">
-              <h3>Comments</h3>
-              <span class="dt-count">0 comments</span>
-            </div>
-            <div class="dt-list" id="dt-list" aria-live="polite"></div>
-            <p class="dt-hint" id="dt-react-hint" aria-live="polite"></p>
-            <div class="dt-reactions" id="dt-reactions" aria-label="Reactions" role="group"></div>
-            <p class="dt-note" id="dt-react-status"></p>
-            <div class="dt-form">
-              <input id="sim-nick" class="dt-input" placeholder="Your name (optional)" aria-label="Your name" maxlength="50">
-              <textarea id="sim-body" class="dt-input" placeholder="Write a comment…" aria-label="Write a comment" rows="3" maxlength="3000" style="resize:vertical;min-height:70px"></textarea>
-              <div class="dt-row">
-                <span class="dt-hint">Plain text · emoji welcome · anti-spam proof-of-work</span>
-                <button id="sim-post" class="btn btn-primary btn-sm">Post comment</button>
+
+            <!-- COMMENTS view -->
+            <div class="demo-view on" id="demo-view-comments">
+              <div class="dt-head">
+                <h3>Comments</h3>
+                <span class="dt-count">0 comments</span>
               </div>
+              <div class="dt-list" id="dt-list" aria-live="polite"></div>
+              <div class="dt-form">
+                <input id="sim-nick" class="dt-input" placeholder="Your name (optional)" aria-label="Your name" maxlength="50">
+                <textarea id="sim-body" class="dt-input" placeholder="Write a comment…" aria-label="Write a comment" rows="3" maxlength="3000" style="resize:vertical;min-height:70px"></textarea>
+                <div class="dt-row">
+                  <span class="dt-hint">Plain text · emoji welcome · anti-spam proof-of-work</span>
+                  <button id="sim-post" class="btn btn-primary btn-sm">Post comment</button>
+                </div>
+              </div>
+              <p class="dt-note" id="sim-status-text" role="status" aria-live="polite"></p>
             </div>
-            <p class="dt-note" id="sim-status-text" role="status" aria-live="polite"></p>
+
+            <!-- REACTIONS view -->
+            <div class="demo-view" id="demo-view-reactions">
+              <div class="dt-head">
+                <h3>Reactions</h3>
+                <span class="dt-count" id="dt-react-count">3 reactions</span>
+              </div>
+              <p class="dt-hint">Anonymous events · real Proof-of-Work per click · difficulty rises as the page gets busy</p>
+              <div class="react-editor" role="group" aria-label="Reactions to show" style="margin-top:6px">
+                <span class="dt-hint">Reactions to show (comma-separated) — try editing or removing one</span>
+                <input id="demo-reactions" class="dt-input" value="👍,❤️,🎉" maxlength="80" aria-label="Reactions to show" spellcheck="false">
+              </div>
+              <div class="dt-reactions" id="dt-reactions" aria-label="Reactions" role="group"></div>
+              <p class="dt-note" id="dt-react-status" aria-live="polite"></p>
+            </div>
+
+            <!-- POLLS view -->
+            <div class="demo-view" id="demo-view-poll">
+              <div class="dt-poll" id="dt-poll" aria-live="polite"></div>
+            </div>
+
           </div>
 
-          <div class="content-rules" aria-label="What visitors can write">
+          <div class="content-rules" aria-label="What visitors can write" id="demo-rules">
             <b>What visitors can write</b>
             <ul>
               <li>Plain text + emoji ✓</li>
               <li>No HTML, no Markdown — everything renders as text</li>
               <li>No clickable links</li>
               <li>Nickname ≤ 50 · body ≤ 3000 characters</li>
-              <li>Reactions are anonymous events (real PoW, escalating difficulty)</li>
+              <li>Reactions and poll votes are anonymous (real PoW, escalating difficulty)</li>
             </ul>
           </div>
         </div>
@@ -76,7 +98,7 @@
         <!-- ---------- admin view ---------- -->
         <div class="sim-view" id="view-admin" role="tabpanel" hidden>
           <div class="panel-title">Admin console</div>
-          <p class="panel-sub">In production this is <code>/admin.html</code> on your Worker, protected by <code>ADMIN_SECRET</code>. Sessions are stateless and HMAC-signed.</p>
+          <p class="panel-sub">In production this is <code>/admin.html</code> on your Worker, protected by <code>ADMIN_SECRET</code> (or password-less with GitHub OAuth). Sessions are stateless and HMAC-signed.</p>
 
           <div id="admin-login">
             <div class="dt-form">
@@ -102,7 +124,7 @@
 
       <div class="glass-panel sim-side">
         <div class="panel-title">Under the hood</div>
-        <p class="panel-sub">What the visitor and the system experience.</p>
+        <p class="panel-sub" id="side-hint">What the visitor and the system experience.</p>
         <ul class="sim-status" aria-live="polite">
           <li data-step="challenge"><span class="dot"></span>Challenge</li>
           <li data-step="pow"><span class="dot"></span>Proof of Work</li>

@@ -1,23 +1,23 @@
-<!-- title: StaticLayer — Comments for static sites, without the comment SaaS -->
+<!-- title: StaticLayer — Comments, reactions & polls for static sites, in your Cloudflare account -->
 <!-- description: Open-source, Cloudflare-native comments for static websites. Your Worker. Your database. No centralized comment platform. -->
 <!-- active: product -->
+<!-- hero-widget: true -->
 
 <section class="hero">
   <div class="container">
     <div class="hero-grid">
       <div>
         <span class="hero-eyebrow">Private · Static-site native · 5-minute install</span>
-        <h1>Private comments for static sites.<br><span class="grad">Without the comment SaaS.</span></h1>
-        <p class="hero-sub">StaticLayer adds <b>moderated comments</b>, <b>anonymous reactions</b> and <b>StrawPoll-style polls</b> to static websites — no trackers, no comment SaaS, live in about five minutes. Deployed into your Cloudflare account, owned by you.</p>
+        <h1>Comments, reactions &amp; polls for static sites.<br><span class="grad grad-anim">Inside your Cloudflare account.</span></h1>
+        <p class="hero-sub">StaticLayer adds <b>moderated comments</b>, <b>anonymous reactions</b> and <b>StrawPoll-style polls</b> to any static website — no trackers, no comment SaaS, no third-party database. Deploy once into your Cloudflare account and the data is yours.</p>
         <div class="hero-cta">
           <a class="btn btn-primary" href="{{BASE}}demo.html">Try the live demo →</a>
-          <a class="btn" href="{{BASE}}docs.html">Get started</a>
+          <a class="btn" href="{{BASE}}docs.html">Get started — 5 min</a>
         </div>
         <p class="hero-meta">
-          <span class="live-dot">Comments + reactions + polls · no trackers</span>
-          <span>5-minute install</span>
+          <span class="live-dot">One widget · three ways to engage</span>
+          <span>No cookies · no tracking</span>
           <a href="{{BASE}}security.html">Security model</a>
-          <a href="{{REPO}}" target="_blank" rel="noopener">GitHub ↗</a>
         </p>
       </div>
 
@@ -25,47 +25,82 @@
         <span class="layer-panel l1" aria-hidden="true"></span>
         <span class="layer-panel l2" aria-hidden="true"></span>
         <span class="layer-panel l3" aria-hidden="true"></span>
-        <div class="browser" aria-label="Live comment preview">
+        <div class="browser" aria-label="Live preview">
           <div class="browser-bar">
             <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
             <span class="browser-url">yoursite.com/blog/hello</span>
           </div>
           <div class="browser-body">
             <div class="widget-demo">
-              <div class="wd-head">
-                <h3>Comments</h3>
-                <span class="wd-count">2 comments</span>
-              </div>
-              <div class="wd-list">
-                <div class="wd-item">
-                  <span class="wd-avatar" aria-hidden="true">A</span>
-                  <div class="wd-main">
-                    <div class="wd-meta"><span class="wd-nick">Alice</span><span class="wd-time">just now</span></div>
-                    <p class="wd-body">This is beautifully simple.</p>
+              <!-- skeleton while the preview "loads" -->
+              <div id="hero-skeleton" aria-hidden="true" style="display:flex;flex-direction:column;gap:12px">
+                <div class="wd-head">
+                  <div class="skel" style="width:110px;height:15px"></div>
+                  <div class="skel" style="width:64px;height:13px"></div>
+                </div>
+                <div class="skel-row">
+                  <span class="skel skel-avatar"></span>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                    <span class="skel skel-line w80"></span>
+                    <span class="skel skel-line w40"></span>
                   </div>
                 </div>
-                <div class="wd-item">
-                  <span class="wd-avatar cool" aria-hidden="true">B</span>
-                  <div class="wd-main">
-                    <div class="wd-meta"><span class="wd-nick">Bob</span><span class="wd-time">2 min ago</span></div>
-                    <p class="wd-body">Exactly what static sites needed. No SaaS, no tracker.</p>
+                <div class="skel-row">
+                  <span class="skel skel-avatar"></span>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                    <span class="skel skel-line w60"></span>
+                    <span class="skel skel-line w40"></span>
                   </div>
                 </div>
+                <div class="skel" style="height:46px;margin-top:2px"></div>
               </div>
-              <div class="wd-reactions" id="hero-reactions" role="group" aria-label="Reactions"></div>
-              <p class="wd-react-status" id="hero-react-status"></p>
-              <div class="wd-form">
-                <input id="hero-nick" class="wd-input" placeholder="Your name (optional)" aria-label="Your name" maxlength="50">
-                <input id="hero-body" class="wd-input" placeholder="Write a comment…" aria-label="Write a comment" maxlength="3000">
-                <div class="wd-row">
-                  <span class="wd-hint">Live preview · plain text · real proof-of-work</span>
-                  <button id="hero-post" class="btn btn-primary btn-sm">Post comment</button>
+
+              <!-- live widget -->
+              <div id="hero-live" hidden>
+                <div class="wd-head">
+                  <h3>Comments</h3>
+                  <span class="wd-count">2 comments</span>
                 </div>
+                <div class="wd-tools">
+                  <span class="wd-hint">Likes · pin · sort</span>
+                  <div class="wd-sort" role="group" aria-label="Sort comments">
+                    <button id="sort-newest" class="active" type="button">Newest</button>
+                    <button id="sort-best" type="button">Best</button>
+                  </div>
+                </div>
+                <div class="wd-list" aria-live="polite"></div>
+                <div class="wd-reactions" id="hero-reactions" role="group" aria-label="Reactions"></div>
+                <p class="wd-react-status" id="hero-react-status"></p>
+                <div id="hero-poll" aria-label="Poll preview"></div>
+                <div class="wd-form">
+                  <input id="hero-nick" class="wd-input" placeholder="Your name (optional)" aria-label="Your name" maxlength="50">
+                  <input id="hero-body" class="wd-input" placeholder="Write a comment…" aria-label="Write a comment" maxlength="3000">
+                  <div class="wd-row">
+                    <span class="wd-hint">Live preview · real proof-of-work</span>
+                    <button id="hero-post" class="btn btn-primary btn-sm">Post comment</button>
+                  </div>
+                </div>
+                <span class="wd-pill" id="hero-status">Try it — post, react, vote. All live.</span>
               </div>
-              <span class="wd-pill" id="hero-status">Try it — post a comment right here.</span>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- what StaticLayer is, in one glance -->
+    <div class="hero-lede" data-reveal>
+      <div class="hl-item">
+        <span class="hl-ico" aria-hidden="true">💬</span>
+        <div><b>Comments</b><span>Moderated, nested threads with likes, pin &amp; sorting.</span></div>
+      </div>
+      <div class="hl-item">
+        <span class="hl-ico" aria-hidden="true">⚡</span>
+        <div><b>Reactions</b><span>One-tap anonymous emoji, proof-of-work protected.</span></div>
+      </div>
+      <div class="hl-item">
+        <span class="hl-ico" aria-hidden="true">📊</span>
+        <div><b>Polls</b><span>StrawPoll-style votes, privacy-first, embed anywhere.</span></div>
       </div>
     </div>
 
@@ -80,12 +115,118 @@
   </div>
 </section>
 
-<section class="section section-alt" id="why">
+<!-- 01 — one widget, three ways to engage -->
+<section class="section" id="engage">
   <div class="container">
     <div class="section-head">
-      <span class="kicker">01 — Why StaticLayer</span>
+      <span class="kicker">01 — What StaticLayer does</span>
+      <h2>One widget. Three ways to engage.</h2>
+      <p>Comments, reactions and polls share the same architecture: anonymous by default, proof-of-work protected, and running entirely inside your Cloudflare account.</p>
+    </div>
+
+    <div class="product-grid">
+      <div class="product-card" style="--pc:rgba(255,138,42,0.16)">
+        <span class="pc-icon" aria-hidden="true">💬</span>
+        <h3>Comments</h3>
+        <p class="lede">Real conversations on static pages: moderated, nested, and safe by default — plain text only.</p>
+        <div class="pc-preview" aria-hidden="true">
+          <div class="pc-comment">
+            <span class="a">A</span>
+            <span class="t">Beautifully simple.<br><span style="color:var(--muted);font-size:10.5px">Alice · just now</span></span>
+            <span class="like">❤️ 12</span>
+          </div>
+          <div class="pc-comment">
+            <span class="a" style="background:linear-gradient(135deg,#2b3a55,#3f5a85)">B</span>
+            <span class="t">Exactly what we needed.<br><span style="color:var(--muted);font-size:10.5px">Bob · 2 min ago</span></span>
+            <span class="like">❤️ 4</span>
+          </div>
+        </div>
+        <ul>
+          <li>Nested replies (up to 3 levels) + owner “Author” badge</li>
+          <li>Likes, pin, report and newest / best sorting</li>
+          <li>One moderation queue for all your pages</li>
+        </ul>
+        <div class="pc-foot"><a href="{{BASE}}comments.html">Explore comments</a></div>
+      </div>
+
+      <div class="product-card" style="--pc:rgba(255,61,84,0.14)">
+        <span class="pc-icon" aria-hidden="true">⚡</span>
+        <h3>Reactions</h3>
+        <p class="lede">Anonymous emoji counts with real integrity — every click pays a tiny proof-of-work.</p>
+        <div class="pc-preview" aria-hidden="true">
+          <div class="pc-react">
+            <span class="pc-chip">👍 <span class="n">38</span></span>
+            <span class="pc-chip">❤️ <span class="n">21</span></span>
+            <span class="pc-chip">🎉 <span class="n">9</span></span>
+          </div>
+        </div>
+        <ul>
+          <li>Cost-based anti-abuse, not identity</li>
+          <li>Difficulty escalates as a page gets busy</li>
+          <li>Fully themeable — choose the emoji set</li>
+        </ul>
+        <div class="pc-foot"><a href="{{BASE}}reactions.html">Explore reactions</a></div>
+      </div>
+
+      <div class="product-card" style="--pc:rgba(124,58,237,0.14)">
+        <span class="pc-icon" aria-hidden="true">📊</span>
+        <h3>Polls</h3>
+        <p class="lede">StrawPoll-style votes embedded anywhere — even globally on every page of your site.</p>
+        <div class="pc-preview pc-poll" aria-hidden="true">
+          <div class="pb"><span style="font-size:11px;flex:none">Comments</span><span class="bar"><i style="--w:54%"></i></span><span class="pct">54%</span></div>
+          <div class="pb"><span style="font-size:11px;flex:none">Reactions</span><span class="bar"><i style="--w:26%"></i></span><span class="pct">26%</span></div>
+          <div class="pb"><span style="font-size:11px;flex:none">Polls</span><span class="bar"><i style="--w:20%"></i></span><span class="pct">20%</span></div>
+        </div>
+        <ul>
+          <li>No IP, no cookies, no identity</li>
+          <li>Single or multi-select, ranked results + leader</li>
+          <li>Optional one-vote-per-browser guard</li>
+        </ul>
+        <div class="pc-foot"><a href="{{BASE}}polls.html">Explore polls</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 — how it works -->
+<section class="section section-alt" id="how">
+  <div class="container">
+    <div class="section-head">
+      <span class="kicker">02 — How it works</span>
+      <h2>Deploy. Embed. Moderate.</h2>
+      <p>Three steps, about five minutes, and no dashboard clicking sprees. The hard part is done by the CLI or the hosted installer.</p>
+    </div>
+    <div class="steps">
+      <div class="step-card">
+        <span class="num">01</span>
+        <h3>Deploy StaticLayer</h3>
+        <p>One command (<code>npx staticlayer init</code>) or the <b>hosted browser installer</b> creates the Worker, the D1 database and the secrets — in your account.</p>
+      </div>
+      <div class="step-card">
+        <span class="num">02</span>
+        <h3>Add the widget</h3>
+        <p>Two lines of HTML on any static page. The same snippet works on every page — thread = page URL. Works with Astro, Hugo, Jekyll, Next.js, plain HTML…</p>
+      </div>
+      <div class="step-card">
+        <span class="num">03</span>
+        <h3>Moderate &amp; publish</h3>
+        <p>Comments land in a private admin queue. Approve, delete or reply from <code>/admin.html</code> — readers see only what you publish.</p>
+      </div>
+    </div>
+    <p style="margin-top:30px;text-align:center">
+      <a class="btn btn-primary" href="{{BASE}}docs.html">Read the quick start →</a>
+      <a class="btn" href="{{BASE}}demo.html">Watch it happen in the demo</a>
+    </p>
+  </div>
+</section>
+
+<!-- 03 — why not a SaaS -->
+<section class="section" id="why">
+  <div class="container">
+    <div class="section-head">
+      <span class="kicker">03 — Why StaticLayer</span>
       <h2>Why not a traditional comment SaaS?</h2>
-      <p>It comes down to architecture, ownership and simplicity.</p>
+      <p>It comes down to one question: who controls the data?</p>
     </div>
     <div class="flow-cols">
       <div class="flow">
@@ -108,90 +249,27 @@
         </ol>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="section" id="benefits">
-  <div class="container">
-    <div class="section-head">
-      <span class="kicker">02 — Benefits</span>
-      <h2>Built around ownership and privacy-conscious architecture</h2>
-      <p>Every design decision traces back to the same question: who controls the data?</p>
-    </div>
-    <div class="benefits">
-      <div class="benefit">
-        <h3>Your infrastructure</h3>
-        <p>Comments live in the Cloudflare resources you control. No third-party comment database.</p>
+    <div class="feature-row" data-reveal>
+      <div class="feature-tile">
+        <span class="k">Your infrastructure</span>
+        <h4>No third-party database</h4>
+        <p>Comments live in the Cloudflare resources you control. There is no centralized comment platform.</p>
       </div>
-      <div class="benefit">
-        <h3>No centralized comment database</h3>
-        <p>StaticLayer does not require a central platform to host your users' comments.</p>
-      </div>
-      <div class="benefit">
-        <h3>No visitor tracking widget</h3>
+      <div class="feature-tile">
+        <span class="k">No visitor tracking</span>
+        <h4>Zero cookies, zero fingerprinting</h4>
         <p>The public widget does not use tracking cookies, local storage, fingerprinting or analytics.</p>
       </div>
-      <div class="benefit">
-        <h3>Static-site native</h3>
-        <p>Built for plain HTML and static-site generators: Astro, Hugo, Jekyll, Next.js static export and more.</p>
-      </div>
-      <div class="benefit">
-        <h3>Source-available</h3>
-        <p>Inspect the runtime, protocol, migrations and security model. Elastic License 2.0.</p>
-      </div>
-      <div class="benefit">
-        <h3>Anti-spam without CAPTCHA</h3>
-        <p>Proof-of-Work plus a hidden honeypot field and a 3-second time gate — all behavioural checks, zero data. No CAPTCHA, no friction for readers.</p>
+      <div class="feature-tile">
+        <span class="k">Anti-spam, no CAPTCHA</span>
+        <h4>Proof-of-Work + honeypot</h4>
+        <p>Behavioural checks only — a tiny client-side puzzle, a hidden honeypot and a time gate. No friction for readers.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="products">
-  <div class="container">
-    <div class="section-head">
-      <span class="kicker">03 — Engagement</span>
-      <h2>Three ways to engage. One privacy model.</h2>
-      <p>Comments, reactions and polls share the same architecture: anonymous, PoW-protected, running in your Cloudflare account.</p>
-    </div>
-    <div class="products">
-      <div class="product">
-        <span class="product-tag">Comments</span>
-        <h3>Conversations, moderated</h3>
-        <p>Plain-text replies in per-page threads (nested, up to 3 levels). Every comment goes through a moderation queue; visitors can like, report and the owner can pin.</p>
-        <ul>
-          <li>Nested replies + owner “Author” badge</li>
-          <li>Likes, pin, reports, sorting (newest/best)</li>
-          <li>Per-page threads, one admin queue</li>
-        </ul>
-        <a href="{{BASE}}comments.html">Explore →</a>
-      </div>
-      <div class="product">
-        <span class="product-tag">Reactions</span>
-        <h3>One-tap, anonymous</h3>
-        <p>Emoji counts with a real Proof-of-Work per click. Difficulty rises as a page gets busier; no moderation, no identity. Placeable above or below the comments.</p>
-        <ul>
-          <li>Cost-based integrity (not identity)</li>
-          <li>Escalating difficulty + rate limits</li>
-          <li>Fully themeable, choose the emoji set</li>
-        </ul>
-        <a href="{{BASE}}reactions.html">Explore →</a>
-      </div>
-      <div class="product">
-        <span class="product-tag">Polls</span>
-        <h3>StrawPoll-style, private</h3>
-        <p>Anonymous, PoW-protected votes created in the admin and embedded anywhere — even globally, on every page. Single or multi-select, ranked results with a leader.</p>
-        <ul>
-          <li>No IP, no cookies, no identity</li>
-          <li>Optional one-vote-per-browser</li>
-          <li>Global polls + display styles</li>
-        </ul>
-        <a href="{{BASE}}polls.html">Explore →</a>
-      </div>
-    </div>
-  </div>
-</section>
-
+<!-- 04 — architecture -->
 <section class="section section-alt" id="architecture">
   <div class="container">
     <div class="section-head">
@@ -209,31 +287,19 @@
   </div>
 </section>
 
+<!-- 05 — security -->
 <section class="section" id="security">
   <div class="container">
     <div class="section-head">
-      <span class="kicker">05 — Security</span>
+      <span class="kicker">05 — Security &amp; privacy</span>
       <h2>Small surface. Explicit boundaries.</h2>
-      <p>Designed with a minimal attack surface and defense-in-depth controls. No "military-grade" claims — inspect the code instead.</p>
-    </div>
-    <div class="sec-cats">
-      <div class="sec-cat"><h3>Public runtime</h3><p>Plain-text comments, prepared SQL, strict input limits.</p><a href="{{BASE}}security.html">Read →</a></div>
-      <div class="sec-cat"><h3>Admin authentication</h3><p>Stateless HMAC-signed session, `__Host-` cookie, absolute TTL.</p><a href="{{BASE}}security.html">Read →</a></div>
-      <div class="sec-cat"><h3>PoW anti-spam</h3><p>Server-authoritative difficulty, signed challenge, single-use.</p><a href="{{BASE}}security.html">Read →</a></div>
-      <div class="sec-cat"><h3>Zero-data anti-spam</h3><p>Honeypot + 3s time gate — silent bot drops, no content reading.</p><a href="{{BASE}}security.html">Read →</a></div>
-      <div class="sec-cat"><h3>D1 replay protection</h3><p>Transactional anti-replay: one challenge, one comment.</p><a href="{{BASE}}security.html">Read →</a></div>
-      <div class="sec-cat"><h3>Plain-text rendering</h3><p>No raw HTML. `textContent` only.</p><a href="{{BASE}}security.html">Read →</a></div>
-      <div class="sec-cat"><h3>No tracking</h3><p>No visitor cookies, local storage, fingerprinting or analytics.</p><a href="{{BASE}}privacy.html">Read →</a></div>
+      <p>Designed with a minimal attack surface and defense-in-depth controls. No “military-grade” claims — inspect the code instead.</p>
     </div>
     <div class="glass-panel">
-      <div class="section-head" style="margin-bottom:22px">
-        <span class="kicker">Scorecard</span>
-        <h2 style="font-size:1.35rem">Security scorecard</h2>
-      </div>
       <div class="score">
         <span class="score-item"><span class="tick">✓</span> Plain-text comments</span>
         <span class="score-item"><span class="tick">✓</span> No raw HTML rendering</span>
-        <span class="score-item"><span class="tick">✓</span> Stateless admin session</span>
+        <span class="score-item"><span class="tick">✓</span> Stateless HMAC admin session</span>
         <span class="score-item"><span class="tick">✓</span> Signed CSRF binding</span>
         <span class="score-item"><span class="tick">✓</span> Single-use PoW challenges</span>
         <span class="score-item"><span class="tick">✓</span> Honeypot + time-gate anti-bot</span>
@@ -241,48 +307,26 @@
         <span class="score-item"><span class="tick">✓</span> GDPR data export (CSV/JSON)</span>
         <span class="score-item"><span class="tick">✓</span> D1 transactional anti-replay</span>
         <span class="score-item"><span class="tick">✓</span> No visitor tracking</span>
+        <span class="score-item"><span class="tick">✓</span> Password-less admin (GitHub OAuth)</span>
         <span class="score-item"><span class="tick">✓</span> No centralized comment database</span>
-        <span class="score-item"><span class="tick">✓</span> Anonymous reactions · PoW protected</span>
       </div>
-      <p class="muted" style="margin:18px 0 0;font-size:12.5px">Explanatory checklist of designed behaviors — not a claim of perfect security.</p>
+      <p class="muted" style="margin:18px 0 0;font-size:12.5px">Explanatory checklist of designed behaviors — not a claim of perfect security. Read the <a href="{{BASE}}security.html">full security model</a>.</p>
+    </div>
+    <div class="sec-cats" style="margin-top:26px;margin-bottom:0">
+      <div class="sec-cat"><h3>Public runtime</h3><p>Plain-text comments, prepared SQL, strict input limits.</p><a href="{{BASE}}security.html">Read →</a></div>
+      <div class="sec-cat"><h3>Admin authentication</h3><p>Stateless HMAC session, password or GitHub OAuth, absolute TTL.</p><a href="{{BASE}}security.html">Read →</a></div>
+      <div class="sec-cat"><h3>No tracking</h3><p>No visitor cookies, local storage, fingerprinting or analytics.</p><a href="{{BASE}}privacy.html">Read →</a></div>
     </div>
   </div>
 </section>
 
-<section class="section section-alt" id="install">
-  <div class="container">
-    <div class="section-head">
-      <span class="kicker">06 — Install</span>
-      <h2>5-minute installation</h2>
-      <p>Deploy, embed, publish. Three steps, no dashboard clicking sprees.</p>
-    </div>
-    <div class="steps">
-      <div class="step-card">
-        <span class="num">01</span>
-        <h3>Deploy StaticLayer</h3>
-        <p><code>npx staticlayer init</code> — a CLI deploys the Worker, creates D1 and binds the secrets.</p>
-      </div>
-      <div class="step-card">
-        <span class="num">02</span>
-        <h3>Add the widget</h3>
-        <p><code>&lt;div data-staticlayer&gt;&lt;/div&gt;</code> — framework-agnostic, one line.</p>
-      </div>
-      <div class="step-card">
-        <span class="num">03</span>
-        <h3>Publish</h3>
-        <p>Open your site, write a comment, approve it from the admin. That's it.</p>
-      </div>
-    </div>
-    <p style="margin-top:28px"><a class="btn btn-primary" href="{{BASE}}docs.html">Read the quick start →</a></p>
-  </div>
-</section>
-
-<section class="section" id="integrations">
+<!-- 06 — integrations -->
+<section class="section section-alt" id="integrations">
   <div class="container">
     <div class="section-head center">
-      <span class="kicker">07 — Integrations</span>
+      <span class="kicker">06 — Integrations</span>
       <h2>One widget. Every static site.</h2>
-      <p>StaticLayer is not tied to a framework. If it can embed JavaScript, it can use StaticLayer.</p>
+      <p>If it can embed JavaScript, it can use StaticLayer.</p>
     </div>
     <div class="integrations">
       <a class="integration" href="{{BASE}}integrations.html"><span class="ico">HT</span> HTML</a>
@@ -296,62 +340,22 @@
   </div>
 </section>
 
-<section class="section section-alt" id="works-where">
+<!-- 07 — FAQ teaser + CTA -->
+<section class="section" id="faq-teaser">
   <div class="container">
     <div class="section-head">
-      <span class="kicker">08 — Deployment</span>
-      <h2>Works where you already host</h2>
-    </div>
-    <div class="where-grid">
-      <div class="where">
-        <h3>GitHub Pages</h3>
-        <p>Run the Worker as a separate API origin and configure CORS for your site origin.</p>
-        <div class="mini"><span><b>GitHub Pages</b></span><span>↓</span><span><b>StaticLayer Worker</b></span><span>↓</span><span><b>D1</b></span></div>
-      </div>
-      <div class="where">
-        <h3>Cloudflare Pages</h3>
-        <p>Same provider, simpler setup: Worker, D1 and site in one account.</p>
-        <div class="mini"><span><b>Cloudflare Pages</b></span><span>↓</span><span><b>Worker + D1</b></span></div>
-      </div>
-      <div class="where">
-        <h3>Custom domain / static hosting</h3>
-        <p>Point the widget at a Worker on your own domain, e.g. <code>comments.example.com</code>.</p>
-        <div class="mini"><span><b>Your site</b></span><span>↓</span><span><b>comments.yourdomain.com</b></span></div>
-      </div>
-    </div>
-    <p style="margin-top:26px"><a href="{{BASE}}integrations.html">See all integration guides →</a></p>
-  </div>
-</section>
-
-<section class="section" id="open-source">
-  <div class="container">
-    <div class="section-head center">
-      <span class="kicker">09 — Source-available</span>
-      <h2>Source-available by default</h2>
-      <p>Source, protocol, migrations and security model are all public and inspectable.</p>
-    </div>
-    <div class="trust">
-      <div class="trust-item"><span class="n">01</span><p>Source-available (ELv2)</p></div>
-      <div class="trust-item"><span class="n">02</span><p>Inspectable protocol</p></div>
-      <div class="trust-item"><span class="n">03</span><p>Reproducible deployment</p></div>
-      <div class="trust-item"><span class="n">04</span><p>Customer-owned runtime</p></div>
-    </div>
-    <p style="margin-top:28px;text-align:center"><a class="btn" href="{{REPO}}" target="_blank" rel="noopener">Explore the repository ↗</a></p>
-  </div>
-</section>
-
-<section class="section section-alt" id="faq-teaser">
-  <div class="container">
-    <div class="section-head">
-      <span class="kicker">10 — FAQ</span>
+      <span class="kicker">07 — FAQ</span>
       <h2>Quick answers</h2>
     </div>
     <div class="faq">
       <details><summary>Does StaticLayer host my comments?</summary><p>No. The runtime is deployed in your Cloudflare environment. There is no centralized comment database.</p></details>
       <details><summary>Do visitors need an account or email?</summary><p>No. Visitors just write a nickname and a plain-text comment.</p></details>
       <details><summary>Does the widget track visitors?</summary><p>No. The public widget does not use tracking cookies, local storage, fingerprinting or analytics.</p></details>
-      <details><summary>Is it automatically GDPR compliant?</summary><p>No. StaticLayer is designed to minimize data processing, but site owners remain responsible for their own legal compliance.</p></details>
+      <details><summary>How long does installation take?</summary><p>About five minutes: one command (or the hosted browser installer), two lines of HTML, and a moderation approval. See the <a href="{{BASE}}install.html">universal guide</a>.</p></details>
     </div>
-    <p style="margin-top:24px"><a href="{{BASE}}faq.html">All FAQ →</a></p>
+    <p style="margin-top:28px;text-align:center">
+      <a class="btn btn-primary" href="{{BASE}}docs.html">Get started</a>
+      <a class="btn" href="{{BASE}}faq.html">All FAQ →</a>
+    </p>
   </div>
 </section>

@@ -12,6 +12,26 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Site — v1.8 polish (home / docs / demo)
+- **Home redesigned** — clearer hierarchy: hero headline "Comments, reactions &
+  polls for static sites — inside your Cloudflare account", an interactive
+  hero widget showing the FULL surface (comments with likes + pin + newest/best
+  sort, anonymous reactions, a live mini-poll, posting with real PoW), an
+  "in one glance" strip (Comments / Reactions / Polls) and dedicated product
+  cards with animated mini-previews. Fewer, denser sections; the security
+  scorecard is now one glass panel.
+- **Docs reorganized** — sidebar grouped into Getting started / Features /
+  Trust; new "How it works — technically" (widget → PoW → Worker → D1 flow
+  diagram), "Why installation is easy" (hosted installer / CLI / manual) and
+  feature cards linking to the dedicated pages.
+- **Demo upgraded** — interactive mode selector: **All / Comments / Reactions /
+  Polls**; comments now have anonymous likes, a live StrawPoll-style poll with
+  ranked results + leader crown, per-mode embed snippets, mode-aware hints and
+  technical log.
+- **Design system polish** — skeleton loading in the hero, micro-interactions
+  (heart pop, count-up ticks, animated poll bars, gradient shift, one-time
+  hero entrance), reduced-motion respected, no overflow on mobile.
+
 ### Added
 - **Password-less admin sign-in with GitHub OAuth (1.7.0)** — optional "Sign
   in with GitHub" in the admin console: no Cloudflare Zero Trust plan, no

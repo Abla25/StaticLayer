@@ -1,5 +1,5 @@
 <!-- title: StaticLayer — Documentation -->
-<!-- description: Documentation for StaticLayer: quick start, installation, universal guide, security, privacy and integrations. -->
+<!-- description: Documentation for StaticLayer: overview, quick start, how it works, installation, security, privacy and integrations. -->
 <!-- active: docs -->
 
 <section class="section" style="padding-top:56px">
@@ -7,26 +7,70 @@
     <div class="doc-layout">
       <aside class="doc-side">
         <nav aria-label="Documentation">
-          <a href="{{BASE}}docs.html" class="active">Quick start</a>
-          <a href="{{BASE}}install.html">Universal install</a>
-          <a href="{{BASE}}integrations.html">Integrations</a>
-          <a href="{{BASE}}comments.html">Comments</a>
-          <a href="{{BASE}}reactions.html">Reactions</a>
-          <a href="{{BASE}}polls.html">Polls</a>
-          <a href="{{BASE}}security.html">Security</a>
-          <a href="{{BASE}}privacy.html">Privacy</a>
-          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+          <div class="doc-group">
+            <span class="doc-group-label">Getting started</span>
+            <a href="{{BASE}}docs.html" class="active">Quick start</a>
+            <a href="{{BASE}}install.html">Universal install</a>
+            <a href="{{BASE}}integrations.html">Integrations</a>
+          </div>
+          <div class="doc-group">
+            <span class="doc-group-label">Features</span>
+            <a href="{{BASE}}comments.html">Comments</a>
+            <a href="{{BASE}}reactions.html">Reactions</a>
+            <a href="{{BASE}}polls.html">Polls</a>
+          </div>
+          <div class="doc-group">
+            <span class="doc-group-label">Trust</span>
+            <a href="{{BASE}}security.html">Security</a>
+            <a href="{{BASE}}privacy.html">Privacy</a>
+            <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+          </div>
         </nav>
       </aside>
 
       <article class="prose" id="quick-start">
         <h1>Quick start</h1>
-        <p>Get StaticLayer running in about five minutes. You need a Cloudflare account, Node.js ≥ 20, and npm.</p>
+        <p class="lede">StaticLayer adds comments, reactions and polls to any static site — deployed into your own Cloudflare account. You need a Cloudflare account and, for the CLI path, Node.js ≥ 20.</p>
 
-        <h2>1. Prepare credentials</h2>
+        <!-- what it is, in one glance -->
+        <div class="doc-cards">
+          <a class="doc-card" href="{{BASE}}comments.html"><span class="n">01 · Comments</span><h3>Moderated conversations</h3><p>Nested threads, likes, pin, sorting — all plain-text and privacy-safe.</p></a>
+          <a class="doc-card" href="{{BASE}}reactions.html"><span class="n">02 · Reactions</span><h3>Anonymous emoji counts</h3><p>One-tap reactions with proof-of-work integrity and escalating difficulty.</p></a>
+          <a class="doc-card" href="{{BASE}}polls.html"><span class="n">03 · Polls</span><h3>Private StrawPoll-style votes</h3><p>Single or multi-select, ranked results, embed anywhere — even globally.</p></a>
+        </div>
+
+        <h2>How it works — technically</h2>
+        <p>When a visitor loads a page with the widget, the browser calls your Worker to get a <b>signed, single-use challenge</b>, solves a small <b>Proof-of-Work</b> (so spam has a real cost, without any CAPTCHA), and submits the comment with its proof. The Worker verifies the signature and the proof, consumes the challenge <b>atomically</b> (a D1 batch — one challenge can never be reused, even under races), and stores the comment as <code>pending</code> in your D1 database. An admin approves it from <code>/admin.html</code> and it appears on the page.</p>
+        <pre><code>Visitor browser                 Your Cloudflare account
+───────────────                 ─────────────────────────
+widget.js                       Worker (runtime)          D1 (database)
+    │  GET /api/comments/challenge  →     │                   │
+    │  ← signed challenge (HMAC)         │                   │
+    │  solve Proof-of-Work ─┐            │                   │
+    │  POST /api/comments   │            │  verify sig + PoW  │
+    │  (comment + nonce)    ────────────→│  consume challenge │
+    │                                    │  store as pending  │
+    │  approve from /admin.html          │  → status: approved │
+</code></pre>
+
+        <div class="feature-row">
+          <div class="feature-tile"><span class="k">Privacy by default</span><h4>No cookies, no IP, no tracking</h4><p>The public widget stores nothing in the browser; the runtime never persists IPs or fingerprints.</p></div>
+          <div class="feature-tile"><span class="k">Anti-spam</span><h4>Cost, not identity</h4><p>Proof-of-Work + honeypot + a 3-second time gate. No CAPTCHA, no friction for readers.</p></div>
+          <div class="feature-tile"><span class="k">Ownership</span><h4>BYOC</h4><p>Everything runs in <i>your</i> Cloudflare account — Worker, D1 database, secrets. No central platform.</p></div>
+        </div>
+
+        <h2>Why installation is easy</h2>
+        <p>There are three ways to install — pick the one that fits you:</p>
+        <div class="feature-row">
+          <div class="feature-tile"><span class="k">Hosted installer</span><h4>Zero terminal</h4><p>The <b>hosted browser installer</b> deploys Worker + D1 + secrets into your account in a few clicks — nothing stored on disk.</p></div>
+          <div class="feature-tile"><span class="k">CLI</span><h4>One command</h4><p><code>npx staticlayer init</code> observes, plans, applies and verifies the whole deployment for you.</p></div>
+          <div class="feature-tile"><span class="k">Manual</span><h4>Full control</h4><p>Create the Worker and D1 in the Cloudflare dashboard yourself — the <a href="{{BASE}}install.html">universal guide</a> walks through every step.</p></div>
+        </div>
+
+        <h2>1 · Prepare credentials</h2>
         <p>Create an API token in the Cloudflare dashboard with account permissions <b>Workers Scripts: Edit</b>, <b>Cloudflare D1: Edit</b> and <b>Account Settings: Read</b>. Copy your <b>Account ID</b> from the same dashboard.</p>
 
-        <h2>2. Install &amp; generate secrets</h2>
+        <h2>2 · Install &amp; generate secrets</h2>
 <pre><code>npm install
 npm run build
 
@@ -35,24 +79,23 @@ export STATICLAYER_ADMIN_SECRET="$(openssl rand -hex 32)"
 export STATICLAYER_SESSION_SECRET="$(openssl rand -hex 32)"
 export STATICLAYER_POW_SECRET="$(openssl rand -hex 32)"</code></pre>
 
-        <h2>3. Deploy</h2>
+        <h2>3 · Deploy</h2>
 <pre><code>npx staticlayer init    # observe → plan → apply → verify
 
 # then create the D1 tables
 npx wrangler d1 migrations apply staticlayer --remote -c wrangler.jsonc</code></pre>
 
-        <h2>4. Add the widget</h2>
+        <h2>4 · Add the widget</h2>
 <pre><code>&lt;div data-staticlayer data-api="https://comments.example.com"&gt;&lt;/div&gt;
 &lt;script src="https://comments.example.com/widget.js" defer&gt;&lt;/script&gt;</code></pre>
-        <p>Same snippet works on every page (thread = page URL). Add an anonymous reaction bar with
-        <code>data-reactions="👍,❤️,🎉"</code>, show it <b>without comments</b> via <code>data-reactions-only</code>,
-        embed a poll with <code>data-poll-id</code>, enable <b>replies</b> (up to 3 levels) or place things separately —
-        see <a href="{{BASE}}integrations.html">Integrations</a>.</p>
+        <p>The same snippet works on every page (thread = page URL). Add an anonymous reaction bar with <code>data-reactions="👍,❤️,🎉"</code>, show it <b>without comments</b> via <code>data-reactions-only</code>, embed a poll with <code>data-poll-id</code>, enable <b>replies</b> (up to 3 levels) or place the reactions above the comments — see <a href="{{BASE}}integrations.html">Integrations</a>.</p>
 
-        <h2>5. Moderate</h2>
-        <p>Open <code>https://comments.example.com/admin.html</code>, sign in with <code>ADMIN_SECRET</code>, and approve the first comment.</p>
+        <h2>5 · Moderate</h2>
+        <p>Open <code>https://comments.example.com/admin.html</code>, sign in with <code>ADMIN_SECRET</code> (or password-less with <b>GitHub OAuth</b> — guide inside the admin under Settings → Admin access &amp; sign-in), and approve the first comment.</p>
 
-        <blockquote><p>Full step-by-step deploy: <a href="{{BASE}}install.html">Universal installation guide</a>. Live walkthrough: <a href="{{BASE}}demo.html">the simulator</a>.</p></blockquote>
+        <div class="callout">
+          <b>Where to go next:</b> full step-by-step deploy → <a href="{{BASE}}install.html">Universal installation guide</a>. Live walkthrough → <a href="{{BASE}}demo.html">the interactive demo</a>. Framework snippets → <a href="{{BASE}}integrations.html">Integrations</a>.
+        </div>
       </article>
     </div>
   </div>
