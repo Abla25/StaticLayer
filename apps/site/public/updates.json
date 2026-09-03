@@ -1,6 +1,6 @@
 {
-  "latest": "1.7.0",
-  "date": "2026-08-28",
-  "notes": "v1.7.0 — Password-less admin sign-in with GitHub OAuth: free, no credit card, no Zero Trust plan. Create a GitHub OAuth App, set GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET / GITHUB_ADMIN_IDS on your Worker (step-by-step guide in Settings → Admin access & sign-in), and the admin login shows \"Sign in with GitHub\". The token is used once and discarded; the password stays as a fallback.",
+  "latest": "1.7.1",
+  "date": "2026-09-03",
+  "notes": "v1.7.1 — Telegram alerts v2: choose which activity notifies you (comments, polls and/or reactions) from the admin console, and each message now says which page got the activity. Privacy stays intact: comment text, nicknames and poll options are never sent to Telegram. Plus a \"Send test message\" button to verify your bot token and chat id instantly.",
   "installerUrl": "https://staticlayer-installer.staticlayer.workers.dev"
 }

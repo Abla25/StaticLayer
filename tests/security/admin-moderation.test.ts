@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Miniflare } from 'miniflare';
 import { base64UrlToBytes, mineNonce, PROTOCOL_VERSION, serializeNonce } from '@staticlayer/protocol';
+import { RUNTIME_VERSION } from '../../packages/runtime/src/version.ts';
 import { SECRETS, spawnWorker } from './worker.ts';
 
 const BASE = 'http://localhost';
@@ -344,7 +345,7 @@ describe('admin moderation v2 — blocked terms + updates', () => {
     const res = await mf.dispatchFetch(`${BASE}/api/admin/updates`, { headers: { cookie } });
     expect(res.status).toBe(200);
     const data = (await res.json()) as { current: string; updateAvailable: boolean };
-    expect(data.current).toBe('1.7.0');
+    expect(data.current).toBe(RUNTIME_VERSION);
     expect(typeof data.updateAvailable).toBe('boolean');
   });
 });
