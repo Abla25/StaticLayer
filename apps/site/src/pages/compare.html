@@ -1,0 +1,155 @@
+<!-- title: StaticLayer vs Disqus, Giscus, Utterances & Isso -->
+<!-- description: How StaticLayer compares with Disqus, Giscus, Utterances and Isso: where data lives, visitor accounts, privacy, anti-spam and moderation. -->
+<!-- active: compare -->
+
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="doc-layout">
+      <aside class="doc-side">
+        <nav aria-label="Documentation">
+          <a href="{{BASE}}docs.html">Quick start</a>
+          <a href="{{BASE}}install.html">Universal install</a>
+          <a href="{{BASE}}integrations.html">Integrations</a>
+          <a href="{{BASE}}comments.html">Comments</a>
+          <a href="{{BASE}}reactions.html">Reactions</a>
+          <a href="{{BASE}}polls.html">Polls</a>
+          <a href="{{BASE}}security.html">Security</a>
+          <a href="{{BASE}}privacy.html">Privacy</a>
+          <a href="{{BASE}}faq.html">FAQ &amp; limitations</a>
+          <a href="{{BASE}}compare.html" class="active">Alternatives</a>
+        </nav>
+      </aside>
+
+      <article class="prose">
+        <h1>StaticLayer vs the alternatives</h1>
+        <p class="lede">You want comments on a static site, without Disqus. There are four common paths: a hosted SaaS (Disqus), a GitHub-backed commenter (Giscus / Utterances), a classic self-hosted server (Isso) — or StaticLayer, which runs inside your own Cloudflare account. Here is an honest comparison.</p>
+
+        <h2>Comparison at a glance</h2>
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>StaticLayer</th>
+              <th>Disqus</th>
+              <th>Giscus</th>
+              <th>Utterances</th>
+              <th>Isso</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Where comments live</td>
+              <td><b>Your Cloudflare D1</b></td>
+              <td>Disqus cloud</td>
+              <td>Your GitHub Discussions</td>
+              <td>Your GitHub Issues</td>
+              <td>Your server (SQLite)</td>
+            </tr>
+            <tr>
+              <td>Hosting model</td>
+              <td><b>BYOC</b> — runs in your Cloudflare account</td>
+              <td>Centralized SaaS</td>
+              <td>Free, GitHub-backed</td>
+              <td>Free, GitHub-backed</td>
+              <td>Self-hosted (you run it)</td>
+            </tr>
+            <tr>
+              <td>Visitor account needed</td>
+              <td><b>None — nickname only</b></td>
+              <td>Account or guest (email)</td>
+              <td>GitHub account</td>
+              <td>GitHub account</td>
+              <td>None (configurable)</td>
+            </tr>
+            <tr>
+              <td>Anti-spam</td>
+              <td><b>Proof-of-Work + one-use challenge + honeypot + time gate + moderation</b>, no CAPTCHA</td>
+              <td>Their moderation tools</td>
+              <td>GitHub's own controls</td>
+              <td>GitHub's own controls</td>
+              <td>DIY (basic, optional)</td>
+            </tr>
+            <tr>
+              <td>Built-in moderation queue</td>
+              <td><b>Yes</b> (pending → approve)</td>
+              <td>Yes (on their platform)</td>
+              <td>Via GitHub Discussions</td>
+              <td>Via GitHub Issues</td>
+              <td>Optional</td>
+            </tr>
+            <tr>
+              <td>Reactions &amp; polls</td>
+              <td><b>Built-in</b> (anonymous, PoW)</td>
+              <td>Likes (account-based)</td>
+              <td>GitHub reactions</td>
+              <td>GitHub reactions</td>
+              <td>Mostly not built-in</td>
+            </tr>
+            <tr>
+              <td>Trackers / cookies</td>
+              <td><b>None</b> in the widget</td>
+              <td>Historically heavy, ads on free tier</td>
+              <td>None</td>
+              <td>None</td>
+              <td>None by default</td>
+            </tr>
+            <tr>
+              <td>Data export / GDPR</td>
+              <td><b>Built-in export</b>; data in your D1</td>
+              <td>Request via their platform</td>
+              <td>It's your repo</td>
+              <td>It's your repo</td>
+              <td>It's your database</td>
+            </tr>
+            <tr>
+              <td>Server to run &amp; patch</td>
+              <td><b>None</b> (Cloudflare serverless)</td>
+              <td>None</td>
+              <td>None</td>
+              <td>None</td>
+              <td>Yes (Python service)</td>
+            </tr>
+            <tr>
+              <td>License / cost</td>
+              <td>Source-available (ELv2); free on Cloudflare's free tier</td>
+              <td>Free tier + paid plans</td>
+              <td>Open source, free</td>
+              <td>Open source, free</td>
+              <td>Open source, free (you pay infra)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>StaticLayer vs Disqus</h2>
+        <p>Disqus is the biggest managed network: zero infrastructure, huge moderation tooling, works anywhere. The trade-offs are exactly why many people leave it: your comments and your readers' data live on a third-party platform, the free tier has historically shown ads, and the widget is known for heavy tracking cookies. Choose StaticLayer if you want the comments <b>and</b> the data to belong to your site, with no ads and no tracking — and you're fine managing a small Cloudflare Worker instead of using a turnkey service.</p>
+
+        <h2>StaticLayer vs Giscus &amp; Utterances (GitHub-backed)</h2>
+        <p>Both store comments inside your GitHub repository (Discussions for Giscus, Issues for Utterances): free, transparent, no tracking, and every comment is versioned next to your code — great for developer blogs whose readers all have GitHub. The limits are real though: <b>visitors need a GitHub account to comment</b>, which silently excludes a large share of non-technical readers; anti-spam and moderation are GitHub's, not yours; and reactions require sign-in too. Choose StaticLayer if you want <b>anyone</b> to comment with just a nickname, with your own moderation queue and built-in anonymous reactions and polls — at the cost of running a Worker + D1 instead of using your repo as storage.</p>
+
+        <h2>StaticLayer vs Isso</h2>
+        <p>Isso is the classic self-hosted commenter and philosophically the closest to StaticLayer: comments stay on infrastructure you control, no accounts, no SaaS. The difference is operational: Isso is a Python server you install, run and keep patched on a VPS; StaticLayer is the serverless equivalent — a Worker + D1 in <b>your</b> Cloudflare account, so there is no server to maintain, plus built-in reactions, polls and stronger anti-spam defaults (proof-of-work, single-use challenges, honeypot, time gate). Choose Isso if you prefer Python or a plain minimal tool on your own VPS; choose StaticLayer if you're comfortable with Cloudflare's generous free tier and want the same ownership without the operations.</p>
+
+        <h2>Where StaticLayer doesn't win (honest)</h2>
+        <ul>
+          <li><b>Comment text is not in your static HTML.</b> Comments are rendered client-side by the widget, so crawlers that don't execute JavaScript won't see them. They are for your readers, not for SEO (see the <a href="{{BASE}}faq.html">FAQ</a>).</li>
+          <li><b>You need a Cloudflare account</b>, and D1 writes are served from a single region.</li>
+          <li><b>ELv2 is source-available, not OSI open source</b> — you can read, modify and self-host it, but not resell it as a hosted service.</li>
+          <li><b>Younger project</b>: smaller community and fewer third-party integrations than Disqus or Isso.</li>
+        </ul>
+
+        <h2>When StaticLayer is the right fit</h2>
+        <ul>
+          <li>Your site is static — Astro, Hugo, Jekyll, Next.js export, GitHub Pages, Cloudflare Pages…</li>
+          <li>You don't want a comment SaaS and you don't want to run a server either.</li>
+          <li>You want <b>everyone</b> able to comment with just a nickname — no account, no email.</li>
+          <li>You want spam protection without CAPTCHA or third-party services.</li>
+          <li>You want comments, anonymous reactions and polls in one privacy-first widget.</li>
+        </ul>
+
+        <div class="callout">
+          <p><b>Try it.</b> See the <a href="{{BASE}}demo.html">interactive demo</a>, follow the <a href="{{BASE}}docs.html">quick start</a>, or read the <a href="{{BASE}}install.html">installation guide</a>. Source on <a href="{{REPO}}" target="_blank" rel="noopener">GitHub</a>.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
