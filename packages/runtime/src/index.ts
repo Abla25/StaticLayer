@@ -10,6 +10,7 @@ import {
   handleAdminGetSettings,
   handleAdminGetTerms,
   handleAdminPutSettings,
+  handleAdminTelegramTest,
 } from './admin-config.ts';
 import { handleAdminLogin, handleAdminLogout, handleAdminSession } from './admin.ts';
 import {
@@ -206,6 +207,9 @@ const worker: ExportedHandler<Env> = {
     }
     if (pathname === '/api/admin/settings' && method === 'PUT') {
       return respond(handleAdminPutSettings(request, env));
+    }
+    if (pathname === '/api/admin/settings/telegram-test' && method === 'POST') {
+      return respond(handleAdminTelegramTest(request, env));
     }
     if (pathname === '/api/admin/terms' && method === 'GET') {
       return respond(handleAdminGetTerms(request, env));
