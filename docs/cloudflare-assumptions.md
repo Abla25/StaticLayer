@@ -316,6 +316,31 @@ permission names, which satisfies the installer's least-privilege requirement.
 
 ---
 
+## 12. Durable Objects on the Workers Free plan (anti-replay design rationale)
+
+**Status: VERIFIED**
+
+- Source: <https://developers.cloudflare.com/durable-objects/platform/pricing/>
+  (page `dateModified` 2026-08-25).
+- Exact wording: *"Durable Objects are available both on Workers Free and
+  Workers Paid plans."* On the Free plan only the **SQLite storage backend** is
+  available ("*Workers Free plan can only create and access SQLite-backed
+  Durable Objects*"); the key-value storage backend is Paid-only.
+- Free-plan storage quotas for SQLite-backed DOs (rows read 5M/day, rows
+  written 100k/day, 5 GB) **match D1's free quotas exactly** — the DO pricing
+  page states they *"match D1 pricing"*.
+- **Consequence (design decision, recorded 2026-09-04):** the earlier draft
+  rationale that anti-replay used D1 `batch()` because "DOs require the paid
+  plan" is **wrong**. The correct rationale: a SQLite-backed DO carries the
+  SAME 100k rows-written/day cap as D1 on the Free plan, so moving the
+  `used_challenges` table into a DO would NOT remove the write quota — it would
+  only replace an atomic, tested D1 `batch()` invariant with a new stateful
+  component (class + migrations + lifecycle). D1 `batch()` stays. A DO remains
+  the natural upgrade path if cross-request state is ever needed (e.g.
+  per-article/per-IP counters stronger than the edge-local Rate Limit binding).
+
+---
+
 ## Summary of consequences for the implementation
 
 | Area | Verified conclusion |
