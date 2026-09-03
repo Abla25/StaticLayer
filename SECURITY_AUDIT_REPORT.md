@@ -58,12 +58,18 @@
    mandatory `GET /oauth/scopes` confirmation step; `docs/cloudflare-assumptions.md`
    updated (§10 bulk secrets, §11 verified IDs + Bach-scope correction).
 7. **New structural test** `tests/security/no-ip-persistence.test.ts`.
+8. **REMOTE-D1 concurrency validated** (2026-09-04): new
+   `tests/security/remote-concurrency.test.ts` (base URL from
+   `STATICLAYER_REMOTE_BASE` env var, never committed) ran against the
+   deployed Worker + production D1 — 3 rounds × 10 concurrent posts sharing
+   one `challenge_id` → exactly 1×200 + 9×409 per round, plus a sequential
+   replay → 409. `SECURITY_REVIEW.md §14.4` and this register updated.
 
 ## 4. Residual risk register
 
 | Risk | Severity | Mitigation / owner |
 | --- | --- | --- |
-| Remote D1 concurrency not yet proven end-to-end | Medium (pre-launch) | Run `wrangler dev --remote` concurrency replay before commercial launch (SECURITY_REVIEW.md §14.4). |
+| Remote D1 concurrency not yet proven end-to-end | ~~Medium (pre-launch)~~ **RESOLVED (2026-09-04)** | Empirically validated against the deployed Worker + production D1 (`tests/security/remote-concurrency.test.ts`): 3 × 10 concurrent posts sharing one `challenge_id` → exactly 1×200 + 9×409 each round; sequential replay → 409. |
 | `d1.write` scope ID not yet confirmed verbatim | Low | `GET /oauth/scopes` at client registration; single constant + test guard. |
 | Operators cannot recover `ADMIN_SECRET` after an installer deploy | Resolved (Round 21) | The installer now shows `ADMIN_SECRET` exactly once after a real deploy — save it. Rotation remains available via `wrangler secret put ADMIN_SECRET` or redeploy; the CLI path (`npx staticlayer init`) lets operators set their own secrets. |
 | Rate limiting is edge-local / eventually consistent | Accepted (backstop only) | PoW + anti-replay remain the security boundary (Cloudflare-documented). |

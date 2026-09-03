@@ -320,16 +320,22 @@ own retention purge.
   (`PATCH /secrets-bulk`, JSON Merge Patch body), multipart deploy, 404
   handling, error propagation.
 
-### 14.4 Anti-replay concurrency — LOCAL-only evidence (Phase 4 audit)
+### 14.4 Anti-replay concurrency — LOCAL + REMOTE evidence (validated 2026-09-04)
 
-**WARNING: This concurrency test runs against local Miniflare D1. While D1
-docs guarantee batch atomicity, production REMOTE D1 concurrency behavior
-requires empirical validation via `wrangler dev --remote` before commercial
-launch.**
+**LOCAL:** the I5 invariant (exactly 1 of N concurrent requests with the same
+`challenge_id`) is proven against the real Worker + **local** D1 in workerd
+(`tests/security/replay-concurrency.test.ts`).
 
-The I5 invariant (exactly 1 of N concurrent requests with the same
-`challenge_id`) is proven only against the real Worker + **local** D1 in
-workerd (`tests/security/replay-concurrency.test.ts`). The warning comment is
-also placed at the top of that test file. See `SECURITY_AUDIT_REPORT.md`
-("Challenge Single-Use" row, Residual Risk column) for the mitigation plan.
+**REMOTE (2026-09-04):** the same invariant was validated empirically against
+the **deployed Worker + production D1** over HTTPS via
+`tests/security/remote-concurrency.test.ts` (runs only when the
+`STATICLAYER_REMOTE_BASE` env var is set — the base URL is never committed).
+Result: 3 rounds × 10 concurrent posts sharing one `challenge_id` produced
+exactly 1×200 + 9×409 in every round, and a sequential replay of a consumed
+challenge returned 409. No rate-limit interference was observed. The D1
+docs guarantee of batch atomicity is therefore corroborated end-to-end.
+
+Invariant I5 is now **PROVEN EMPIRICALLY in both environments** — this
+resolves the pre-launch "remote D1 concurrency" open item (see
+`SECURITY_AUDIT_REPORT.md` residual-risk register).
 

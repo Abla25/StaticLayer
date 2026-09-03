@@ -6,11 +6,11 @@ import { SECRETS, spawnWorker } from './worker.ts';
 const BASE = 'http://localhost';
 
 /**
- * WARNING: This concurrency test runs against LOCAL Miniflare D1. While D1
- * docs guarantee batch atomicity, production REMOTE D1 concurrency behavior
- * requires empirical validation via `wrangler dev --remote` before commercial
- * launch. (Phase 4 audit — see SECURITY_REVIEW.md §14.4 and
- * SECURITY_AUDIT_REPORT.md.)
+ * LOCAL D1 concurrency test for the anti-replay invariant (I5). While the D1
+ * docs guarantee batch atomicity, production REMOTE D1 concurrency has now
+ * ALSO been validated empirically (2026-09-04) against the deployed Worker +
+ * production D1 — see tests/security/remote-concurrency.test.ts (runs only
+ * when STATICLAYER_REMOTE_BASE is set) and SECURITY_REVIEW.md §14.4.
  */
 
 /**
