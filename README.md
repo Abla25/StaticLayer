@@ -1,6 +1,10 @@
-# 🗨️ StaticLayer
+# StaticLayer
 
 **Comments for static sites — without the comment SaaS.**
+
+
+<img width="1368" height="1080" alt="Cap2026-09-02at23 11 04-ezgif com-optimize" src="https://github.com/user-attachments/assets/fd8a0f88-3b88-49a8-a50f-4f11f887611d" />
+
 
 StaticLayer is a source-available, Cloudflare-native comment system designed for static websites. Your Worker. Your database. No centralized comment platform.
 
