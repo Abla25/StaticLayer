@@ -178,6 +178,9 @@ $('deploy').addEventListener('click', async () => {
     ratelimitNamespaceId: $('rl-ns').value.trim() || undefined,
     cfAccessTeam: $('cf-access-team').value.trim() || undefined,
     cfAccessAud: $('cf-access-aud').value.trim() || undefined,
+    githubClientId: $('gh-client-id').value.trim() || undefined,
+    githubClientSecret: $('gh-client-secret').value.trim() || undefined,
+    githubAdminIds: $('gh-admin-ids').value.trim() || undefined,
     siteUrl: $('site-url').value.trim() || undefined,
     dryRun: false,
   };
@@ -194,6 +197,10 @@ $('deploy').addEventListener('click', async () => {
       $('admin-url').textContent = adminUrl;
       $('admin-open').href = adminUrl;
       $('admin-console-box').classList.remove('hidden');
+      // GitHub sign-in callback (shown even when GitHub wasn't configured —
+      // the operator can create the OAuth App now and re-run the installer).
+      $('github-callback').textContent = result.endpoint + '/api/admin/github/callback';
+      $('github-callback-box').classList.remove('hidden');
       reportEmbedHeight();
     }
     // The operator's admin password is returned exactly once (only on a real
@@ -233,6 +240,12 @@ $('deploy').addEventListener('click', async () => {
 $('copy').addEventListener('click', async () => {
   await navigator.clipboard.writeText($('snippet').textContent);
   $('copy').textContent = 'Copied ✓';
+});
+
+$('copy-gh').addEventListener('click', async () => {
+  await navigator.clipboard.writeText($('github-callback').textContent);
+  $('copy-gh').textContent = 'Copied ✓';
+  setTimeout(function () { $('copy-gh').textContent = 'Copy callback'; }, 1600);
 });
 
 /* ---- Step 3: pick your site from your Cloudflare domains ---- */

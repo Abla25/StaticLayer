@@ -390,7 +390,7 @@
       <input id="gh-client-secret" type="password" placeholder="your-client-secret">
       <label for="gh-admin-ids">Your GitHub user id <span style="font-weight:400">(allowlist — find it at <code>api.github.com/users/&lt;your-login&gt;</code> → <code>"id"</code>)</span></label>
       <input id="gh-admin-ids" placeholder="e.g. 1234567">
-      <div class="note">Create a free OAuth App on GitHub (<b>Settings → Developer settings → OAuth Apps</b>) with the Authorization callback URL <code>&lt;your-worker&gt;/api/admin/github/callback</code>, then paste the Client ID / Secret and your numeric user id here. GitHub only ever sees your own login — no visitor data ever leaves your Worker. The full step-by-step guide lives in the admin console → <b>Settings → Admin access &amp; sign-in</b>.</div>
+      <div class="note">Create a free OAuth App on GitHub (<b>Settings → Developer settings → OAuth Apps</b>) with the Authorization callback URL <code>&lt;your-worker&gt;/api/admin/github/callback</code>, then paste the Client ID / Secret and your numeric user id here. GitHub only ever sees your own login — no visitor data ever leaves your Worker. <b>The installer creates <code>ADMIN_SECRET</code>, <code>SESSION_SECRET</code> and <code>POW_SECRET</code> for you automatically</b> — never add those by hand. The full step-by-step guide lives in the admin console → <b>Settings → Admin access &amp; sign-in</b>.</div>
       <div class="divider"><span>Your site — recommended</span></div>
       <label for="site-url">Your site URL <span style="font-weight:400">(recommended — lets the widget call this Worker from your site)</span></label>
       <div class="row">
@@ -419,6 +419,11 @@
         <p class="muted" style="font-size:13.5px;margin:0 0 8px">Open this URL, then paste the admin password below:</p>
         <pre id="admin-url"></pre>
         <div class="row"><a id="admin-open" class="btn btn-primary" target="_blank" rel="noopener">Open admin ↗</a></div>
+        <div id="github-callback-box" class="hidden" style="margin-top:14px;background:rgba(255,90,31,.08);border:1px solid rgba(255,90,31,.25);border-radius:12px;padding:12px 14px;font-size:13px">
+          <b>Password-less GitHub sign-in (optional):</b> create a free GitHub OAuth App with this callback URL, then re-run this installer with the GitHub fields filled in — updates preserve your admin password and never touch your data.
+          <pre id="github-callback" style="user-select:all"></pre>
+          <div class="row"><button id="copy-gh" class="btn btn-ghost">Copy callback</button></div>
+        </div>
       </div>
       <div id="admin-secret-box" class="hidden">
         <div class="panel-title" style="margin:22px 0 8px;font-size:15px">Your admin password</div>

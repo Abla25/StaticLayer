@@ -95,6 +95,35 @@ describe('hosted installer worker — static + meta', () => {
     expect(htmlText).toContain('StaticLayer — Web Installer');
     expect(htmlText).toContain('https://abla25.github.io/StaticLayer/');
     expect(htmlText).toContain('id="continue-local"');
+    // GitHub sign-in is collected at install: the wizard exposes the fields,
+    // the callback helper in the success step, and the copy button.
+    expect(htmlText).toContain('id="gh-client-id"');
+    expect(htmlText).toContain('id="gh-client-secret"');
+    expect(htmlText).toContain('id="gh-admin-ids"');
+    expect(htmlText).toContain('id="github-callback"');
+    expect(htmlText).toContain('id="copy-gh"');
+    // The 3 core secrets are generated automatically — never asked by hand.
+    expect(htmlText).toContain('The installer creates');
+    expect(htmlText).toContain('ADMIN_SECRET</code>');
+    expect(htmlText).toContain('SESSION_SECRET</code>');
+    expect(htmlText).toContain('POW_SECRET</code>');
+  });
+
+  it('sends the GitHub fields on BOTH the plan and the real deploy', async () => {
+    const res = await mf.dispatchFetch('http://installer.local/app.js');
+    expect(res.status).toBe(200);
+    const js = await res.text();
+    // Two payload builders exist: the plan preview (dryRun:true) and the real
+    // deploy (dryRun:false). Regression: the deploy builder once dropped the
+    // GitHub fields, so GitHub sign-in was never applied on a real deploy.
+    const planBlock = js.slice(js.indexOf('computePlan'), js.indexOf('computePlan') + 2500);
+    const deployBlock = js.slice(js.indexOf("$('deploy').addEventListener"), js.indexOf("$('deploy').addEventListener") + 2500);
+    for (const field of ['githubClientId', 'githubClientSecret', 'githubAdminIds']) {
+      expect(planBlock).toContain(field);
+      expect(deployBlock).toContain(field);
+    }
+    expect(planBlock).toContain('dryRun: true');
+    expect(deployBlock).toContain('dryRun: false');
   });
 
   it('serves app.js and nav.js', async () => {

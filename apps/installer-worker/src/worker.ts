@@ -347,6 +347,22 @@ const worker: ExportedHandler<Env> = {
           body && typeof body.cfAccessTeam === 'string' && body.cfAccessTeam.trim() ? body.cfAccessTeam.trim() : undefined,
         cfAccessAud:
           body && typeof body.cfAccessAud === 'string' && body.cfAccessAud.trim() ? body.cfAccessAud.trim() : undefined,
+        githubClientId:
+          body && typeof body.githubClientId === 'string' && body.githubClientId.trim()
+            ? body.githubClientId.trim()
+            : undefined,
+        githubClientSecret:
+          body && typeof body.githubClientSecret === 'string' && body.githubClientSecret.trim()
+            ? body.githubClientSecret.trim()
+            : undefined,
+        githubAdminIds:
+          body && typeof body.githubAdminIds === 'string' && body.githubAdminIds.trim()
+            ? body.githubAdminIds.trim()
+            : undefined,
+        githubAdminLogins:
+          body && typeof body.githubAdminLogins === 'string' && body.githubAdminLogins.trim()
+            ? body.githubAdminLogins.trim()
+            : undefined,
         siteUrl:
           body && typeof body.siteUrl === 'string' && body.siteUrl.trim() ? body.siteUrl.trim() : undefined,
         dryRun,
