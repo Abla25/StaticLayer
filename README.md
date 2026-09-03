@@ -1,4 +1,4 @@
-<img width="1368" height="1080" alt="Cap2026-09-02at23 11 04-ezgif com-optimize" src="https://github.com/user-attachments/assets/7f10537c-6e5f-4c71-b768-b8025c5e04fb" />
+# 🗨️ StaticLayer
 
 **Comments for static sites — without the comment SaaS.**
 
