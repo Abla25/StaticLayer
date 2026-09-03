@@ -188,6 +188,76 @@ describe('anti-replay — challenge consumption', () => {
   });
 });
 
+/**
+ * Issue: "Load-test solve-flooding against D1 daily write cap".
+ *
+ * What a solve-flood looks like at the data layer: an attacker mints and
+ * submits many VALID pre-solved challenges. The only D1 writes are on submit
+ * (used_challenges + comment in ONE batch), and the retention cron bounds the
+ * table to ~24h of traffic. These tests prove the flood invariants that the
+ * quota math relies on, deterministically on the local engine:
+ *   - every unique valid solve is accepted EXACTLY once → DB growth is 1:1
+ *     with accepted comments (no duplicates, no orphaned challenge rows);
+ *   - replaying/storming any consumed challenge NEVER adds rows (409) — the
+ *     anti-replay table cannot be grown by replay traffic.
+ * (The absolute 100k rows-written/day free cap itself cannot be exercised
+ * against local Miniflare — that is a REMOTE-D1 launch check, see
+ * SECURITY_REVIEW.md §14.4.)
+ */
+describe('anti-replay — solve flood growth (Issue: load-test solve-flooding)', () => {
+  let mf: Miniflare | undefined;
+  afterEach(async () => {
+    await mf?.dispose();
+    mf = undefined;
+  });
+
+  it('N unique pre-solved challenges submitted concurrently: all accepted once, DB grows 1:1', async () => {
+    mf = await spawnWorker({ difficulty: 6 });
+    const N = 20;
+    const payloads: PostPayload[] = [];
+    for (let i = 0; i < N; i += 1) {
+      const c = await obtainChallenge(mf, `/flood/${i}`);
+      payloads.push(buildPayload(c, await solve(c, `flood body ${i}`), `flood body ${i}`));
+    }
+
+    const responses = await Promise.all(payloads.map((p) => submit(mf as Miniflare, p)));
+    for (const r of responses) {
+      expect(r.status).toBe(200);
+    }
+
+    const db = await (mf as Miniflare).getD1Database('DB');
+    expect((await db.prepare('SELECT COUNT(*) AS c FROM comments').first())?.c).toBe(N);
+    expect((await db.prepare('SELECT COUNT(*) AS c FROM used_challenges').first())?.c).toBe(N);
+  });
+
+  it('replay storm of every consumed challenge never grows comments or used_challenges', async () => {
+    mf = await spawnWorker({ difficulty: 6 });
+    const N = 8;
+    const payloads: PostPayload[] = [];
+    for (let i = 0; i < N; i += 1) {
+      const c = await obtainChallenge(mf, `/storm/${i}`);
+      payloads.push(buildPayload(c, await solve(c, `storm ${i}`), `storm ${i}`));
+    }
+    for (const p of payloads) {
+      expect((await submit(mf as Miniflare, p)).status).toBe(200);
+    }
+
+    // Blast every consumed challenge again, 5 concurrent replays each.
+    const storms: Promise<Response>[] = [];
+    for (const p of payloads) {
+      for (let k = 0; k < 5; k += 1) storms.push(submit(mf as Miniflare, p));
+    }
+    const responses = await Promise.all(storms);
+    for (const r of responses) {
+      expect(r.status).toBe(409);
+    }
+
+    const db = await (mf as Miniflare).getD1Database('DB');
+    expect((await db.prepare('SELECT COUNT(*) AS c FROM comments').first())?.c).toBe(N);
+    expect((await db.prepare('SELECT COUNT(*) AS c FROM used_challenges').first())?.c).toBe(N);
+  });
+});
+
 describe('admin login skeleton', () => {
   let mf: Miniflare | undefined;
   afterEach(async () => {
