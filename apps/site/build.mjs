@@ -125,6 +125,8 @@ function layout({ title, description, body, active, withSimulator, withHeroWidge
 <title>${title}</title>
 <meta name="description" content="${description}">
 <meta name="keywords" content="${siteConfig.keywords.join(', ')}">
+<!-- Google Search Console site verification (public by design — proves HTML ownership only). -->
+<meta name="google-site-verification" content="-Z8Zf6XvXtyE8_aAlrqOTOtKQRegUoNZfTIsgbx2Vy4" />
 <link rel="canonical" href="${DOMAIN}${BASE}${slug}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="StaticLayer">
