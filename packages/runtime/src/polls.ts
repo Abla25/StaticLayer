@@ -24,6 +24,7 @@ import { DEFAULTS, envNumber, type Env } from './env.ts';
 import { json, readJsonBody } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
 import { readSettings, settingNumber } from './settings.ts';
+import { notifyPollVote } from './telegram.ts';
 import { timeGateResponse } from './antiabuse.ts';
 
 /**
@@ -378,6 +379,12 @@ export async function handlePollVote(request: Request, env: Env): Promise<Respon
   }
 
   const counts = await loadCounts(env, poll.id);
+
+  // Owner notification on an accepted vote (best-effort). GDPR-minimal: the
+  // alert never contains the chosen option — only the page + admin link.
+  const origin = new URL(request.url).origin;
+  await notifyPollVote(env, `${origin}/admin.html`, { hostContext, articlePath });
+
   return json({
     ok: true,
     poll: serializePoll(poll, counts),

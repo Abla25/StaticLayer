@@ -599,6 +599,22 @@
   }
 
   // ---- settings ---------------------------------------------------------
+  function telegramEventsValue() {
+    var evts = [];
+    ['set-telegram-evt-comment', 'set-telegram-evt-poll', 'set-telegram-evt-reaction'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && el.checked) evts.push(el.value);
+    });
+    return evts.join(',');
+  }
+  function setTelegramEventsValue(str) {
+    var set = {};
+    String(str || '').split(',').forEach(function (v) { if (v) set[v.trim()] = true; });
+    ['set-telegram-evt-comment', 'set-telegram-evt-poll', 'set-telegram-evt-reaction'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.checked = !!set[el.value];
+    });
+  }
   function loadSettings() {
     api('/api/admin/settings')
       .then(function (data) {
@@ -609,6 +625,7 @@
         document.getElementById('set-telegram-alerts').value = s.telegram_alerts === 'on' ? 'on' : 'off';
         document.getElementById('set-telegram-token').value = s.telegram_bot_token || '';
         document.getElementById('set-telegram-chat').value = s.telegram_chat_id || '';
+        setTelegramEventsValue(s.telegram_events == null ? 'comment' : s.telegram_events);
         document.getElementById('set-owner-nick').value = s.owner_nickname || 'Site owner';
       })
       .catch(function (err) { showStatus(document.getElementById('settings-status'), 'Error: ' + err.message, true); });
@@ -640,6 +657,7 @@
         telegram_alerts: document.getElementById('set-telegram-alerts').value,
         telegram_bot_token: document.getElementById('set-telegram-token').value.trim(),
         telegram_chat_id: document.getElementById('set-telegram-chat').value.trim(),
+        telegram_events: telegramEventsValue(),
         owner_nickname: document.getElementById('set-owner-nick').value.trim()
       }
     };
@@ -651,10 +669,26 @@
   document.getElementById('settings-reset').addEventListener('click', function () {
     api('/api/admin/settings', {
       method: 'PUT',
-      body: JSON.stringify({ settings: { pow_difficulty: 16, reaction_options: '👍,❤️,🎉', moderation_mode: 'open', telegram_alerts: 'off', telegram_bot_token: '', telegram_chat_id: '', owner_nickname: 'Site owner' } })
+      body: JSON.stringify({ settings: { pow_difficulty: 16, reaction_options: '👍,❤️,🎉', moderation_mode: 'open', telegram_alerts: 'off', telegram_bot_token: '', telegram_chat_id: '', telegram_events: 'comment', owner_nickname: 'Site owner' } })
     })
       .then(function () { loadSettings(); showStatus(document.getElementById('settings-status'), 'Reset to defaults ✓'); })
       .catch(function (err) { showStatus(document.getElementById('settings-status'), 'Error: ' + err.message, true); });
+  });
+  // "Send test message" — verifies the saved Telegram token + chat id instantly
+  // and surfaces the exact Telegram error instead of failing silently.
+  document.getElementById('telegram-test').addEventListener('click', function () {
+    var statusEl = document.getElementById('telegram-test-status');
+    var btn = document.getElementById('telegram-test');
+    btn.disabled = true;
+    statusEl.textContent = 'Sending…';
+    statusEl.style.color = '';
+    api('/api/admin/settings/telegram-test', { method: 'POST', body: '{}' })
+      .then(function () { statusEl.textContent = '✓ Test message sent — check Telegram.'; statusEl.style.color = 'var(--ok,#1a8f5a)'; })
+      .catch(function (err) {
+        statusEl.textContent = 'Failed: ' + err.message;
+        statusEl.style.color = 'var(--err,#e23a52)';
+      })
+      .finally(function () { btn.disabled = false; });
   });
 
   // ---- widget builder --------------------------------------------------

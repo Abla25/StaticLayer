@@ -282,11 +282,12 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
   }
 
   // Owner notification when the comment enters the moderation queue.
-  // GDPR-minimal: the alert carries no comment data — only "pending" + admin
-  // link (see telegram.ts). Best-effort; never blocks or fails the submit.
+  // GDPR-minimal: the alert carries no comment data — only the page where the
+  // comment arrived + the admin link (see telegram.ts). Best-effort; never
+  // blocks or fails the submit.
   if (status === 'pending') {
     const origin = new URL(request.url).origin;
-    await notifyPendingComment(env, `${origin}/admin.html`);
+    await notifyPendingComment(env, `${origin}/admin.html`, { hostContext, articlePath });
   }
 
   return json({

@@ -20,6 +20,7 @@ import { json, readJsonBody, validField } from './http.ts';
 import { applyRateLimit } from './ratelimit.ts';
 import { timeGateResponse } from './antiabuse.ts';
 import { readSettings } from './settings.ts';
+import { notifyReaction } from './telegram.ts';
 
 /**
  * Reactions — anonymous, PoW-protected (mode "a": cost-based integrity).
@@ -398,6 +399,11 @@ export async function handlePostReaction(request: Request, env: Env): Promise<Re
   )
     .bind(articlePath)
     .all<{ reaction: string; count: number }>();
+
+  // Owner notification on an accepted reaction (best-effort). GDPR-minimal:
+  // the alert never contains the reaction itself — only the page + admin link.
+  const origin = new URL(request.url).origin;
+  await notifyReaction(env, `${origin}/admin.html`, { hostContext, articlePath });
 
   return json({ ok: true, reaction, reactions: counts });
 }

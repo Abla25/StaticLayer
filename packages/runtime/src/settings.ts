@@ -18,8 +18,11 @@ import type { D1Database } from '@cloudflare/workers-types';
  *   telegram_alerts    'on' | 'off'  (default off)
  *   telegram_bot_token string         (created with @BotFather, private)
  *   telegram_chat_id   string         (your chat id, e.g. 123456789)
- * The alert contains NO comment data — only "a new comment awaits
- * moderation" plus a link to the admin console.
+ *   telegram_events    string         comma-separated: comment,poll,reaction
+ *                                     (default 'comment')
+ * The alert contains NO user content — only "new activity awaits you" plus
+ * a link to the admin console. Comment text, nicknames and poll options are
+ * never sent to Telegram.
  */
 export const SETTING_KEYS = [
   'pow_difficulty',
@@ -28,6 +31,7 @@ export const SETTING_KEYS = [
   'telegram_alerts',
   'telegram_bot_token',
   'telegram_chat_id',
+  'telegram_events',
   'owner_nickname',
 ] as const;
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -37,6 +41,24 @@ export type ModerationMode = (typeof MODERATION_MODES)[number];
 
 export const TELEGRAM_ALERT_STATES = ['on', 'off'] as const;
 export type TelegramAlertState = (typeof TELEGRAM_ALERT_STATES)[number];
+
+export const TELEGRAM_EVENT_TYPES = ['comment', 'poll', 'reaction'] as const;
+export type TelegramEventType = (typeof TELEGRAM_EVENT_TYPES)[number];
+
+/**
+ * Which events trigger a Telegram alert. Stored comma-separated (default
+ * 'comment'). A comment alert fires when a comment enters the moderation
+ * queue; poll/reaction alerts fire on new votes — always without content.
+ */
+export function telegramEventsEnabled(map: Map<string, string>, event: TelegramEventType): boolean {
+  const raw = map.get('telegram_events');
+  if (raw === undefined) return event === 'comment'; // default when never set
+  const list = raw
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(event);
+}
 
 /** Read all known settings into a Map (one query). Missing keys are absent. */
 export async function readSettings(db: D1Database): Promise<Map<string, string>> {

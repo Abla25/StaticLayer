@@ -422,13 +422,22 @@
       <div class="settings-form" style="margin-top:22px">
         <div class="list-panel">
           <h3>Telegram alerts</h3>
-          <p class="lsub">Get a private notification on Telegram when a new comment is awaiting moderation. <b>Privacy-first:</b> the message contains no comment content — only "a new comment awaits moderation" plus a link to this console. Your bot token and chat id are stored only in your own private D1 database.</p>
+          <p class="lsub">Get a private notification on Telegram when there is new activity on your site. <b>Privacy-first:</b> the message only says which page the activity happened on — comment text, nicknames and poll options are <b>never</b> sent to Telegram. Your bot token and chat id are stored only in your own private D1 database.</p>
           <div class="field">
             <label for="set-telegram-alerts">Alerts</label>
             <select id="set-telegram-alerts">
               <option value="off">Off</option>
               <option value="on">On</option>
             </select>
+          </div>
+          <div class="field">
+            <label>Notify me about</label>
+            <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:6px">
+              <label style="display:flex;gap:6px;align-items:center;font-size:14px"><input type="checkbox" id="set-telegram-evt-comment" value="comment"> Comments</label>
+              <label style="display:flex;gap:6px;align-items:center;font-size:14px"><input type="checkbox" id="set-telegram-evt-poll" value="poll"> Polls</label>
+              <label style="display:flex;gap:6px;align-items:center;font-size:14px"><input type="checkbox" id="set-telegram-evt-reaction" value="reaction"> Reactions</label>
+            </div>
+            <p class="hint">Choose which activity triggers an alert. The message includes the page link — never the content itself.</p>
           </div>
           <div class="field">
             <label for="set-telegram-token">Bot token</label>
@@ -440,7 +449,12 @@
             <input type="text" id="set-telegram-chat" maxlength="100" placeholder="123456789" spellcheck="false">
             <p class="hint"><b>Find your chat id:</b> message your bot once (e.g. "hi"), then open <code>https://api.telegram.org/bot&lt;YOUR_TOKEN&gt;/getUpdates</code> in a browser and copy the number in <code>"chat":{"id":123456789,…}</code> (channels/groups have a leading minus).</p>
           </div>
-          <p class="lsub" style="margin-top:8px">Then press <b>Save settings</b> and post a comment on your site: you'll get the notification.</p>
+          <div class="row mt">
+            <button type="button" id="telegram-test" class="btn">Send test message</button>
+            <span id="telegram-test-status" class="status-inline" style="align-self:center"></span>
+          </div>
+          <p class="hint"><b>Tip:</b> press <b>Save settings</b> first, then <b>Send test message</b> to verify instantly. If it fails, Telegram shows the exact reason below.</p>
+          <p class="lsub" style="margin-top:8px">Then press <b>Save settings</b> and trigger one of the enabled activities on your site (a comment, poll vote or reaction): you'll get the notification.</p>
         </div>
       </div>
       <div class="settings-form" style="margin-top:22px">

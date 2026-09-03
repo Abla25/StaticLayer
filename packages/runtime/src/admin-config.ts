@@ -11,10 +11,13 @@ import {
   settingNumber,
   settingString,
   TELEGRAM_ALERT_STATES,
+  TELEGRAM_EVENT_TYPES,
   type ModerationMode,
+  type TelegramEventType,
 } from './settings.ts';
 import { normalizeListValue, type ListKind } from './moderation-lists.ts';
 import { normalizeTerm } from './blocked-terms.ts';
+import { testTelegramAlert } from './telegram.ts';
 
 /**
  * Admin configuration API (session + CSRF protected):
@@ -146,6 +149,7 @@ interface EffectiveSettings {
   telegram_alerts: string;
   telegram_bot_token: string;
   telegram_chat_id: string;
+  telegram_events: string;
   owner_nickname: string;
 }
 
@@ -158,6 +162,7 @@ async function effectiveSettings(db: D1Database, env: Env): Promise<EffectiveSet
     telegram_alerts: settingString(map, 'telegram_alerts', 'off'),
     telegram_bot_token: settingString(map, 'telegram_bot_token', ''),
     telegram_chat_id: settingString(map, 'telegram_chat_id', ''),
+    telegram_events: settingString(map, 'telegram_events', 'comment'),
     owner_nickname: settingString(map, 'owner_nickname', 'Site owner'),
   };
 }
@@ -228,6 +233,29 @@ export async function handleAdminPutSettings(request: Request, env: Env): Promis
     await putSetting(env.DB, 'telegram_chat_id', s.telegram_chat_id.trim());
   }
 
+  // Which activity events trigger an alert (comma-separated, canonical order;
+  // empty = alerts never fire even when telegram_alerts is on).
+  if (s.telegram_events !== undefined) {
+    if (typeof s.telegram_events !== 'string' || s.telegram_events.length > 100) {
+      return json({ error: 'telegram_events must be a short string' }, 400);
+    }
+    const seen = new Set<string>();
+    const events: TelegramEventType[] = [];
+    for (const part of s.telegram_events.split(',')) {
+      const value = part.trim().toLowerCase();
+      if (!value) continue;
+      if (!(TELEGRAM_EVENT_TYPES as readonly string[]).includes(value)) {
+        return json({ error: 'telegram_events may only contain comment, poll, reaction' }, 400);
+      }
+      if (!seen.has(value)) {
+        seen.add(value);
+        events.push(value as TelegramEventType);
+      }
+    }
+    events.sort((a, b) => TELEGRAM_EVENT_TYPES.indexOf(a) - TELEGRAM_EVENT_TYPES.indexOf(b));
+    await putSetting(env.DB, 'telegram_events', events.join(','));
+  }
+
   if (s.owner_nickname !== undefined) {
     if (typeof s.owner_nickname !== 'string' || s.owner_nickname.length > 50) {
       return json({ error: 'owner_nickname must be a short string' }, 400);
@@ -236,4 +264,15 @@ export async function handleAdminPutSettings(request: Request, env: Env): Promis
   }
 
   return json({ settings: await effectiveSettings(env.DB, env) });
+}
+
+/** POST /api/admin/settings/telegram-test — send a live test alert (auth + CSRF). */
+export async function handleAdminTelegramTest(request: Request, env: Env): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return auth.response;
+  if (!(await requireCsrf(request, auth.payload))) return json({ error: 'invalid csrf token' }, 403);
+
+  const origin = new URL(request.url).origin;
+  const result = await testTelegramAlert(env, `${origin}/admin.html`);
+  return json(result.ok ? { ok: true } : { ok: false, error: result.error }, result.ok ? 200 : 400);
 }
