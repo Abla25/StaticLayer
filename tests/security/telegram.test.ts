@@ -200,14 +200,14 @@ describe('Telegram alerts (GDPR-minimal)', () => {
     const env = enabledDb('comment');
 
     await notifyPendingComment(env, 'https://x.test/admin.html', {
-      hostContext: 'thewrongbus.example',
+      hostContext: 'demo.example',
       articlePath: '/2024/09/hello-world',
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const text = sentText(fetchMock);
     // The owner learns WHICH page got the activity…
-    expect(text).toContain('📄 thewrongbus.example/2024/09/hello-world');
+    expect(text).toContain('📄 demo.example/2024/09/hello-world');
     expect(text).toContain('🔐 Console: https://x.test/admin.html');
     // …but never any user content.
     expect(text).not.toContain('hello world');
