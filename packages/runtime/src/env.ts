@@ -22,6 +22,12 @@ export interface Env {
   CHALLENGE_TTL_SECONDS?: number;
   /** Minimum seconds between challenge issue and submit (anti-bot time gate). */
   CHALLENGE_TIME_GATE_SECONDS?: number;
+  /**
+   * Edge-cache TTL (seconds) for the public anonymous comments list (Cache
+   * API, keyed per article_path). 0 disables edge caching. Requests carrying
+   * a per-browser voterToken are never cached. Default 60 (see DEFAULTS).
+   */
+  EDGE_CACHE_TTL_SECONDS?: number;
   SESSION_TTL_SECONDS?: number;
   MAX_REQUEST_BYTES?: number;
   /**
@@ -82,6 +88,7 @@ export const DEFAULTS = {
   POW_DIFFICULTY: 16,
   CHALLENGE_TTL_SECONDS: 300,
   CHALLENGE_TIME_GATE_SECONDS: 3,
+  EDGE_CACHE_TTL_SECONDS: 60,
   SESSION_TTL_SECONDS: 7200,
   MAX_REQUEST_BYTES: 65536,
   REACTION_OPTIONS: '👍,❤️,🎉',

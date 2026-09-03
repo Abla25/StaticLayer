@@ -1,7 +1,8 @@
 import { bytesToBase64Url, MAX_ARTICLE_PATH_BYTES, MAX_HOST_CONTEXT_BYTES, sha256 } from '@staticlayer/protocol';
-import type { Env } from './env.ts';
+import { DEFAULTS, envNumber, type Env } from './env.ts';
 import { json, validField } from './http.ts';
 import { verifyVoterToken } from './polls.ts';
+import { getCachedCommentsList, isCacheableListRequest, putCachedCommentsList } from './edge-cache.ts';
 
 /**
  * GET /api/comments?article_path=...&host_context=...&voterToken=...
@@ -12,8 +13,15 @@ import { verifyVoterToken } from './polls.ts';
  * `voterToken` is supplied (the browser's anonymous like token), each comment
  * also reports `voted: true` for the ones this browser already liked. A reply
  * is included when its parent is approved OR no longer exists (deleted); a
- * reply whose parent is still pending is hidden. Cacheable for 60s and NEVER
- * sets a cookie.
+ * reply whose parent is still pending is hidden. NEVER sets a cookie.
+ *
+ * CACHEABILITY (see edge-cache.ts):
+ *   - No voterToken  → the list is public. Response is browser-cacheable
+ *     (`public, max-age=60`) and, when EDGE_CACHE_TTL_SECONDS > 0, stored in
+ *     the Cache API keyed by article_path with `s-maxage=<ttl>`; admin
+ *     mutations purge the key (admin-comments.ts).
+ *   - voterToken present → the payload carries personalized `voted` state and
+ *     MUST NOT be cached: the response is `no-store`.
  */
 export async function handleListComments(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
@@ -31,6 +39,15 @@ export async function handleListComments(request: Request, env: Env): Promise<Re
   }
 
   const voterToken = url.searchParams.get('voterToken') ?? '';
+
+  // Edge cache only for fully anonymous reads (no per-browser `voted` state).
+  const edgeTtl = envNumber(env.EDGE_CACHE_TTL_SECONDS, DEFAULTS.EDGE_CACHE_TTL_SECONDS);
+  const cacheable = isCacheableListRequest(url, edgeTtl);
+  if (cacheable) {
+    const cached = await getCachedCommentsList(articlePath);
+    if (cached) return cached;
+  }
+
   const voterId = voterToken ? await verifyVoterToken(voterToken, env) : null;
   const voterHash = voterId ? bytesToBase64Url(await sha256(voterId)) : null;
 
@@ -69,5 +86,19 @@ export async function handleListComments(request: Request, env: Env): Promise<Re
     voted: votedIds.has(c.id),
   }));
 
-  return json({ comments }, 200, { 'cache-control': 'public, max-age=60' });
+  // Personalized responses (voterToken) are NOT cacheable: leave the json()
+  // default `no-store`. Anonymous lists are public; when edge caching is on,
+  // the stored copy carries `s-maxage=<ttl>` for the Cache API.
+  const headers: Record<string, string> = {};
+  if (voterToken.length === 0) {
+    headers['cache-control'] = cacheable
+      ? `public, max-age=60, s-maxage=${edgeTtl}`
+      : 'public, max-age=60';
+  }
+
+  const response = json({ comments }, 200, headers);
+  if (cacheable) {
+    await putCachedCommentsList(articlePath, response);
+  }
+  return response;
 }

@@ -27,6 +27,7 @@ import { decide, readLists } from './moderation-lists.ts';
 import { findBlockedTerm, readBlockedTerms } from './blocked-terms.ts';
 import { notifyPendingComment } from './telegram.ts';
 import { fakePendingComment, isHoneypotTriggered, timeGateResponse } from './antiabuse.ts';
+import { purgeCommentsList } from './edge-cache.ts';
 import { signVoterToken, verifyVoterToken } from './polls.ts';
 
 /**
@@ -279,6 +280,13 @@ export async function handleSubmitComment(request: Request, env: Env): Promise<R
   if (inserted !== 1) {
     // Defensive: consumed === 1 but no comment row => internal inconsistency.
     return json({ error: 'comment not stored' }, 500);
+  }
+
+  // An allowlisted (auto-approved) comment is immediately visible -> drop the
+  // per-article edge cache. A `pending` comment never enters the public list,
+  // so no purge is needed on submit.
+  if (status === 'approved') {
+    await purgeCommentsList(articlePath);
   }
 
   // Owner notification when the comment enters the moderation queue.

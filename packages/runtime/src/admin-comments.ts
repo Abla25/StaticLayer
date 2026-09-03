@@ -2,6 +2,7 @@ import type { Env } from './env.ts';
 import { json, readJsonBody } from './http.ts';
 import { requireAdmin, requireCsrf } from './auth.ts';
 import { readSettings, settingString } from './settings.ts';
+import { purgeCommentsList } from './edge-cache.ts';
 
 /**
  * Admin moderation API (Phase 2 + Round 21.3).
@@ -162,11 +163,21 @@ export async function handleAdminBulkComments(request: Request, env: Env): Promi
 
   const placeholders = ids.map(() => '?').join(', ');
   const cleanIds = ids as string[];
+
+  // approve/unapprove/delete all change the PUBLIC list for these articles,
+  // so the per-article edge cache must be purged afterwards (best-effort).
+  const { results: affected } = await env.DB
+    .prepare(`SELECT DISTINCT article_path FROM comments WHERE id IN (${placeholders})`)
+    .bind(...cleanIds)
+    .all<{ article_path: string }>();
+  const paths = affected.map((r) => r.article_path);
+
   if (action === 'delete') {
     const result = await env.DB
       .prepare(`DELETE FROM comments WHERE id IN (${placeholders})`)
       .bind(...cleanIds)
       .run();
+    for (const p of paths) await purgeCommentsList(p);
     return json({ ok: true, changes: result.meta.changes });
   }
   const status = action === 'approve' ? 'approved' : 'pending';
@@ -174,6 +185,7 @@ export async function handleAdminBulkComments(request: Request, env: Env): Promi
     .prepare(`UPDATE comments SET status = ? WHERE id IN (${placeholders})`)
     .bind(status, ...cleanIds)
     .run();
+  for (const p of paths) await purgeCommentsList(p);
   return json({ ok: true, changes: result.meta.changes });
 }
 
@@ -216,6 +228,16 @@ export async function handleAdminPatchComment(
   }
   binds.push(id);
 
+  // article_path for the per-article edge-cache purge (status/pinned changes
+  // alter the public list or its ordering).
+  const target = await env.DB
+    .prepare('SELECT article_path FROM comments WHERE id = ?')
+    .bind(id)
+    .first<{ article_path: string }>();
+  if (!target) {
+    return json({ error: 'comment not found' }, 404);
+  }
+
   const result = await env.DB
     .prepare(`UPDATE comments SET ${sets.join(', ')} WHERE id = ?`)
     .bind(...binds)
@@ -223,6 +245,8 @@ export async function handleAdminPatchComment(
   if (result.meta.changes === 0) {
     return json({ error: 'comment not found' }, 404);
   }
+
+  await purgeCommentsList(target.article_path);
 
   const row = await env.DB.prepare(`${LIST_SELECT} WHERE c.id = ?`).bind(id).first();
   return json({ comment: row });
@@ -276,6 +300,9 @@ export async function handleAdminReplyComment(
     .bind(replyId, parent.article_path, ownerNickname, body.trim(), now, parent.id)
     .run();
 
+  // Owner replies are auto-approved -> immediately visible -> purge the cache.
+  await purgeCommentsList(parent.article_path);
+
   const row = await env.DB.prepare(`${LIST_SELECT} WHERE c.id = ?`).bind(replyId).first();
   return json({ comment: row }, 201);
 }
@@ -294,10 +321,19 @@ export async function handleAdminDeleteComment(
     return json({ error: 'invalid comment id' }, 400);
   }
 
+  const target = await env.DB
+    .prepare('SELECT article_path FROM comments WHERE id = ?')
+    .bind(id)
+    .first<{ article_path: string }>();
+  if (!target) {
+    return json({ error: 'comment not found' }, 404);
+  }
+
   const result = await env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(id).run();
   if (result.meta.changes === 0) {
     return json({ error: 'comment not found' }, 404);
   }
+  await purgeCommentsList(target.article_path);
   return json({ ok: true });
 }
 

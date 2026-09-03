@@ -27,6 +27,11 @@ export interface WorkerOptions {
   challengeTtlSeconds?: number;
   /** Min seconds between challenge issue and submit; default 0 in tests. */
   timeGateSeconds?: number;
+  /**
+   * Edge-cache TTL for the public comments list; default 0 in tests so that
+   * approvals are immediately visible and the suite stays deterministic.
+   */
+  edgeCacheTtlSeconds?: number;
   withRateLimiter?: boolean;
   allowedOrigins?: string;
   reactionBase?: number;
@@ -120,6 +125,8 @@ export async function spawnWorker(
   }
   // Time gate OFF by default so existing tests stay fast.
   bindings.CHALLENGE_TIME_GATE_SECONDS = options.timeGateSeconds ?? 0;
+  // Edge cache OFF by default so state-changing tests see results immediately.
+  bindings.EDGE_CACHE_TTL_SECONDS = options.edgeCacheTtlSeconds ?? 0;
   if (options.allowedOrigins !== undefined) {
     bindings.ALLOWED_ORIGINS = options.allowedOrigins;
   }

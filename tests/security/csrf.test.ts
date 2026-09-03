@@ -212,6 +212,16 @@ describe('public GET /api/comments (Phase 2)', () => {
     const res = await mf.dispatchFetch(`${BASE}/api/comments`);
     expect(res.status).toBe(400);
   });
+
+  it('never marks a voterToken (personalized) response as cacheable', async () => {
+    mf = await spawnWorker();
+    const res = await mf.dispatchFetch(
+      `${BASE}/api/comments?article_path=${encodeURIComponent(ARTICLE)}&host_context=example.com&voterToken=anon-token-abc`,
+    );
+    expect(res.status).toBe(200);
+    // Personalized `voted` state must not be cacheable (default is no-store).
+    expect(res.headers.get('cache-control')).toBe('no-store');
+  });
 });
 
 describe('static assets (Phase 2)', () => {
