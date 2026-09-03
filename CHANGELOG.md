@@ -12,6 +12,16 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Telegram alerts v2 (runtime)
+- **Per-event alert selection** — new `telegram_events` setting
+  (comment,poll,reaction — default `comment`) with checkboxes in the admin
+  console; poll votes and reactions now notify the owner too when enabled.
+- **The alert names the page** — the message now says which page (host +
+  article path) got the activity, plus the admin-console link.
+- **Privacy invariant unchanged** — comment text, nicknames and poll options
+  are still never sent to Telegram; the message builder strips newlines so
+  paths/hosts can never inject extra lines.
+
 ### Public-readiness
 - **PUBLIC_RELEASE_AUDIT.md updated** — no longer "v1.0.0-beta.1, not
   production-grade": now reflects v1.7.0 (160 tests / 22 files, typecheck 0,
