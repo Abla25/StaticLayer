@@ -31,7 +31,7 @@ All templates accept the same options (see the main widget docs in
 - `pollStyle` / `pollResults` — poll display options
 - `sort` — `newest | oldest | best` (default `newest`)
 - `reactionsPosition` — `top | bottom` (default `bottom`)
-- `lang` — `en | it | auto` (default `auto`)
+- `lang` — `en | it | de | auto` (default `auto`)
 - `theme` — `auto | light | dark`
 - `accent` / `accent2` — brand colors
 - `radius` — corner radius in px (default 14)
@@ -102,7 +102,7 @@ type CommentProps = {
   pollResults?: 'after' | 'always';
   sort?: 'newest' | 'oldest' | 'best';
   reactionsPosition?: 'top' | 'bottom';
-  lang?: 'en' | 'it' | 'auto';
+  lang?: 'en' | 'it' | 'de' | 'auto';
   theme?: 'auto' | 'light' | 'dark';
   accent?: string;
   radius?: string;

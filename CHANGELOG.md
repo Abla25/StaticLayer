@@ -12,6 +12,16 @@ Versioning: [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### German localization (widget)
+- **`data-lang="de"`** — full German dictionary for comments, reactions and
+  polls; `auto` now also detects German from the browser language
+  (primary subtag, so `de-DE`, `de-AT`, `de-CH` all match). English stays the
+  fallback, and `data-text` overrides still win.
+- **Admin embed builder** — "Deutsch" added to the language selector.
+- **Tests** — new `widget-i18n.test.ts`: language selection, auto-detection,
+  override precedence, and a key-parity check so every locale defines exactly
+  the English keys.
+
 ### Telegram alerts v2 (runtime)
 - **Per-event alert selection** — new `telegram_events` setting
   (comment,poll,reaction — default `comment`) with checkboxes in the admin

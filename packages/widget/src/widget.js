@@ -24,7 +24,7 @@
  *
  * Optional look & feel (all can also be passed via window.StaticLayer.mount
  * opts: lang, theme, accent, accent2, radius, maxWidth, texts):
- *   data-lang="auto|en|it"        UI language (default auto-detect)
+ *   data-lang="auto|en|it|de"     UI language (default auto-detect)
  *   data-theme="auto|light|dark"  force a theme (default: follow OS)
  *   data-accent="#ff8a2a"         accent color (and data-accent-2 for the end)
  *   data-radius="18"              corner radius in px
@@ -87,7 +87,7 @@
   }
 
   /* ------------------------ localization ------------------------------ */
-  // UI copy is localizable via `data-lang="en|it|auto"` (default: auto-detect
+  // UI copy is localizable via `data-lang="en|it|de|auto"` (default: auto-detect
   // from navigator.language, fallback EN) and overridable per-key via
   // `data-text='{"post":"Pubblica","empty":"…"}'` or opts.texts.
   // countOne/countMany accept a `{n}` placeholder.
@@ -211,8 +211,70 @@
       showMoreReplies: 'Mostra altre risposte ({n})',
       parentRemoved: 'Commento padre rimosso',
       author: 'Autore'
+    },
+    de: {
+      title: 'Kommentare',
+      nickPlaceholder: 'Name (optional)',
+      bodyPlaceholder: 'Kommentar schreiben …',
+      post: 'Kommentar senden',
+      hint: 'Nur Text · Emojis willkommen · Spamschutz per Proof-of-Work',
+      empty: 'Noch keine Kommentare – schreiben Sie den ersten. 💬',
+      anonymous: 'Anonym',
+      emptyComment: 'Der Kommentar darf nicht leer sein.',
+      solving: 'Proof-of-Work wird berechnet …',
+      pending: 'Kommentar gesendet – wartet auf Freigabe.',
+      posted: 'Kommentar veröffentlicht.',
+      reactAria: 'Reagieren mit ',
+      reactionRecorded: '✓ Reaktion gespeichert',
+      slowDown: 'Bitte etwas langsamer – zu viele Reaktionen.',
+      challengeUsed: 'Challenge bereits verwendet – bitte erneut versuchen.',
+      countOne: '1 Kommentar',
+      countMany: '{n} Kommentare',
+      voted: '✓ Abgestimmt',
+      closed: 'Diese Umfrage ist beendet',
+      pollMissing: 'Umfrage nicht gefunden',
+      alreadyVoted: 'Sie haben bei dieser Umfrage bereits abgestimmt',
+      pollLoadError: 'Umfrage konnte nicht geladen werden',
+      pollVoteCountOne: '1 Stimme',
+      pollVoteCountMany: '{n} Stimmen',
+      pollLeader: 'Führt mit {n} Stimmen',
+      pollVoteBtn: 'Abstimmen ({n})',
+      pollMultiHint: 'Eine oder mehrere Optionen auswählen',
+      pollChangeVotes: 'Stimmen ändern',
+      pollVotesChanged: 'Stimmen zurückgesetzt – Sie können erneut abstimmen',
+      viewResults: 'Ergebnisse ansehen',
+      backToVote: 'Abstimmen',
+      resultsPreview: 'Aktuelle Ergebnisse',
+      startTitle: 'Starten Sie die Diskussion',
+      pinned: 'Angeheftet',
+      flag: 'Melden',
+      flagBusy: 'Meldung wird gesendet …',
+      flagDone: 'Danke – Meldung gesendet',
+      flagErr: 'Meldung fehlgeschlagen',
+      sortNewest: 'Neueste',
+      sortOldest: 'Älteste',
+      sortBest: 'Beste',
+      timeNow: 'gerade eben',
+      timeMinAgo: 'vor {n} Min.',
+      timeHourAgo: 'vor {n} Std.',
+      timeDayAgo: 'vor {n} T.',
+      timeWeekAgo: 'vor {n} Wo.',
+      timeMonthAgo: 'vor {n} Mon.',
+      timeYearAgo: 'vor {n} J.',
+      readMore: 'Weiterlesen',
+      showLess: 'Weniger anzeigen',
+      like: 'Gefällt mir',
+      liked: 'Gefällt mir',
+      reply: 'Antworten',
+      cancelReply: 'Abbrechen',
+      replyPlaceholder: 'Antwort schreiben …',
+      showMoreReplies: 'Weitere Antworten anzeigen ({n})',
+      parentRemoved: 'Ursprünglicher Kommentar entfernt',
+      author: 'Autor'
     }
   };
+
+  var SUPPORTED_LANGS = ['en', 'it', 'de'];
 
   /* ------------------------------ styles ------------------------------ */
   var STYLES = '' +
@@ -414,9 +476,11 @@
 
     // -------- localization: lang auto-detect + per-key overrides ---------
     var lang = ((opts && opts.lang) || root.getAttribute('data-lang') || 'auto');
-    if (lang !== 'en' && lang !== 'it') {
-      lang = (typeof navigator !== 'undefined' && navigator.language &&
-        navigator.language.toLowerCase().indexOf('it') === 0) ? 'it' : 'en';
+    if (SUPPORTED_LANGS.indexOf(lang) === -1) {
+      // Auto-detect from the primary subtag ("de-AT" → "de"), fallback EN.
+      var navLang = (typeof navigator !== 'undefined' && navigator.language)
+        ? navigator.language.toLowerCase().split('-')[0] : '';
+      lang = SUPPORTED_LANGS.indexOf(navLang) !== -1 ? navLang : 'en';
     }
     var dict = I18N[lang] || I18N.en;
     var customTexts = null;

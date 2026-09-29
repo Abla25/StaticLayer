@@ -11,7 +11,7 @@ type CommentsProps = {
   pollResults?: 'after' | 'always';
   sort?: 'newest' | 'oldest' | 'best';
   reactionsPosition?: 'top' | 'bottom';
-  lang?: 'en' | 'it' | 'auto';
+  lang?: 'en' | 'it' | 'de' | 'auto';
   theme?: 'auto' | 'light' | 'dark';
   accent?: string;
   accent2?: string;
